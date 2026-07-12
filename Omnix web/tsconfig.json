@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",                          /* Version de JS générée */
+    "module": "CommonJS",                        /* Format des modules requis par Node.js */
+    "moduleResolution": "node",
+    "rootDir": "./src",                          /* Où se trouve le code source */
+    "outDir": "./dist",                          /* Où sera envoyé le code compilé */
+    "esModuleInterop": true,                     /* Compatibilité d'import avec CommonJS */
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,                              /* Active la vérification stricte des types */
+    "skipLibCheck": true                         /* Accélère la compilation en sautant la vérification des types tiers */
+  },
+  "include": ["src/**/*"],                       /* Compiler uniquement le contenu de src/ */
+  "exclude": ["node_modules", "dist", "tests/**/*"] /* Exclure node_modules, dist et les tests */
+}
