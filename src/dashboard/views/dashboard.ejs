@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OMNIX - Vos Serveurs</title>
+  <style>
+    /* Styles CSS natifs */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #030712; /* Slate 950 */
+      color: #f1f5f9; /* Slate 100 */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+    
+    .halo-top {
+      position: absolute;
+      top: -200px;
+      right: -200px;
+      width: 500px;
+      height: 500px;
+      background: rgba(6, 182, 212, 0.05); /* Cyan */
+      filter: blur(100px);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    /* En-tête */
+    header {
+      border-bottom: 1px solid #1e293b;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+    .logo-img {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      object-fit: cover;
+      box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+    }
+    .logo-text {
+      font-weight: 800;
+      letter-spacing: 1px;
+      background: linear-gradient(to right, #22d3ee, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 16px;
+    }
+
+    /* Barre de Navigation du Header */
+    .nav-links {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      transition: color 0.15s ease;
+    }
+    .nav-links a:hover {
+      color: white;
+    }
+    .nav-links a.active {
+      color: #38bdf8; /* Cyan */
+      text-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+    }
+    /* Onglet Administrateur / Staff */
+    .admin-nav-link {
+      color: #c084fc !important; /* Purple 400 */
+      text-shadow: 0 0 8px rgba(192, 132, 252, 0.4);
+    }
+    .admin-nav-link:hover {
+      color: #d8b4fe !important;
+    }
+
+    .btn-logout {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.15s ease;
+    }
+    .btn-logout:hover {
+      color: white;
+    }
+
+    main {
+      flex: 1;
+      max-width: 1000px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 40px 24px;
+      z-index: 10;
+    }
+
+    .user-profile-header {
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 20px;
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 40px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    .user-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 2px solid #1e293b;
+      object-fit: cover;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+    .user-info h3 {
+      font-size: 18px;
+      font-weight: 800;
+      color: white;
+    }
+    .user-badges {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .badge {
+      font-size: 9px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-admin {
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+    .badge-premium {
+      color: #c084fc;
+      background: rgba(192, 132, 252, 0.1);
+      border: 1px solid rgba(192, 132, 252, 0.2);
+    }
+    .badge-free {
+      color: #94a3b8;
+      background: rgba(148, 163, 184, 0.05);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+    }
+
+    h2 {
+      font-size: 24px;
+      font-weight: 900;
+      color: white;
+      margin-bottom: 8px;
+    }
+    p.subtitle {
+      font-size: 13px;
+      color: #64748b;
+      margin-bottom: 32px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-cols: 1fr;
+      gap: 24px;
+    }
+    @media (min-width: 600px) {
+      .grid {
+        grid-template-cols: repeat(2, 1fr);
+      }
+    }
+    @media (min-width: 900px) {
+      .grid {
+        grid-template-cols: repeat(3, 1fr);
+      }
+    }
+
+    .server-card {
+      background: rgba(15, 23, 42, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 20px;
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+    .server-card:hover {
+      box-shadow: 0 0 25px rgba(6, 182, 212, 0.15);
+      border-color: rgba(6, 182, 212, 0.3);
+    }
+    .server-icon {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      border: 2px solid #1e293b;
+      object-fit: cover;
+      margin-bottom: 16px;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+    }
+    .server-name {
+      font-size: 16px;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 24px;
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .btn-group {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .btn-manage {
+      width: 100%;
+      padding: 11px;
+      background: linear-gradient(135deg, #06b6d4, #4f46e5);
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-decoration: none;
+      border-radius: 10px;
+      display: inline-block;
+      transition: transform 0.1s;
+    }
+    .btn-invite {
+      width: 100%;
+      padding: 11px;
+      background: rgba(15, 23, 42, 0.3);
+      border: 1px solid #1e293b;
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-decoration: none;
+      border-radius: 10px;
+      display: inline-block;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    footer {
+      border-top: 1px solid #0f172a;
+      padding: 24px;
+      text-align: center;
+      font-size: 12px;
+      color: #475569;
+    }
+
+    .debug-console {
+      margin-top: 40px;
+      padding: 20px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      font-family: monospace;
+      font-size: 11px;
+      color: #38bdf8;
+      max-height: 250px;
+      overflow-y: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .log-line {
+      margin-bottom: 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.02);
+      padding-bottom: 4px;
+    }
+    .log-time {
+      color: #64748b;
+    }
+    .log-error {
+      color: #f87171;
+    }
+    .log-success {
+      color: #34d399;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Écouteur d'erreurs -->
+  <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+      const debugConsole = document.getElementById('debug-container');
+      const debugMsg = document.getElementById('debug-msg');
+      if (debugConsole && debugMsg) {
+        debugConsole.style.display = 'block';
+        debugMsg.innerText = `${message} (Ligne ${lineno}:${colno})`;
+      }
+      return false;
+    };
+  </script>
+
+  <div class="halo-top"></div>
+
+  <!-- Barre de navigation -->
+  <header>
+    <a href="/" class="logo-area">
+      <img src="/logo.png" id="logo-main-img" onerror="this.style.display='none'; document.getElementById('logo-fallback-box').style.display='flex';" class="logo-img" alt="OMNIX Logo">
+      <div id="logo-fallback-box" style="display: none; width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #06b6d4, #7c3aed); align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 18px; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);">O</div>
+      <span class="logo-text">OMNIX Panel</span>
+    </a>
+    
+    <!-- BARRE DE NAVIGATION INTERACTIVE DU COMPTE CONNECTÉ -->
+    <nav class="nav-links" id="header-nav">
+      <a href="/">Accueil</a>
+      <a href="/dashboard" class="active">Dashboard</a>
+      <a href="/founder">Founder</a>
+      <!-- L'onglet Staff Panel s'ajoutera ici dynamiquement si l'utilisateur est Admin -->
+    </nav>
+
+    <button onclick="logout()" class="btn-logout">Déconnexion</button>
+  </header>
+
+  <!-- Contenu Principal -->
+  <main>
+    <section class="user-profile-header" id="user-header">
+      <div style="width: 64px; height: 64px; border-radius: 50%; background: #1e293b;"></div>
+      <div class="user-info">
+        <h3 style="color: #475569;">En attente d'authentification...</h3>
+      </div>
+    </section>
+
+    <h2>Sélectionnez votre serveur</h2>
+    <p class="subtitle">Seuls les serveurs sur lesquels vous possédez les droits d'administration sont listés.</p>
+
+    <div id="guilds-grid" class="grid">
+      <div class="col-span-full" id="loading-label" style="text-align: center; color: #64748b; padding: 48px 0;">
+        Vérification sécurisée et chargement de vos serveurs...
+      </div>
+    </div>
+
+    <!-- CONSOLE DE LOGS VISUELLE EN TEMPS RÉEL -->
+    <div class="debug-console" id="console-log-box">
+      <div style="color: #cbd5e1; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; margin-bottom: 10px; display: flex; justify-content: space-between;">
+        <span>📝 CONSOLE DE SUIVI OMNIX</span>
+        <span style="color: #64748b; font-size: 9px; text-transform: uppercase;">Temps Réel</span>
+      </div>
+      <div id="log-list"></div>
+    </div>
+
+    <!-- Console mobile -->
+    <div id="debug-container" class="debug-console" style="display: none;">
+      <strong style="color: #ef4444;">⚠️ [DEBUG CONSOLE MOBILE] :</strong>
+      <p id="debug-msg" style="margin-top: 8px; white-space: pre-wrap; word-break: break-all;"></p>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 OMNIX. Tous droits réservés.</p>
+  </footer>
+
+  <script>
+    const clientId = "<%= clientId %>";
+
+    function addLog(message, type = 'info') {
+      const logList = document.getElementById('log-list');
+      if (!logList) return;
+      const timeStr = new Date().toLocaleTimeString('fr-FR');
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      
+      let colorClass = '';
+      if (type === 'error') colorClass = 'log-error';
+      if (type === 'success') colorClass = 'log-success';
+
+      line.innerHTML = `<span class="log-time">[${timeStr}]</span> <span class="${colorClass}">${message}</span>`;
+      logList.appendChild(line);
+      
+      const box = document.getElementById('console-log-box');
+      if (box) box.scrollTop = box.scrollHeight;
+    }
+
+    function setToken(value) {
+      try {
+        localStorage.setItem('jwt_token', value);
+        addLog("Jeton de session enregistré dans LocalStorage.", "success");
+      } catch (e) {
+        addLog("LocalStorage bloqué. Utilisation d'un Cookie de secours...", "error");
+        document.cookie = `jwt_token=${value}; path=/; max-age=604800; SameSite=Lax`;
+        addLog("Jeton de session enregistré dans les Cookies.", "success");
+      }
+    }
+
+    function getToken() {
+      try {
+        const localToken = localStorage.getItem('jwt_token');
+        if (localToken) return localToken;
+      } catch (e) {}
+      
+      const cookieValue = getCookie('jwt_token');
+      if (cookieValue) {
+        addLog("Jeton récupéré depuis les Cookies de secours.");
+        return cookieValue;
+      }
+      return null;
+    }
+
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+      return null;
+    }
+
+    function removeToken() {
+      try {
+        localStorage.removeItem('jwt_token');
+      } catch (e) {}
+      document.cookie = "jwt_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      addLog("Jeton de session supprimé.", "success");
+    }
+
+    // Initialisation
+    function startDashboard() {
+      addLog("DOM entièrement chargé. Démarrage de l'analyse...");
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const tokenFromUrl = urlParams.get('token');
+      
+      if (tokenFromUrl) {
+        addLog("Nouveau jeton d'authentification détecté dans l'URL !", "success");
+        setToken(tokenFromUrl);
+        window.history.replaceState({}, document.title, window.location.pathname);
+        addLog("URL nettoyée avec succès.");
+      }
+
+      const jwtToken = getToken();
+      if (!jwtToken) {
+        addLog("Erreur : Aucun jeton détecté. Redirection...", "error");
+        setTimeout(() => { window.location.href = '/'; }, 2000);
+        return;
+      }
+
+      renderUserProfile(jwtToken);
+      loadGuilds(jwtToken);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', startDashboard);
+    } else {
+      startDashboard();
+    }
+
+    function parseJwt(token) {
+      if (!token || token === 'null' || token === 'undefined' || !token.includes('.')) {
+        addLog("Le format du jeton est invalide ou vide.", "error");
+        return null;
+      }
+      try {
+        addLog("Décodage du jeton de session...");
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        
+        const pad = base64.length % 4;
+        const paddedBase64 = pad ? base64 + '='.repeat(4 - pad) : base64;
+        
+        const rawBinary = window.atob(paddedBase64);
+        const bytes = new Uint8Array(rawBinary.length);
+        for (let i = 0; i < rawBinary.length; i++) {
+          bytes[i] = rawBinary.charCodeAt(i);
+        }
+        
+        const decoder = new TextDecoder('utf-8');
+        const jsonStr = decoder.decode(bytes);
+        const parsed = JSON.parse(jsonStr);
+        addLog(`Décodage réussi ! Utilisateur détecté : ${parsed.username}`, "success");
+        return parsed;
+      } catch (e) {
+        addLog(`Erreur décodage : ${e.message}`, "error");
+        return null;
+      }
+    }
+
+    function renderUserProfile(jwtToken) {
+      const payload = parseJwt(jwtToken);
+      if (!payload) {
+        logout();
+        return;
+      }
+
+      const userHeader = document.getElementById('user-header');
+      const avatarUrl = payload.avatar 
+        ? `https://cdn.discordapp.com/avatars/${payload.discordId}/${payload.avatar}.png` 
+        : 'https://cdn.discordapp.com/embed/avatars/0.png';
+
+      let badgesHtml = '';
+      if (payload.isAdmin) {
+        badgesHtml += `<span class="badge badge-admin">Admin</span>`;
+        
+        // CORRECTION DYNAMIQUE DU MENU : Ajoute l'onglet Staff Panel dans l'en-tête
+        const nav = document.getElementById('header-nav');
+        if (nav && !document.getElementById('nav-admin-link')) {
+          const adminLink = document.createElement('a');
+          adminLink.href = '/admin';
+          adminLink.id = 'nav-admin-link';
+          adminLink.className = 'admin-nav-link';
+          adminLink.innerText = 'Staff Panel';
+          nav.appendChild(adminLink);
+        }
+      }
+      if (payload.isPremium) {
+        badgesHtml += `<span class="badge badge-premium">Premium</span>`;
+      }
+      if (!payload.isAdmin && !payload.isPremium) {
+        badgesHtml += `<span class="badge badge-free">Free User</span>`;
+      }
+
+      userHeader.innerHTML = `
+        <img src="${avatarUrl}" class="user-avatar" alt="Avatar">
+        <div class="user-info">
+          <h3>${payload.username}</h3>
+          <div class="user-badges">
+            ${badgesHtml}
+          </div>
+        </div>
+      `;
+      addLog("Profil de l'utilisateur mis à jour à l'écran.", "success");
+    }
+
+    async function loadGuilds(jwtToken) {
+      addLog("Envoi de la requête de récupération des serveurs...");
+      try {
+        const response = await fetch('/api/guilds', {
+          headers: { 'Authorization': `Bearer ${jwtToken}` }
+        });
+
+        addLog(`Code réponse HTTP : ${response.status}`);
+
+        if (!response.ok) {
+          throw new Error(`Erreur d'accès à l'API (Status : ${response.status})`);
+        }
+
+        const guilds = await response.json();
+        addLog(`Serveurs récupérés : ${guilds.length} serveurs d'administration détectés.`, "success");
+        
+        const grid = document.getElementById('guilds-grid');
+        grid.innerHTML = '';
+
+        if (guilds.length === 0) {
+          grid.innerHTML = `<div style="text-align: center; color: #94a3b8; grid-column: 1/-1; padding: 48px 0;">Aucun serveur administrable trouvé.</div>`;
+          return;
+        }
+
+        guilds.forEach(guild => {
+          const card = document.createElement('div');
+          card.className = "server-card";
+
+          const avatarUrl = guild.icon 
+            ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png` 
+            : 'https://cdn.discordapp.com/embed/avatars/0.png';
+
+          const inviteUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&permissions=8&scope=bot%20applications.commands&guild_id=${guild.id}`;
+
+          card.innerHTML = `
+            <img src="${avatarUrl}" class="server-icon" alt="${guild.name}">
+            <h3 class="server-name">${guild.name}</h3>
+            <div class="btn-group">
+              <a href="/dashboard/${guild.id}" class="btn-manage">Gérer</a>
+              <a href="${inviteUrl}" target="_blank" class="btn-invite">Inviter le bot</a>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+        
+        addLog("Grille des serveurs affichée.", "success");
+
+      } catch (error) {
+        addLog(`Échec lors du traitement de l'API : ${error.message}`, "error");
+        document.getElementById('loading-label').innerText = "Erreur de réseau ou de session.";
+      }
+    }
+
+    function logout() {
+      addLog("Fermeture de la session...");
+      removeToken();
+      window.location.href = '/';
+    }
+  </script>
+</body>
+</html>
