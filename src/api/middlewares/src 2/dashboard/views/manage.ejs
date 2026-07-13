@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OMNIX - Console</title>
+  <style>
+    /* Styles CSS natifs - Sans dépendance externe (100% stable sur Safari iOS) */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #030712; /* Slate 950 */
+      color: #f1f5f9; /* Slate 100 */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+    
+    .halo-bottom {
+      position: absolute;
+      bottom: -150px;
+      left: -150px;
+      width: 500px;
+      height: 500px;
+      background: rgba(139, 92, 246, 0.05); /* Violet */
+      filter: blur(100px);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    /* En-tête */
+    header {
+      border-bottom: 1px solid #1e293b;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+    .logo-img {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      object-fit: cover;
+      box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+    }
+    .back-link {
+      text-decoration: none;
+      color: #94a3b8;
+      font-size: 13px;
+      font-weight: 600;
+      transition: color 0.15s ease;
+    }
+    .back-link:hover {
+      color: white;
+    }
+    .logo-text {
+      font-weight: 800;
+      letter-spacing: 1px;
+      background: linear-gradient(to right, #60a5fa, #22d3ee, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 16px;
+    }
+
+    /* Menu Tiroir (Drawer) Latéral Droit */
+    .btn-burger {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+    .burger-icon {
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
+    }
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: -300px; /* Masqué à l'origine */
+      width: 280px;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-left: 1px solid rgba(255, 255, 255, 0.04);
+      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+    .drawer.open {
+      transform: translateX(-300px); /* Glissement */
+    }
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn-close-drawer {
+      background: none;
+      border: none;
+      color: #64748b;
+      font-size: 28px;
+      cursor: pointer;
+    }
+    .btn-close-drawer:hover {
+      color: white;
+    }
+    .drawer-links {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .drawer-links a {
+      text-decoration: none;
+      color: #94a3b8;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .drawer-links a:hover {
+      background: rgba(255,255,255,0.02);
+      color: white;
+    }
+    .drawer-links a.active {
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.05);
+    }
+    .admin-nav-link {
+      color: #c084fc !important;
+      text-shadow: 0 0 8px rgba(192, 132, 252, 0.4);
+    }
+
+    /* Disposition Flexbox Principale */
+    .container {
+      flex: 1;
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 40px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      z-index: 10;
+    }
+    @media (min-width: 768px) {
+      .container {
+        flex-direction: row;
+      }
+    }
+
+    /* Barre latérale d'onglets */
+    aside {
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 16px;
+    }
+    @media (min-width: 768px) {
+      aside {
+        width: 250px;
+        flex-direction: column;
+        overflow-x: visible;
+        padding-bottom: 0;
+      }
+    }
+    .tab-btn {
+      width: 100%;
+      text-align: left;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+      white-space: nowrap;
+    }
+    .tab-btn:hover {
+      background: rgba(15, 23, 42, 0.4);
+      color: white;
+    }
+    .tab-btn.active {
+      background: #4f46e5;
+      color: white;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+    }
+
+    /* Panneau de configuration (Glassmorphism) */
+    .config-panel {
+      flex: 1;
+      background: rgba(15, 23, 42, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      position: relative;
+    }
+    .hidden {
+      display: none !important;
+    }
+
+    /* Fiche de Licence */
+    .license-card {
+      padding: 20px;
+      background: rgba(3, 7, 18, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      border-radius: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .license-title {
+      font-weight: 800;
+      font-size: 16px;
+      color: white;
+    }
+    .license-sub {
+      font-size: 11px;
+      color: #475569;
+      margin-top: 4px;
+    }
+    .badge-free {
+      font-size: 10px;
+      font-weight: 700;
+      color: #94a3b8;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid #334155;
+      padding: 6px 14px;
+      border-radius: 20px;
+    }
+    .badge-premium {
+      font-size: 10px;
+      font-weight: 700;
+      color: #34d399; /* Emerald 400 */
+      background: rgba(6, 78, 59, 0.2);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      padding: 6px 14px;
+      border-radius: 20px;
+    }
+
+    /* Ligne d'interrupteur (iOS Toggle) */
+    .switch-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      background: rgba(3, 7, 18, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.02);
+      border-radius: 16px;
+      margin-bottom: 24px;
+    }
+    .switch-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: white;
+    }
+    .switch-sub {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+
+    /* iOS Checkbox Custom */
+    .ios-toggle {
+      width: 44px;
+      height: 24px;
+      background: #1e293b;
+      border-radius: 20px;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      position: relative;
+      outline: none;
+      transition: background 0.2s ease;
+    }
+    .ios-toggle:checked {
+      background: #4f46e5;
+    }
+    .ios-toggle::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s ease;
+    }
+    .ios-toggle:checked::after {
+      transform: translateX(20px);
+    }
+
+    /* Formulaires de saisie */
+    .form-group {
+      margin-bottom: 24px;
+    }
+    label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    input[type="text"], input[type="number"], textarea {
+      width: 100%;
+      background-color: #030712;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 14px;
+      color: white;
+      font-family: inherit;
+      transition: border-color 0.15s ease;
+    }
+    input:focus, textarea:focus {
+      border-color: #4f46e5;
+      outline: none;
+    }
+
+    /* Grille de formulaires */
+    .form-grid {
+      display: grid;
+      grid-template-cols: 1fr;
+      gap: 16px;
+    }
+    @media (min-width: 600px) {
+      .form-grid {
+        grid-template-cols: repeat(2, 1fr);
+      }
+    }
+
+    /* Bouton d'action de sauvegarde */
+    .save-btn-container {
+      margin-top: 40px;
+      border-top: 1px solid #1e293b;
+      padding-top: 24px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .btn-save {
+      padding: 14px 24px;
+      background: linear-gradient(135deg, #06b6d4, #4f46e5);
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+      transition: transform 0.1s;
+    }
+    .btn-save:active {
+      transform: scale(0.98);
+    }
+
+    /* Alerte de notification Toast */
+    .toast {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      padding: 14px 20px;
+      background-color: #059669; /* Emerald 600 */
+      color: white;
+      font-weight: 700;
+      font-size: 13px;
+      border-radius: 12px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+      z-index: 100;
+    }
+
+    /* Pied de page */
+    footer {
+      border-top: 1px solid #0f172a;
+      padding: 24px;
+      text-align: center;
+      font-size: 12px;
+      color: #475569;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="halo-bottom"></div>
+
+  <!-- En-tête -->
+  <header>
+    <a href="/dashboard" class="logo-area">
+      <img src="/logo.png" id="logo-main-img" onerror="this.style.display='none'; document.getElementById('logo-fallback-box').style.display='flex';" class="logo-img" alt="OMNIX Logo">
+      <div id="logo-fallback-box" style="display: none; width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #06b6d4, #7c3aed); align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 18px; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);">O</div>
+      <span class="logo-text">OMNIX Config</span>
+    </a>
+
+    <!-- Bouton d'ouverture du Menu Tiroir -->
+    <button onclick="toggleDrawer(true)" class="btn-burger">
+      <svg class="burger-icon" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+    </button>
+  </header>
+
+  <!-- MENU TIROIR DE NAVIGATION DROIT -->
+  <div id="side-drawer" class="drawer">
+    <div class="drawer-header">
+      <span class="logo-text">Menu</span>
+      <button onclick="toggleDrawer(false)" class="btn-close-drawer">&times;</button>
+    </div>
+    <div class="drawer-links" id="drawer-nav">
+      <a href="/">Accueil</a>
+      <a href="/dashboard" class="active">Dashboard</a>
+      <a href="/founder">Découvrir OMNIX</a>
+    </div>
+  </div>
+
+  <!-- Conteneur d'administration -->
+  <div class="container">
+    
+    <!-- Liste des onglets -->
+    <aside>
+      <button onclick="switchTab('tab-overview')" id="btn-tab-general" class="tab-btn active">Vue d'ensemble</button>
+      <button onclick="switchTab('tab-welcome')" id="btn-tab-welcome" class="tab-btn">Accueil & Départ</button>
+      <button onclick="switchTab('tab-moderation')" id="btn-tab-moderation" class="tab-btn">Modération & AutoMod</button>
+      <button onclick="switchTab('tab-tickets')" id="btn-tab-tickets" class="tab-btn">Support & Tickets</button>
+      <button onclick="switchTab('tab-economy')" id="btn-tab-economy" class="tab-btn">Économie & Niveaux</button>
+      <button onclick="switchTab('tab-ai')" id="btn-tab-ai" class="tab-btn">IA & Intelligence</button>
+      <button onclick="switchTab('tab-backups')" id="btn-tab-backups" class="tab-btn">Sauvegardes (Premium)</button>
+    </aside>
+
+    <!-- Formulaire d'édition -->
+    <main class="config-panel">
+      
+      <!-- Onglet 1 : Vue d'ensemble -->
+      <section id="tab-overview" class="tab-content">
+        <h3 style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 24px;">Fiche d'identité</h3>
+        
+        <div class="license-card">
+          <div>
+            <p class="license-title" id="license-label">Vérification de la licence...</p>
+            <p class="license-sub" id="license-expiration"></p>
+          </div>
+          <span id="license-badge" class="badge-free">FREE</span>
+        </div>
+
+        <!-- 6 INTERRUPTEURS ON/OFF DE COMMANDES ET MODULES INDIVIDUELS (IA, backup, economy, modération, ping, ticket) -->
+        <h4 style="font-size: 13px; font-weight: 800; color: white; margin-top: 32px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.8px;">Activation des Commandes</h4>
+        
+        <!-- Toggle 1 : AI -->
+        <div class="switch-row" style="padding: 16px 20px; margin-bottom: 16px;">
+          <div>
+            <p class="switch-title" style="font-size: 13px;">Commande : /ai (Premium)</p>
+            <p class="switch-sub" style="font-size: 10px;">Active l'accès à l'assistant virtuel intelligent.</p>
+          </div>
+          <input type="checkbox" id="ai-enabled-toggle" class="ios-toggle">
+        </div>
+
+        <!-- Toggle 2 : Backup -->
+        <div class="switch-row" style="padding: 16px 20px; margin-bottom: 16px;">
+          <div>
+            <p class="switch-title" style="font-size: 13px;">Commande : /backup (Premium)</p>
+            <p class="switch-sub" style="font-size: 10px;">Active les commandes d'instantanés de sauvegarde.</p>
+          </div>
+          <input type="checkbox" id="backups-enabled-toggle" class="ios-toggle">
+        </div>
+
+        <!-- Toggle 3 : Economy -->
+        <div class="switch-row" style="padding: 16px 20px; margin-bottom: 16px;">
+          <div>
+            <p class="switch-title" style="font-size: 13px;">Commande : /economy</p>
+            <p class="switch-sub" style="font-size: 10px;">Active l'utilisation de l'économie virtuelle.</p>
+          </div>
+          <input type="checkbox" id="economy-enabled-toggle" class="ios-toggle">
+        </div>
+
+        <!-- Toggle 4 : Moderation -->
+        <div class="switch-row" style="padding: 16px 20px; margin-bottom: 16px;">
+          <div>
+            <p class="switch-title" style="font-size: 13px;">Commande : /moderation</p>
+            <p class="switch-sub" style="font-size: 10px;">Active les outils de bannissement et sanctions.</p>
+          </div>
+          <input type="checkbox" id="moderation-enabled-toggle" class="ios-toggle">
+        </div>
+
+        <!-- Toggle 5 : Ticket -->
+        <div class="switch-row" style="padding: 16px 20px; margin-bottom: 16px;">
+          <div>
+            <p class="switch-title" style="font-size: 13px;">Commande : /ticket</p>
+            <p class="switch-sub" style="font-size: 10px;">Active la création de salons de support.</p>
+          </div>
+          <input type="checkbox" id="tickets-enabled-toggle" class="ios-toggle">
+        </div>
+
+        <!-- Toggle 6 : Ping -->
+        <div class="switch-row" style="padding: 16px 20px; margin-bottom: 16px;">
+          <div>
+            <p class="switch-title" style="font-size: 13px;">Commande : /ping</p>
+            <p class="switch-sub" style="font-size: 10px;">Active la commande de test de latence et de version.</p>
+          </div>
+          <input type="checkbox" id="ping-enabled-toggle" class="ios-toggle">
+        </div>
+      </section>
+
+      <!-- Onglet 2 : Accueil & Départ -->
+      <section id="tab-welcome" class="tab-content hidden">
+        <h3 style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 24px;">Accueil & Départ</h3>
+        
+        <!-- Welcome Module -->
+        <div class="switch-row">
+          <div>
+            <p class="switch-title">Activer le module d'accueil (Welcome)</p>
+            <p class="switch-sub">Envoie un message lors de l'arrivée d'un membre.</p>
+          </div>
+          <input type="checkbox" id="welcome-enabled" class="ios-toggle">
+        </div>
+
+        <!-- Goodbye Module -->
+        <div class="switch-row">
+          <div>
+            <p class="switch-title">Activer le module de départ (Goodbye)</p>
+            <p class="switch-sub">Envoie un message lors du départ d'un membre.</p>
+          </div>
+          <input type="checkbox" id="goodbye-enabled" class="ios-toggle">
+        </div>
+
+        <!-- Custom Messages -->
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Message d'accueil personnalisé</label>
+            <textarea id="welcome-message" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Message de départ personnalisé</label>
+            <textarea id="goodbye-message" rows="3"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- Onglet 3 : Modération & AutoMod -->
+      <section id="tab-moderation" class="tab-content hidden">
+        <h3 style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 24px;">Modération & AutoMod</h3>
+
+        <!-- Moderation Module -->
+        <div class="switch-row">
+          <div>
+            <p class="switch-title">Activer le module de modération</p>
+            <p class="switch-sub">Enregistre et applique les sanctions de manière traçable.</p>
+          </div>
+          <input type="checkbox" id="moderation-enabled" class="ios-toggle">
+        </div>
+
+        <div class="form-group">
+          <label>ID du salon de logs de modération</label>
+          <input type="text" id="moderation-log" placeholder="Ex: 1211490202246189167">
+        </div>
+
+        <!-- AutoMod Module -->
+        <div class="switch-row">
+          <div>
+            <p class="switch-title">Activer le filtre de censure AutoMod</p>
+            <p class="switch-sub">Supprime automatiquement les messages contenant des propos proscrits.</p>
+          </div>
+          <input type="checkbox" id="automod-enabled" class="ios-toggle">
+        </div>
+
+        <div class="form-group">
+          <label>Liste noire de mots censurés (séparés par une virgule)</label>
+          <input type="text" id="automod-words" placeholder="Ex: insulte1, insulte2, pub">
+        </div>
+      </section>
+
+      <!-- Onglet 4 : Support & Tickets -->
+      <section id="tab-tickets" class="tab-content hidden">
+        <h3 style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 24px;">Gestion des Tickets</h3>
+
+        <div class="switch-row">
+          <div>
+            <p class="switch-title">Activer le module de tickets</p>
+            <p class="switch-sub">Permet aux membres d'ouvrir des salons de support privés.</p>
+          </div>
+          <input type="checkbox" id="tickets-enabled" class="ios-toggle">
+        </div>
+
+        <div class="form-group">
+          <label>ID de la catégorie d'ouverture des salons</label>
+          <input type="text" id="tickets-category" placeholder="Ex: 1211490202246189167">
+        </div>
+      </section>
+
+      <!-- Onglet 5 : Économie & Niveaux -->
+      <section id="tab-economy" class="tab-content hidden">
+        <h3 style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 24px;">Économie & Niveaux d'XP</h3>
+
+        <!-- Economy Module -->
+        <div class="switch-row">
+          <div>
+            <p class="switch-title">Activer l'économie virtuelle</p>
+            <p class="switch-sub">Permet aux joueurs de gagner de la monnaie locale via /work.</p>
+          </div>
+          <input type="checkbox" id="economy-enabled" class="ios-toggle">
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Symbole de la monnaie locale</label>
+            <input type="text" id="economy-symbol">
+          </div>
+          <div class="form-group">
+            <label>Délai pour travailler (Cooldown en minutes)</label>
+            <input type="number" id="economy-cooldown">
+          </div>
+        </div>
+
+        <!-- Levels Module -->
+        <div class="switch-row" style="margin-top: 24px;">
+          <div>
+            <p class="switch-title">Activer le système de Niveaux & XP</p>
+            <p class="switch-sub">Attribue de l'expérience aux membres actifs par message.</p>
+          </div>
+          <input type="checkbox" id="levels-enabled" class="ios-toggle">
+        </div>
+
+        <div class="form-group">
+          <label>Points d'XP attribués par message envoyé</label>
+          <input type="number" id="levels-xp">
+        </div>
+      </section>
+
+      <!-- Onglet 6 : Intelligence Artificielle -->
+      <section id="tab-ai" class="tab-content hidden">
+        <h3 style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 24px;">Intelligence Artificielle</h3>
+
+        <div class="switch-row">
+          <div>
+            <p class="switch-title">Activer l'assistant virtuel (IA)</p>
+            <p class="switch-sub">Permet l'accès sécurisé à la commande /ai sur le serveur.</p>
+          </div>
+          <input type="checkbox" id="ai-enabled" class="ios-toggle">
+        </div>
+
+        <div class="form-group">
+          <label>Prompt Système (Comportement de l'IA)</label>
+          <textarea id="ai-prompt" rows="5"></textarea>
+        </div>
+      </section>
+
+      <!-- Onglet 7 : Sauvegardes (Premium) -->
+      <section id="tab-backups" class="tab-content hidden">
+        <h3 style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 24px;">Sauvegardes & Restauration</h3>
+
+        <div class="switch-row">
+          <div>
+            <p class="switch-title">Activer l'archivage automatique</p>
+            <p class="switch-sub">Génère des archives régulières de la configuration sur le Cloud.</p>
+          </div>
+          <input type="checkbox" id="backups-enabled" class="ios-toggle">
+        </div>
+
+        <!-- Outils d'action de sauvegarde en jeu -->
+        <div style="padding: 24px; background: rgba(3, 7, 18, 0.4); border: 1px solid rgba(255, 255, 255, 0.02); border-radius: 16px;">
+          <h4 style="font-size: 14px; font-weight: 700; color: white; margin-bottom: 8px;">Gestion des instantanés</h4>
+          <p style="font-size: 11px; color: #64748b; line-height: 1.5; margin-bottom: 16px;">Créez un point de restauration complet de vos configurations actuelles directement sur votre base privée.</p>
+          <button onclick="triggerBackup()" style="padding: 10px 16px; background-color: #4f46e5; border: none; border-radius: 8px; color: white; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;">Créer un instantané manuel</button>
+        </div>
+      </section>
+
+      <!-- Bouton d'enregistrement permanent -->
+      <div class="save-btn-container">
+        <button onclick="saveConfig()" class="btn-save">Enregistrer les paramètres</button>
+      </div>
+
+      <!-- Toast de confirmation -->
+      <div id="toast" class="toast hidden">
+        Paramètres enregistrés avec succès !
+      </div>
+
+    </main>
+  </div>
+
+  <footer>
+    <p>&copy; 2026 OMNIX. Tous droits réservés.</p>
+  </footer>
+
+  <script>
+    const guildId = "<%= guildId %>";
+    const jwtToken = localStorage.getItem('jwt_token');
+
+    if (!jwtToken) {
+      window.location.href = '/';
+    }
+
+    // Gestion de l'affichage du menu tiroir
+    function toggleDrawer(open) {
+      const drawer = document.getElementById('side-drawer');
+      if (open) {
+        drawer.classList.add('open');
+      } else {
+        drawer.classList.remove('open');
+      }
+    }
+
+    // Décodeur de jeton de session pour ajouter dynamiquement l'onglet Staff
+    function parseJwt(token) {
+      if (!token || token === 'null' || token === 'undefined' || !token.includes('.')) return null;
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const pad = base64.length % 4;
+        const paddedBase64 = pad ? base64 + '='.repeat(4 - pad) : base64;
+        const rawBinary = window.atob(paddedBase64);
+        const bytes = new Uint8Array(rawBinary.length);
+        for (let i = 0; i < rawBinary.length; i++) {
+          bytes[i] = rawBinary.charCodeAt(i);
+        }
+        const decoder = new TextDecoder('utf-8');
+        return JSON.parse(decoder.decode(bytes));
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // Vérifie et ajoute l'onglet Staff de l'en-tête
+    function renderDrawerMenu() {
+      const payload = parseJwt(jwtToken);
+      if (payload && payload.isAdmin) {
+        const nav = document.getElementById('drawer-nav');
+        if (nav && !document.getElementById('nav-admin-link')) {
+          const adminLink = document.createElement('a');
+          adminLink.href = '/admin';
+          adminLink.id = 'nav-admin-link';
+          adminLink.className = 'admin-nav-link';
+          adminLink.innerText = 'Staff Panel';
+          nav.appendChild(adminLink);
+        }
+      }
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(tabId).classList.remove('hidden');
+
+      document.querySelectorAll('aside button').forEach(el => {
+        el.className = "tab-btn";
+      });
+      
+      const activeBtn = document.getElementById('btn-' + tabId);
+      if (activeBtn) activeBtn.className = "tab-btn active";
+    }
+
+    // CORRECTIF SÉCURISÉ DOUBLE-CANAL & BYPASS PREMIUM UTILISATEUR
+    async function loadConfig() {
+      try {
+        const response = await fetch(`/api/guilds/${guildId}/config`, {
+          headers: { 'Authorization': `Bearer ${jwtToken}` }
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.details || errData.error || `Erreur HTTP ${response.status}`);
+        }
+
+        const config = await response.json();
+
+        // 1. Décodage local du JWT utilisateur pour vérifier s'il détient personnellement le Premium
+        const payload = parseJwt(jwtToken);
+        const isUserPremium = payload && (payload.isPremium || payload.isAdmin);
+        const isGuildPremium = config.premium?.isPremium;
+
+        const licenseLabel = document.getElementById('license-label');
+        const badge = document.getElementById('license-badge');
+        
+        // CORRECTION DYNAMIQUE PREMIUM : Si le serveur OU l'utilisateur est Premium, on affiche le badge vert
+        if (isGuildPremium || isUserPremium) {
+          licenseLabel.innerText = isGuildPremium 
+            ? `Premium Activé (${config.premium.tier.toUpperCase()})` 
+            : "Premium Actif (Licence Utilisateur Personnelle)";
+          badge.className = "badge-premium";
+          badge.innerText = "PREMIUM";
+        } else {
+          licenseLabel.innerText = "Version d'évaluation standard";
+          badge.className = "badge-free";
+          badge.innerText = "FREE";
+        }
+
+        // Remplissage sécurisé et protégé des variables EJS pour éviter tout conflit de schéma
+        document.getElementById('welcome-enabled').checked = config.modules?.welcome?.enabled || false;
+        document.getElementById('welcome-message').value = config.modules?.welcome?.message || "Bienvenue {user} !";
+
+        document.getElementById('goodbye-enabled').checked = config.modules?.goodbye?.enabled || false;
+        document.getElementById('goodbye-message').value = config.modules?.goodbye?.message || "Au revoir {user}...";
+
+        document.getElementById('moderation-enabled').checked = config.modules?.moderation?.enabled || false;
+        document.getElementById('moderation-log').value = config.modules?.moderation?.logChannelId || "";
+        
+        document.getElementById('automod-enabled').checked = config.modules?.autoMod?.enabled || false;
+        document.getElementById('automod-words').value = (config.modules?.autoMod?.blacklistedWords || []).join(', ');
+
+        document.getElementById('tickets-enabled').checked = config.modules?.tickets?.enabled || false;
+        document.getElementById('tickets-category').value = config.modules?.tickets?.categoryId || "";
+
+        document.getElementById('economy-enabled').checked = config.modules?.economy?.enabled || false;
+        document.getElementById('economy-symbol').value = config.modules?.economy?.currencySymbol || "$";
+        document.getElementById('economy-cooldown').value = config.modules?.economy?.workCooldownMinutes || 60;
+        
+        document.getElementById('levels-enabled').checked = config.modules?.levels?.enabled || false;
+        document.getElementById('levels-xp').value = config.modules?.levels?.xpPerMessage || 15;
+
+        document.getElementById('ai-enabled').checked = config.modules?.ai?.enabled || false;
+        document.getElementById('ai-prompt').value = config.modules?.ai?.systemPrompt || "Tu es un assistant utile.";
+
+        document.getElementById('backups-enabled').checked = config.modules?.backups?.enabled || false;
+
+        // Liaison des 6 interrupteurs de l'onglet Vue d'ensemble
+        document.getElementById('ai-enabled-toggle').checked = config.modules?.ai?.enabled || false;
+        document.getElementById('backups-enabled-toggle').checked = config.modules?.backups?.enabled || false;
+        document.getElementById('economy-enabled-toggle').checked = config.modules?.economy?.enabled || false;
+        document.getElementById('moderation-enabled-toggle').checked = config.modules?.moderation?.enabled || false;
+        document.getElementById('tickets-enabled-toggle').checked = config.modules?.tickets?.enabled || false;
+        // Optionnel : ping n'a pas de module de base, on l'allume ou le lie s'il existe
+        document.getElementById('ping-enabled-toggle').checked = config.modules?.ping?.enabled || true;
+
+      } catch (error) {
+        alert("Impossible de charger les configurations :\n\n" + error.message);
+        window.location.href = '/dashboard';
+      }
+    }
+
+    async function saveConfig() {
+      const payload = {
+        modules: {
+          welcome: {
+            enabled: document.getElementById('welcome-enabled').checked,
+            message: document.getElementById('welcome-message').value,
+            channelId: null,
+            useEmbed: false
+          },
+          goodbye: {
+            enabled: document.getElementById('goodbye-enabled').checked,
+            message: document.getElementById('goodbye-message').value,
+            channelId: null,
+            useEmbed: false
+          },
+          moderation: {
+            // Se synchronise à la fois depuis l'onglet Modération et la Vue d'ensemble (Toggles rapides)
+            enabled: document.getElementById('moderation-enabled').checked || document.getElementById('moderation-enabled-toggle').checked,
+            logChannelId: document.getElementById('moderation-log').value || null
+          },
+          autoMod: {
+            enabled: document.getElementById('automod-enabled').checked,
+            blacklistedWords: document.getElementById('automod-words').value.split(',').map(w => w.trim()).filter(Boolean)
+          },
+          tickets: {
+            enabled: document.getElementById('tickets-enabled').checked || document.getElementById('tickets-enabled-toggle').checked,
+            categoryId: document.getElementById('tickets-category').value || null,
+            counter: 0
+          },
+          economy: {
+            enabled: document.getElementById('economy-enabled').checked || document.getElementById('economy-enabled-toggle').checked,
+            currencySymbol: document.getElementById('economy-symbol').value,
+            workCooldownMinutes: parseInt(document.getElementById('economy-cooldown').value, 10) || 60
+          },
+          levels: {
+            enabled: document.getElementById('levels-enabled').checked,
+            xpPerMessage: parseInt(document.getElementById('levels-xp').value, 10) || 15,
+            rewardRoles: []
+          },
+          ai: {
+            enabled: document.getElementById('ai-enabled').checked || document.getElementById('ai-enabled-toggle').checked,
+            systemPrompt: document.getElementById('ai-prompt').value,
+            contextLimit: 10
+          },
+          backups: {
+            enabled: document.getElementById('backups-enabled').checked || document.getElementById('backups-enabled-toggle').checked
+          },
+          // Liaison facultative pour le ping
+          ping: {
+            enabled: document.getElementById('ping-enabled-toggle').checked
+          }
+        }
+      };
+
+      try {
+        const response = await fetch(`/api/guilds/${guildId}/config`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${jwtToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.message || errData.error);
+        }
+
+        const toast = document.getElementById('toast');
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 3000);
+
+        loadConfig();
+
+      } catch (error) {
+        alert("Une erreur est survenue lors de l'enregistrement : " + error.message);
+      }
+    }
+
+    // Déclenchement manuel de sauvegarde
+    async function triggerBackup() {
+      try {
+        const response = await fetch(`/api/guilds/${guildId}/backups`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${jwtToken}` }
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.message || errData.error || `Erreur HTTP ${response.status}`);
+        }
+
+        alert("✅ Instantané de sauvegarde créé avec succès !");
+      } catch (error) {
+        alert("❌ Échec de la création de la sauvegarde : " + error.message);
+      }
+    }
+
+    // Initialisation
+    renderDrawerMenu();
+    loadConfig();
+  </script>
+</body>
+</html>
