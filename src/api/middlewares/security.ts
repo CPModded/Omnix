@@ -1,7 +1,7 @@
 /**
  * ====================================================================
- * CONFIGURATION DE LA SÉCURITÉ DE L'API (OMNIX CORE)
- * Gère Helmet, CORS dynamique, Rate Limiting, et force l'annulation HSTS.
+ * CONFIGURATION DE LA SÉCURITÉ DE L'API (OMNIX CORE - CLOUD COMPATIBLE)
+ * Active le trust proxy requis pour Render, Heroku et Cloudflare.
  * ====================================================================
  */
 
@@ -11,13 +11,16 @@ import rateLimit from 'express-rate-limit';
 import { Express } from 'express';
 
 export function setupSecurity(app: Express) {
-  // CORRECTION : On désactive CSP pour autoriser les scripts EJS, et HSTS pour éviter le forçage HTTPS
+  // CORRECTIF CLOUD : Ordonne à Express de faire confiance au proxy inverse de Render
+  app.set('trust proxy', 1);
+
+  // Désactivation de la directive HSTS et de la politique CSP de Helmet pour le Dashboard EJS
   app.use(helmet({
-    contentSecurityPolicy: false, // Permet le bon lancement des scripts du Dashboard
+    contentSecurityPolicy: false,
     hsts: false
   }));
 
-  // Force l'annulation active du cache HTTPS des navigateurs mobiles (HSTS Clear)
+  // Annulation du cache HTTPS des navigateurs mobiles (HSTS Clear)
   app.use((req, res, next) => {
     res.setHeader('Strict-Transport-Security', 'max-age=0');
     next();
@@ -29,7 +32,7 @@ export function setupSecurity(app: Express) {
     'http://localhost:3000'
   ];
 
-  // Configuration CORS dynamique pour autoriser la communication multi-domaines
+  // Configuration CORS dynamique
   app.use(cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
