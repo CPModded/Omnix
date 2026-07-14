@@ -1,7 +1,6 @@
 /**
  * ====================================================================
- * CONTRÔLEUR D'ADMINISTRATION GLOBALE (OMNIX STAFF CORE - PRODUCTION)
- * Gère le monitoring, les annonces, les licences et la blacklist.
+ * CONTRÔLEUR D'ADMINISTRATION GLOBALE (OMNIX STAFF CORE - STABLE)
  * ====================================================================
  */
 
@@ -40,28 +39,29 @@ export class AdminController {
           return res.status(404).json({ error: 'Utilisateur introuvable.' });
         }
 
-        // On vide le tableau de licences via la méthode officielle .set()
         user.set('licenses', []);
         
         if (isPremium) {
-          const now = new Date();
-          const expiresAt = new Date();
-          expiresAt.setDate(now.getDate() + durationInDays);
+          // Gestion de la durée : Si durationInDays est égal à 0, c'est une licence LIFETIME (à vie)
+          let expiresAt: Date | null = null;
+          if (durationInDays > 0) {
+            expiresAt = new Date();
+            expiresAt.setDate(expiresAt.getDate() + durationInDays);
+          }
 
-          // Génération d'une clé d'utilisateur unique
           const rand = Math.random().toString(36).substring(2, 8).toUpperCase();
 
           user.licenses.push({
             licenseKey: `OMNIX-USER-${rand}`,
             tier: durationInDays === 0 ? 'lifetime' : 'premium',
             status: 'active',
-            activatedGuildId: null, // Licence d'utilisateur
+            activatedGuildId: null,
             expiresAt: expiresAt
           });
         }
 
         await user.save();
-        console.log(`[Admin API] ✅ Licence utilisateur mise à jour pour ${user.username} (Premium: ${isPremium})`);
+        console.log(`[Admin API] ✅ Licence utilisateur mise à jour pour ${user.username} (Premium: ${isPremium}, Durée: ${durationInDays} jours)`);
         return res.json({ message: 'Licence utilisateur mise à jour.', user });
       }
 
@@ -85,10 +85,7 @@ export class AdminController {
       return res.json({ message: `Statut premium du serveur ${guildId} mis à jour.`, config });
     } catch (error: any) {
       console.error('[Admin API] ❌ Erreur togglePremium :', error.message);
-      return res.status(500).json({ 
-        error: 'Impossible de modifier le statut premium.',
-        details: error.message 
-      });
+      return res.status(500).json({ error: 'Impossible de modifier le statut.', details: error.message });
     }
   }
 
@@ -141,7 +138,6 @@ export class AdminController {
         return res.status(404).json({ error: 'Utilisateur introuvable.' });
       }
 
-      // Les administrateurs ne peuvent pas être blacklistés par sécurité
       if (user.isAdmin && isBlacklisted) {
         return res.status(400).json({ error: 'Impossible de bannir un membre du staff.' });
       }
