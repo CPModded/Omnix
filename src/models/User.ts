@@ -4,7 +4,8 @@ export interface IUser extends Document {
   discordId: string;
   username: string;
   avatar: string | null;
-  isAdmin: boolean; // Propriétaire du bot (Owner)
+  isAdmin: boolean;
+  isBlacklisted: boolean; // Ajout : Bloquer l'accès à la plateforme
   rewards: {
     points: number;
     referralsCount: number;
@@ -25,6 +26,7 @@ const UserSchema = new Schema<IUser>({
   username: { type: String, required: true },
   avatar: { type: String, default: null },
   isAdmin: { type: Boolean, default: false },
+  isBlacklisted: { type: Boolean, default: false }, // Faux par défaut
   rewards: {
     points: { type: Number, default: 0 },
     referralsCount: { type: Number, default: 0 },
