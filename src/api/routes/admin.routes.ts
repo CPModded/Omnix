@@ -10,7 +10,6 @@ import { isAuthenticated, AuthenticatedRequest } from '../middlewares/auth';
 
 const router = Router();
 
-// Middleware local pour restreindre l'exécution aux administrateurs
 function requireBotOwner(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   if (!req.user || !req.user.isAdmin) {
     console.warn(`[API Auth] 🚫 Tentative d'accès non autorisé par : ${req.user?.username || 'Inconnu'}`);
