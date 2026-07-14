@@ -1,8 +1,6 @@
 /**
  * ====================================================================
  * CONTRÔLEUR D'ADMINISTRATION GLOBALE (OMNIX STAFF CORE)
- * Permet au staff de surveiller le système, de lister les membres
- * et d'octroyer ou de révoquer des licences Premium en temps réel.
  * ====================================================================
  */
 
@@ -88,7 +86,11 @@ export class AdminController {
       return res.json({ message: `Statut premium du serveur ${guildId} mis à jour.`, config });
     } catch (error: any) {
       console.error('[Admin API] ❌ Erreur togglePremium :', error.message);
-      return res.status(500).json({ error: 'Impossible de modifier le statut premium.' });
+      // CORRECTIF : On renvoie l'erreur technique pour le diagnostic mobile
+      return res.status(500).json({ 
+        error: 'Impossible de modifier le statut premium.',
+        details: error.message 
+      });
     }
   }
 
