@@ -1,11 +1,5 @@
-/**
- * ====================================================================
- * POINT D'ENTRÉE OMNIX (BOT + API + REAL-TIME SOCKETS)
- * Coordonne et démarre tous les services avec support Socket.IO.
- * ====================================================================
- */
+import { CONFIG } from './config'; // Doit être importé sur la toute première ligne pour éviter la TDZ
 
-import { CONFIG } from './config'; 
 import mongoose from 'mongoose';
 import app from './api/app';
 import { client as botClient } from './bot/client';
@@ -16,7 +10,6 @@ import { Server } from 'socket.io';
 
 const httpServer = createServer(app);
 
-// Initialisation globale de Socket.IO
 export const io = new Server(httpServer, {
   cors: {
     origin: CONFIG.CLIENT_URL,
@@ -24,10 +17,8 @@ export const io = new Server(httpServer, {
   }
 });
 
-// Écoute des connexions Socket.IO pour le temps réel du Dashboard
 io.on('connection', (socket) => {
   console.log(`[Socket.IO] Nouveau client connecté : ${socket.id}`);
-  
   socket.on('disconnect', () => {
     console.log(`[Socket.IO] Client déconnecté : ${socket.id}`);
   });
@@ -39,15 +30,13 @@ async function bootstrap() {
   console.log('======================================================');
 
   try {
-    // 1. Connexion à la base de données MongoDB (Atlas/Kermit)
-    console.log('[Database] Connexion à MongoDB...');
+    console.log('[Database] Connexion à MongoDB Atlas...');
     if (!CONFIG.MONGO_URI) {
       throw new Error("La variable MONGO_URI est manquante.");
     }
     await mongoose.connect(CONFIG.MONGO_URI);
     console.log('[Database] Connexion MongoDB établie.');
 
-    // 2. Chargement du Bot Discord
     console.log('[Bot] Chargement des commandes et des événements...');
     await loadCommands(botClient);
     await loadEvents(botClient);
@@ -58,7 +47,6 @@ async function bootstrap() {
     }
     await botClient.login(CONFIG.DISCORD.BOT_TOKEN);
 
-    // 3. Démarrage du Serveur Web HTTP & Socket.IO
     console.log('[API] Démarrage du serveur Web...');
     const serverPort = CONFIG.PORT || 3000;
     
