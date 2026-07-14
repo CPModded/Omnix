@@ -1,9 +1,3 @@
-/**
- * ====================================================================
- * MIDDLEWARE DE VÉRIFICATION PREMIUM (BYPASS LICENCE UTILISATEUR)
- * ====================================================================
- */
-
 import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from './auth';
 import { GuildConfig } from '../../models/GuildConfig';
