@@ -5,7 +5,7 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 export const CONFIG = {
   PORT: process.env.PORT || 3000,
-  CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:3000', // Ajout dynamique de l'URL
+  CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:3000',
   MONGO_URI: process.env.MONGO_URI || 'mongodb://localhost:27017/discord_platform',
   JWT_SECRET: process.env.JWT_SECRET || 'fallback_secret_key_change_me',
   DISCORD: {
