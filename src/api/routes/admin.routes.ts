@@ -1,7 +1,6 @@
 /**
  * ====================================================================
  * CONFIGURATION DES ROUTES DE L'API D'ADMINISTRATION GLOBALE
- * Sécurise et restreint l'accès aux données du Staff OMNIX.
  * ====================================================================
  */
 
@@ -11,7 +10,7 @@ import { isAuthenticated, AuthenticatedRequest } from '../middlewares/auth';
 
 const router = Router();
 
-// Middleware local pour restreindre l'exécution aux administrateurs (Owners) déclarés
+// Middleware local pour restreindre l'exécution aux administrateurs
 function requireBotOwner(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   if (!req.user || !req.user.isAdmin) {
     console.warn(`[API Auth] 🚫 Tentative d'accès non autorisé par : ${req.user?.username || 'Inconnu'}`);
@@ -20,7 +19,7 @@ function requireBotOwner(req: AuthenticatedRequest, res: Response, next: NextFun
   next();
 }
 
-// Routes d'administration sécurisées (Toutes soumises au double contrôle JWT + requireBotOwner)
+// Routes d'administration sécurisées
 router.get('/monitoring', isAuthenticated as any, requireBotOwner as any, AdminController.getMonitoring);
 router.post('/premium', isAuthenticated as any, requireBotOwner as any, AdminController.togglePremium);
 router.post('/announce', isAuthenticated as any, requireBotOwner as any, AdminController.sendGlobalAnnouncement);
