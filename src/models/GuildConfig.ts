@@ -10,13 +10,30 @@ export interface IGuildConfig extends Document {
   modules: {
     moderation: { enabled: boolean; logChannelId: string | null };
     tickets: { enabled: boolean; categoryId: string | null; counter: number };
-    economy: { enabled: boolean; currencySymbol: string };
+    giveaways: { enabled: boolean };
+    suggestions: { enabled: boolean; channelId: string | null };
+    logs: { enabled: boolean; generalChannelId: string | null; modChannelId: string | null };
+    welcome: { enabled: boolean; channelId: string | null; message: string; useEmbed: boolean };
+    goodbye: { enabled: boolean; channelId: string | null; message: string; useEmbed: boolean };
+    autoRole: { enabled: boolean; roleIds: string[] };
+    antiRaid: { enabled: boolean; thresholdCount: number; thresholdSeconds: number };
+    antiSpam: { enabled: boolean; maxMessages: number; windowSeconds: number };
+    antiLink: { enabled: boolean; allowedDomains: string[] };
+    autoMod: { enabled: boolean; blacklistedWords: string[] };
+    levels: { enabled: boolean; xpPerMessage: number; rewardRoles: Array<{ level: number; roleId: string }> };
+    economy: { enabled: boolean; currencySymbol: string; workCooldownMinutes: number };
+    music: { enabled: boolean };
     ai: { enabled: boolean; systemPrompt: string; contextLimit: number };
+    counting: { enabled: boolean; channelId: string | null; currentNumber: number };
+    autoReactions: { enabled: boolean; rules: Array<{ trigger: string; emojis: string[] }> };
+    scheduledMessages: { enabled: boolean; list: Array<{ message: string; cronPattern: string; channelId: string }> };
+    polls: { enabled: boolean };
+    verification: { enabled: boolean; roleId: string | null };
+    backups: { enabled: boolean };
+    customCommands: { enabled: boolean; list: Array<{ trigger: string; response: string }> };
+    statistics: { enabled: boolean };
+    ping: { enabled: boolean };
   };
-  customCommands: Array<{
-    trigger: string;
-    response: string;
-  }>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,29 +46,32 @@ const GuildConfigSchema = new Schema<IGuildConfig>({
     expiresAt: { type: Date, default: null }
   },
   modules: {
-    moderation: {
-      enabled: { type: Boolean, default: false },
-      logChannelId: { type: String, default: null }
-    },
-    tickets: {
-      enabled: { type: Boolean, default: false },
-      categoryId: { type: String, default: null },
-      counter: { type: Number, default: 0 }
-    },
-    economy: {
-      enabled: { type: Boolean, default: false },
-      currencySymbol: { type: String, default: '$' }
-    },
-    ai: {
-      enabled: { type: Boolean, default: false },
-      systemPrompt: { type: String, default: "Tu es un assistant utile sur ce serveur Discord." },
-      contextLimit: { type: Number, default: 10 }
-    }
-  },
-  customCommands: [{
-    trigger: { type: String, required: true },
-    response: { type: String, required: true }
-  }]
+    moderation: { enabled: { type: Boolean, default: false }, logChannelId: { type: String, default: null } },
+    tickets: { enabled: { type: Boolean, default: false }, categoryId: { type: String, default: null }, counter: { type: Number, default: 0 } },
+    giveaways: { enabled: { type: Boolean, default: false } },
+    suggestions: { enabled: { type: Boolean, default: false }, channelId: { type: String, default: null } },
+    logs: { enabled: { type: Boolean, default: false }, generalChannelId: { type: String, default: null }, modChannelId: { type: String, default: null } },
+    welcome: { enabled: { type: Boolean, default: false }, channelId: { type: String, default: null }, message: { type: String, default: "Bienvenue {user} !" }, useEmbed: { type: Boolean, default: false } },
+    goodbye: { enabled: { type: Boolean, default: false }, channelId: { type: String, default: null }, message: { type: String, default: "Au revoir {user}..." }, useEmbed: { type: Boolean, default: false } },
+    autoRole: { enabled: { type: Boolean, default: false }, roleIds: [{ type: String }] },
+    antiRaid: { enabled: { type: Boolean, default: false }, thresholdCount: { type: Number, default: 5 }, thresholdSeconds: { type: Number, default: 10 } },
+    antiSpam: { enabled: { type: Boolean, default: false }, maxMessages: { type: Number, default: 5 }, windowSeconds: { type: Number, default: 5 } },
+    antiLink: { enabled: { type: Boolean, default: false }, allowedDomains: [{ type: String }] },
+    autoMod: { enabled: { type: Boolean, default: false }, blacklistedWords: [{ type: String }] },
+    levels: { enabled: { type: Boolean, default: false }, xpPerMessage: { type: Number, default: 15 }, rewardRoles: [{ level: { type: Number, required: true }, roleId: { type: String, required: true } }] },
+    economy: { enabled: { type: Boolean, default: false }, currencySymbol: { type: String, default: "$" }, workCooldownMinutes: { type: Number, default: 60 } },
+    music: { enabled: { type: Boolean, default: false } },
+    ai: { enabled: { type: Boolean, default: false }, systemPrompt: { type: String, default: "Tu es un assistant utile." }, contextLimit: { type: Number, default: 10 } },
+    counting: { enabled: { type: Boolean, default: false }, channelId: { type: String, default: null }, currentNumber: { type: Number, default: 0 } },
+    autoReactions: { enabled: { type: Boolean, default: false }, rules: [{ trigger: { type: String, required: true }, emojis: [{ type: String }] }] },
+    scheduledMessages: { enabled: { type: Boolean, default: false }, list: [{ message: { type: String, required: true }, cronPattern: { type: String, required: true }, channelId: { type: String, required: true } }] },
+    polls: { enabled: { type: Boolean, default: false } },
+    verification: { enabled: { type: Boolean, default: false }, roleId: { type: String, default: null } },
+    backups: { enabled: { type: Boolean, default: false } },
+    customCommands: { enabled: { type: Boolean, default: false }, list: [{ trigger: { type: String, required: true }, response: { type: String, required: true } }] },
+    statistics: { enabled: { type: Boolean, default: false } },
+    ping: { enabled: { type: Boolean, default: true } }
+  }
 }, { timestamps: true });
 
 export const GuildConfig = model<IGuildConfig>('GuildConfig', GuildConfigSchema);
