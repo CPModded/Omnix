@@ -1,15 +1,8 @@
-/**
- * ====================================================================
- * CONTRÔLEUR DE CONFIGURATION (ALGORITHME D'APLATISSEMENT DE PAYLOAD)
- * ====================================================================
- */
-
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import { GuildConfig } from '../../models/GuildConfig';
 
 // Fonction d'aide pour aplatir les objets imbriqués en chemin par points (dotted paths)
-// Évite d'écraser les autres modules en base de données lors d'une mise à jour partielle
 function flattenObject(ob: any, prefix = ''): any {
   const toReturn: any = {};
   for (const i in ob) {
@@ -43,7 +36,7 @@ export class GuildConfigController {
         await config.save();
         console.log(`[Config API] ✅ Nouvelle configuration enregistrée en base pour ${guildId}`);
       } else {
-        // Autoguérison de la base si de nouveaux modules manquent dans l'ancien document
+        // AUTOGUÉRISON / MIGRATION AUTOMATIQUE :
         let modified = false;
         const defaultDoc = new GuildConfig({ guildId });
         const defaultModules = defaultDoc.modules.toObject ? defaultDoc.modules.toObject() : defaultDoc.modules;
@@ -87,13 +80,12 @@ export class GuildConfigController {
     try {
       delete updates.guildId;
 
-      // OPTIMISATION CRITIQUE : On aplatit les mises à jour en dotted paths
-      // Transforme { modules: { welcome: { enabled: true } } } en { "modules.welcome.enabled": true }
+      // Aplatissement du payload reçu
       const flattenedUpdates = flattenObject(updates);
 
       const config = await GuildConfig.findOneAndUpdate(
         { guildId },
-        { $set: flattenedUpdates }, // Applique uniquement les champs modifiés sans toucher au reste
+        { $set: flattenedUpdates },
         { new: true, runValidators: true }
       );
 
