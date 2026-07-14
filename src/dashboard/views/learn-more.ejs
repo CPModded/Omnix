@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OMNIX - En savoir plus</title>
+  <style>
+    /* Styles CSS natifs */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #030712;
+      color: #f1f5f9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+    header {
+      border-bottom: 1px solid #1e293b;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .logo-area { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .logo-img { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; }
+    .logo-text {
+      font-weight: 800;
+      letter-spacing: 1px;
+      background: linear-gradient(to right, #60a5fa, #22d3ee, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 18px;
+    }
+    .btn-burger { background: none; border: none; color: #94a3b8; cursor: pointer; }
+    .burger-icon { width: 24px; height: 24px; fill: currentColor; }
+    
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: -300px;
+      width: 280px;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-left: 1px solid rgba(255, 255, 255, 0.04);
+      z-index: 1000;
+      transition: transform 0.3s ease;
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+    .drawer.open { transform: translateX(-300px); }
+    .btn-close-drawer { background: none; border: none; color: #64748b; font-size: 28px; cursor: pointer; }
+    .drawer-links { display: flex; flex-direction: column; gap: 16px; }
+    .drawer-links a {
+      text-decoration: none;
+      color: #94a3b8;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .drawer-links a:hover { background: rgba(255,255,255,0.02); color: white; }
+
+    main {
+      flex: 1;
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 60px 24px;
+      z-index: 10;
+    }
+    h2 { font-size: 28px; font-weight: 900; color: white; margin-bottom: 24px; text-align: left; }
+    .doc-section {
+      background: rgba(15, 23, 42, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+    .doc-title { font-size: 16px; font-weight: 800; color: white; margin-bottom: 12px; }
+    .doc-text { font-size: 13px; color: #94a3b8; line-height: 1.6; }
+
+    footer { border-top: 1px solid #0f172a; padding: 24px; text-align: center; font-size: 12px; color: #475569; }
+  </style>
+</head>
+<body>
+
+  <!-- En-tête -->
+  <header>
+    <a href="/" class="logo-area">
+      <img src="/logo.png" id="logo-main-img" onerror="this.style.display='none'; document.getElementById('logo-fallback-box').style.display='flex';" class="logo-img" alt="OMNIX Logo">
+      <div id="logo-fallback-box" style="display: none; width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #06b6d4, #7c3aed); align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 18px; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);">O</div>
+      <span class="logo-text">OMNIX</span>
+    </a>
+    
+    <button onclick="toggleDrawer(true)" class="btn-burger">
+      <svg class="burger-icon" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+    </button>
+  </header>
+
+  <!-- MENU TIROIR -->
+  <div id="side-drawer" class="drawer">
+    <div class="drawer-header">
+      <span class="logo-text">Menu</span>
+      <button onclick="toggleDrawer(false)" class="btn-close-drawer">&times;</button>
+    </div>
+    <div class="drawer-links" id="drawer-nav">
+      <a href="/">Accueil</a>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/pricing">Abonnements</a>
+      <a href="/learn-more" class="active">En savoir plus</a>
+    </div>
+  </div>
+
+  <main>
+    <h2>En savoir plus sur OMNIX</h2>
+
+    <div class="doc-section">
+      <h3 class="doc-title">🤖 Présentation Générale</h3>
+      <p class="doc-text">
+        OMNIX est une plateforme d'automatisation de serveurs Discord dotée de 24 modules et d'une Intelligence Artificielle intégrée. Notre architecture multi-tenant garantit le cloisonnement absolu des données de votre serveur, de son économie et de ses configurations [1].
+      </p>
+    </div>
+
+    <div class="doc-section">
+      <h3 class="doc-title">🧠 Module Intelligence Artificielle (Premium)</h3>
+      <p class="doc-text">
+        Le module d'IA vous permet de déployer un agent conversationnel autonome de type GPT sur votre serveur Discord via la commande `/ai`. Le prompt système et le comportement de cet agent sont entièrement modifiables en temps réel depuis votre Dashboard.
+      </p>
+    </div>
+
+    <div class="doc-section">
+      <h3 class="doc-title">💾 Module de Sauvegarde (Premium)</h3>
+      <p class="doc-text">
+        Sauvegardes l'intégralité de vos configurations d'OMNIX en un clic sous forme d'archive JSON sécurisée sur notre Cloud [1]. En cas de mauvaise manipulation, vous pouvez restaurer instantanément votre serveur à son état précédent [1].
+      </p>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 OMNIX. Tous droits réservés.</p>
+  </footer>
+
+  <script>
+    function toggleDrawer(open) {
+      const drawer = document.getElementById('side-drawer');
+      if (open) {
+        drawer.classList.add('open');
+      } else {
+        drawer.classList.remove('open');
+      }
+    }
+
+    function parseJwt(token) {
+      if (!token || token === 'null' || token === 'undefined' || !token.includes('.')) return null;
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const pad = base64.length % 4;
+        const paddedBase64 = pad ? base64 + '='.repeat(4 - pad) : base64;
+        const rawBinary = window.atob(paddedBase64);
+        const bytes = new Uint8Array(rawBinary.length);
+        for (let i = 0; i < rawBinary.length; i++) {
+          bytes[i] = rawBinary.charCodeAt(i);
+        }
+        const decoder = new TextDecoder('utf-8');
+        return JSON.parse(decoder.decode(bytes));
+      } catch (e) {
+        return null;
+      }
+    }
+
+    const jwtToken = localStorage.getItem('jwt_token');
+    if (jwtToken) {
+      const payload = parseJwt(jwtToken);
+      if (payload && payload.isAdmin) {
+        const nav = document.getElementById('drawer-nav');
+        if (nav && !document.getElementById('nav-admin-link')) {
+          const adminLink = document.createElement('a');
+          adminLink.href = '/admin';
+          adminLink.id = 'nav-admin-link';
+          adminLink.className = 'admin-nav-link';
+          adminLink.innerText = 'Staff Panel';
+          nav.appendChild(adminLink);
+        }
+      }
+    }
+  </script>
+</body>
+</html>
