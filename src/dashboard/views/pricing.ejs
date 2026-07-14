@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OMNIX - Abonnements</title>
   <style>
-    /* Styles CSS natifs */
+    /* Styles CSS natifs - Sans dépendance externe (100% stable sur Safari iOS) */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background-color: #030712;
-      color: #f1f5f9;
+      background-color: #030712; /* Slate 950 */
+      color: #f1f5f9; /* Slate 100 */
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       min-height: 100vh;
       display: flex;
@@ -92,7 +92,7 @@
 
     main {
       flex: 1;
-      max-width: 1000px;
+      max-width: 1100px;
       width: 100%;
       margin: 0 auto;
       padding: 60px 24px;
@@ -102,16 +102,31 @@
     h2 { font-size: 32px; font-weight: 900; color: white; margin-bottom: 8px; }
     p.subtitle { font-size: 14px; color: #64748b; margin-bottom: 48px; }
 
-    /* Grille de Prix à 4 colonnes */
+    /* Section Titre */
+    .section-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #38bdf8; /* Cyan 400 */
+      text-align: left;
+      margin-top: 48px;
+      margin-bottom: 24px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-left: 4px solid #4f46e5;
+      padding-left: 12px;
+    }
+
+    /* Grille de Prix (Durées Flexibles) */
     .pricing-grid {
       display: grid;
       grid-template-cols: 1fr;
-      gap: 24px;
+      gap: 20px;
+      margin-bottom: 60px;
     }
     @media (min-width: 600px) {
       .pricing-grid { grid-template-cols: repeat(2, 1fr); }
     }
-    @media (min-width: 900px) {
+    @media (min-width: 1000px) {
       .pricing-grid { grid-template-cols: repeat(4, 1fr); }
     }
     .price-card {
@@ -124,21 +139,19 @@
       flex-direction: column;
       justify-content: space-between;
       box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      transition: border-color 0.3s, box-shadow 0.3s;
     }
     .price-card:hover {
       border-color: rgba(6, 182, 212, 0.25);
       box-shadow: 0 0 20px rgba(6, 182, 212, 0.1);
     }
     .price-card.featured {
-      border-color: rgba(139, 92, 246, 0.3);
+      border-color: rgba(139, 92, 246, 0.35);
       box-shadow: 0 0 25px rgba(139, 92, 246, 0.15);
     }
-    .card-title { font-size: 16px; font-weight: 800; color: white; margin-bottom: 8px; }
-    .card-price { font-size: 28px; font-weight: 900; color: white; margin-bottom: 16px; }
-    .card-price span { font-size: 11px; font-weight: 600; color: #475569; }
-    .features-list { list-style: none; text-align: left; margin-bottom: 24px; font-size: 11px; color: #94a3b8; }
-    .features-list li { margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .card-title { font-size: 15px; font-weight: 800; color: white; margin-bottom: 12px; }
+    .card-price { font-size: 28px; font-weight: 900; color: white; }
+    .card-monthly { font-size: 11px; font-weight: 600; color: #a78bfa; margin-top: 4px; margin-bottom: 24px; }
     
     .btn-buy {
       width: 100%;
@@ -155,8 +168,37 @@
       text-decoration: none;
       display: block;
       box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
+      transition: transform 0.1s;
     }
     .btn-buy:active { transform: scale(0.98); }
+
+    /* Grille d'offres SaaS (Free, Premium, Enterprise) */
+    .saas-grid {
+      display: grid;
+      grid-template-cols: 1fr;
+      gap: 24px;
+    }
+    @media (min-width: 768px) {
+      .saas-grid { grid-template-cols: repeat(3, 1fr); }
+    }
+    .saas-card {
+      background: rgba(15, 23, 42, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      border-radius: 24px;
+      padding: 32px 24px;
+      text-align: left;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .saas-card.premium {
+      border-color: rgba(139, 92, 246, 0.3);
+      box-shadow: 0 0 25px rgba(139, 92, 246, 0.1);
+    }
+    .saas-title { font-size: 18px; font-weight: 800; color: white; margin-bottom: 6px; }
+    .saas-price { font-size: 32px; font-weight: 900; color: white; margin-bottom: 24px; }
+    .saas-price span { font-size: 13px; font-weight: 600; color: #475569; }
+    .features-list { list-style: none; margin-bottom: 32px; font-size: 12px; color: #94a3b8; }
+    .features-list li { margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .check-icon { color: #34d399; font-weight: bold; }
 
     footer { border-top: 1px solid #0f172a; padding: 24px; text-align: center; font-size: 12px; color: #475569; }
   </style>
@@ -193,70 +235,99 @@
   </div>
 
   <main>
-    <h2>Abonnements OMNIX Premium</h2>
-    <p class="subtitle">Débloquez l'intégralité des 24 fonctionnalités d'automatisation et d'IA.</p>
+    <h2>Tarifs & Abonnements OMNIX</h2>
+    <p class="subtitle">Choisissez la formule d'automatisation et de services adaptée à votre communauté.</p>
 
-    <!-- LES 4 OFFRES DE PAIEMENTS STRIPE LIÉES AVEC VOS LIENS RÉELS -->
+    <!-- SECTION 1 : LES FORMULES PREMIUM DURÉES FLEXIBLES (AVEC VOS LIENS RÉELS STRIPE) -->
+    <h3 class="section-title">🟦 OMNIX Premium (Durées Flexibles)</h3>
     <div class="pricing-grid">
       
-      <!-- Offre 1 : 30 Jours -->
+      <!-- Offre 1 : 1 mois -->
       <div class="price-card">
         <div>
-          <h3 class="card-title">OMNIX Premium</h3>
-          <p class="card-price">4.99 € <span>/ 30 jours</span></p>
-          <ul class="features-list">
-            <li>✔ Module IA (GPT) actif</li>
-            <li>✔ Sauvegardes & Restauration</li>
-            <li>✔ Boutique d'économie</li>
-            <li>✔ Création de tickets illimités</li>
-          </ul>
+          <h3 class="card-title">Abonnement Mensuel</h3>
+          <p class="card-price">7.99 €</p>
+          <p class="card-monthly">7,99 € / mois</p>
         </div>
-        <a href="https://buy.stripe.com/4gM5kD5MOf3531o9bh73G04" target="_blank" class="btn-buy">S'abonner (30j)</a>
+        <a href="https://buy.stripe.com/4gM5kD5MOf3531o9bh73G04" target="_blank" class="btn-buy">S'abonner (1 mois)</a>
       </div>
 
-      <!-- Offre 2 : 90 Jours -->
+      <!-- Offre 2 : 3 mois -->
       <div class="price-card">
         <div>
-          <h3 class="card-title">OMNIX Trimestre</h3>
-          <p class="card-price">12.99 € <span>/ 90 jours</span></p>
-          <ul class="features-list">
-            <li>✔ Module IA (GPT) actif</li>
-            <li>✔ Sauvegardes & Restauration</li>
-            <li>✔ Boutique d'économie</li>
-            <li>✔ Création de tickets illimités</li>
-          </ul>
+          <h3 class="card-title">Abonnement Trimestriel</h3>
+          <p class="card-price">24.99 €</p>
+          <p class="card-monthly">~ 8,33 € / mois</p>
         </div>
-        <a href="https://buy.stripe.com/14A28rdfgg791Xk87d73G05" target="_blank" class="btn-buy">S'abonner (90j)</a>
+        <a href="https://buy.stripe.com/14A28rdfgg791Xk87d73G05" target="_blank" class="btn-buy">S'abonner (3 mois)</a>
       </div>
 
-      <!-- Offre 3 : 180 Jours -->
+      <!-- Offre 3 : 6 mois -->
+      <div class="price-card">
+        <div>
+          <h3 class="card-title">Abonnement Semestriel</h3>
+          <p class="card-price">47.99 €</p>
+          <p class="card-monthly">~ 7,99 € / mois</p>
+        </div>
+        <a href="https://buy.stripe.com/bJebJ18Z0bQTeK673973G07" target="_blank" class="btn-buy">S'abonner (6 mois)</a>
+      </div>
+
+      <!-- Offre 4 : 1 An (Mise en avant + Nouveau lien Stripe !) -->
       <div class="price-card featured">
         <div>
-          <h3 class="card-title" style="color: #a78bfa;">OMNIX Semestre</h3>
-          <p class="card-price">22.99 € <span>/ 180 jours</span></p>
-          <ul class="features-list">
-            <li>✔ Module IA (GPT) actif</li>
-            <li>✔ Sauvegardes & Restauration</li>
-            <li>✔ Boutique d'économie</li>
-            <li>✔ Création de tickets illimités</li>
-          </ul>
+          <h3 class="card-title" style="color: #a78bfa;">Abonnement Annuel</h3>
+          <p class="card-price">74.99 €</p>
+          <p class="card-monthly" style="color: #a78bfa;">~ 6,25 € / mois (Économie)</p>
         </div>
-        <a href="https://buy.stripe.com/bJebJ18Z0bQTeK673973G07" target="_blank" class="btn-buy" style="background: linear-gradient(135deg, #06b6d4, #7c3aed);">S'abonner (180j)</a>
+        <a href="https://buy.stripe.com/fZuaEX7UW8EH6dA5Z573G09" target="_blank" class="btn-buy" style="background: linear-gradient(135deg, #06b6d4, #7c3aed);">S'abonner (1 an)</a>
       </div>
 
-      <!-- Offre 4 : 1 An -->
-      <div class="price-card">
-        <div>
-          <h3 class="card-title">OMNIX Annuel</h3>
-          <p class="card-price">44.99 € <span>/ 365 jours</span></p>
-          <ul class="features-list">
-            <li>✔ Module IA (GPT) actif</li>
-            <li>✔ Sauvegardes & Restauration</li>
-            <li>✔ Boutique d'économie</li>
-            <li>✔ Création de tickets illimités</li>
-          </ul>
-        </div>
-        <a href="https://buy.stripe.com/aFa8wP1wyf35bxUfzF73G08" target="_blank" class="btn-buy">S'abonner (1 an)</a>
+    </div>
+
+    <!-- SECTION 2 : COMPARATIF DES OFFRES SAAS (FREE, PREMIUM, ENTERPRISE) -->
+    <h3 class="section-title">📊 Niveaux de Services SaaS</h3>
+    <div class="saas-grid">
+      
+      <!-- Offre Free -->
+      <div class="saas-card">
+        <h4 class="saas-title">🆓 Free</h4>
+        <p class="saas-price">0 € <span class="text-slate-500">/ serveur</span></p>
+        <ul class="features-list">
+          <li><span class="check-icon">✔</span> Modération basique</li>
+          <li><span class="check-icon">✔</span> Tickets de support limités</li>
+          <li><span class="check-icon">✔</span> Logs de salons simples</li>
+          <li><span class="check-icon">✔</span> Commandes d'Économie de base</li>
+          <li><span class="check-icon">✔</span> Dashboard web limité</li>
+        </ul>
+      </div>
+
+      <!-- Offre Premium -->
+      <div class="saas-card premium">
+        <h4 class="saas-title" style="color: #c084fc;">⭐ Premium</h4>
+        <p class="saas-price">9.99 € <span>/ mois</span></p>
+        <ul class="features-list">
+          <li><span class="check-icon" style="color: #c084fc;">✔</span> Assistant IA (GPT) actif</li>
+          <li><span class="check-icon" style="color: #c084fc;">✔</span> Économie locale & Boutique</li>
+          <li><span class="check-icon" style="color: #c084fc;">✔</span> Tickets de support avancés</li>
+          <li><span class="check-icon" style="color: #c084fc;">✔</span> Système d'XP (Leveling Pro)</li>
+          <li><span class="check-icon" style="color: #c084fc;">✔</span> Sauvegardes & Restauration</li>
+          <li><span class="check-icon" style="color: #c084fc;">✔</span> Statistiques analytiques d'activité</li>
+          <li><span class="check-icon" style="color: #c084fc;">✔</span> Personnalisation complète des modules</li>
+        </ul>
+      </div>
+
+      <!-- Offre Enterprise -->
+      <div class="saas-card">
+        <h4 class="saas-title" style="color: #60a5fa;">👑 Enterprise</h4>
+        <p class="saas-price">19.99 € <span>/ mois</span></p>
+        <ul class="features-list">
+          <li><span class="check-icon" style="color: #60a5fa;">✔</span> Tout le contenu **Premium**</li>
+          <li><span class="check-icon" style="color: #60a5fa;">✔</span> Support technique prioritaire</li>
+          <li><span class="check-icon" style="color: #60a5fa;">✔</span> Limites de requêtes IA augmentées</li>
+          <li><span class="check-icon" style="color: #60a5fa;">✔</span> Configuration sur mesure par le staff</li>
+          <li><span class="check-icon" style="color: #60a5fa;">✔</span> Branding personnalisé (Votre nom/logo)</li>
+          <li><span class="check-icon" style="color: #60a5fa;">✔</span> Option d'hébergement sur serveur dédié</li>
+        </ul>
       </div>
 
     </div>
@@ -276,7 +347,7 @@
       }
     }
 
-    // Décodeur de jeton pour le Staff Link
+    // Décodeur de session pour le Staff Link
     function parseJwt(token) {
       if (!token || token === 'null' || token === 'undefined' || !token.includes('.')) return null;
       try {
