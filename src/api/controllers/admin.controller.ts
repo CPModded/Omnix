@@ -1,6 +1,6 @@
 /**
  * ====================================================================
- * CONTRÔLEUR D'ADMINISTRATION GLOBALE (OMNIX STAFF CORE)
+ * CONTRÔLEUR D'ADMINISTRATION GLOBALE (OMNIX STAFF CORE - STABLE)
  * ====================================================================
  */
 
@@ -39,8 +39,9 @@ export class AdminController {
           return res.status(404).json({ error: 'Utilisateur introuvable.' });
         }
 
-        // Réinitialise les licences utilisateur de ce membre
-        user.licenses = [];
+        // CORRECTIF DE SÉCURITÉ MONGOOSE : On vide le tableau via la méthode officielle .set()
+        // Évite les plantages de types liés à l'assignation directe d'un tableau vide []
+        user.set('licenses', []);
         
         if (isPremium) {
           const now = new Date();
@@ -54,7 +55,7 @@ export class AdminController {
             licenseKey: `WERI-USER-${rand}`,
             tier: tier || 'premium',
             status: 'active',
-            activatedGuildId: null, // Indique que la licence suit l'utilisateur sur tous ses serveurs
+            activatedGuildId: null, // Licence d'utilisateur
             expiresAt: expiresAt
           });
         }
@@ -86,7 +87,6 @@ export class AdminController {
       return res.json({ message: `Statut premium du serveur ${guildId} mis à jour.`, config });
     } catch (error: any) {
       console.error('[Admin API] ❌ Erreur togglePremium :', error.message);
-      // CORRECTIF : On renvoie l'erreur technique pour le diagnostic mobile
       return res.status(500).json({ 
         error: 'Impossible de modifier le statut premium.',
         details: error.message 
