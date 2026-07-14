@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OMNIX - Panel Staff</title>
   <style>
-    /* Styles CSS natifs */
+    /* Styles CSS natifs - Sans dépendance externe (100% stable sur Safari iOS) */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -71,6 +71,7 @@
       font-size: 16px;
     }
 
+    /* Menu Tiroir (Drawer) Latéral Droit */
     .btn-burger {
       background: none;
       border: none;
@@ -87,7 +88,7 @@
     .drawer {
       position: fixed;
       top: 0;
-      right: -300px;
+      right: -300px; /* Masqué à l'origine */
       width: 280px;
       height: 100vh;
       background: rgba(15, 23, 42, 0.85);
@@ -103,7 +104,7 @@
       gap: 32px;
     }
     .drawer.open {
-      transform: translateX(-300px);
+      transform: translateX(-300px); /* Glissement */
     }
     .drawer-header {
       display: flex;
@@ -190,6 +191,7 @@
       margin-top: 8px;
     }
 
+    /* Barre de recherche */
     .search-box-container {
       margin-bottom: 24px;
     }
@@ -347,16 +349,50 @@
       transform: scale(0.97);
     }
 
-    footer {
-      border-top: 1px solid #0f172a;
-      padding: 24px;
-      text-align: center;
-      font-size: 12px;
-      color: #475569;
+    /* Console de logs pour le Staff */
+    .debug-console {
+      margin-top: 40px;
+      padding: 20px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      font-family: monospace;
+      font-size: 11px;
+      color: #38bdf8;
+      max-height: 250px;
+      overflow-y: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .log-line {
+      margin-bottom: 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.02);
+      padding-bottom: 4px;
+    }
+    .log-time {
+      color: #64748b;
+    }
+    .log-error {
+      color: #f87171;
+    }
+    .log-success {
+      color: #34d399;
     }
   </style>
 </head>
 <body>
+
+  <!-- Écouteur global d'erreurs -->
+  <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+      const debugConsole = document.getElementById('debug-container');
+      const debugMsg = document.getElementById('debug-msg');
+      if (debugConsole && debugMsg) {
+        debugConsole.style.display = 'block';
+        debugMsg.innerText = `${message} (Ligne ${lineno}:${colno})`;
+      }
+      return false;
+    };
+  </script>
 
   <div class="halo-top"></div>
 
@@ -382,6 +418,7 @@
     <div class="drawer-links" id="drawer-nav">
       <a href="/">Accueil</a>
       <a href="/dashboard">Dashboard</a>
+      <a href="/pricing">Abonnements</a>
       <a href="/founder">Founder</a>
     </div>
   </div>
@@ -419,6 +456,15 @@
       </div>
     </section>
 
+    <!-- CONSOLE DE LOGS VISUELLE EN TEMPS RÉEL (Réinjectée dans le panel Staff) -->
+    <div class="debug-console" id="console-log-box" style="margin-top: 48px;">
+      <div style="color: #cbd5e1; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; margin-bottom: 10px; display: flex; justify-content: space-between;">
+        <span>📝 CONSOLE DE SUIVI OMNIX (STAFF)</span>
+        <span style="color: #64748b; font-size: 9px; text-transform: uppercase;">Temps Réel</span>
+      </div>
+      <div id="log-list"></div>
+    </div>
+
   </div>
 
   <footer>
@@ -432,6 +478,26 @@
       window.location.href = '/';
     }
 
+    // Système de logs visuel de la console Staff
+    function addLog(message, type = 'info') {
+      const logList = document.getElementById('log-list');
+      if (!logList) return;
+      const timeStr = new Date().toLocaleTimeString('fr-FR');
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      
+      let colorClass = '';
+      if (type === 'error') colorClass = 'log-error';
+      if (type === 'success') colorClass = 'log-success';
+
+      line.innerHTML = `<span class="log-time">[${timeStr}]</span> <span class="${colorClass}">${message}</span>`;
+      logList.appendChild(line);
+      
+      const box = document.getElementById('console-log-box');
+      if (box) box.scrollTop = box.scrollHeight;
+    }
+
+    // Gestion de l'affichage du menu tiroir
     function toggleDrawer(open) {
       const drawer = document.getElementById('side-drawer');
       if (open) {
@@ -492,6 +558,7 @@
     }
 
     async function loadMonitoring() {
+      addLog("Chargement des métriques système...");
       try {
         const response = await fetch('/api/admin/monitoring', {
           headers: { 'Authorization': `Bearer ${jwtToken}` }
@@ -503,13 +570,15 @@
         document.getElementById('stats-total-users').innerText = stats.database.totalUsers;
         document.getElementById('stats-total-guilds').innerText = stats.bot.guildsCount;
         document.getElementById('stats-ping').innerText = `${stats.bot.ping} ms`;
+        addLog("Métriques système chargées avec succès.", "success");
 
       } catch (error) {
-        console.error("[Staff Panel Error] : Échec.");
+        addLog("Échec de chargement du monitoring.", "error");
       }
     }
 
     async function loadUsers() {
+      addLog("Récupération de la liste des membres...");
       try {
         const response = await fetch('/api/admin/users', {
           headers: { 'Authorization': `Bearer ${jwtToken}` }
@@ -556,20 +625,20 @@
             badgesHtml += `<span class="badge badge-blacklist">Banni</span>`;
           }
 
-          // Sélecteur de durée Premium de secours
+          // CORRECTIF : Onglet 180 Jours ajouté dans le sélecteur d'administration
           let durationSelectorHtml = '';
           if (!hasUserPremium && !user.isBlacklisted) {
             durationSelectorHtml = `
               <select id="duration-${user.discordId}" class="duration-select">
                 <option value="30">30 Jours</option>
                 <option value="90">90 Jours</option>
+                <option value="180">180 Jours</option>
                 <option value="365">365 Jours</option>
                 <option value="0">À Vie (Lifetime)</option>
               </select>
             `;
           }
 
-          // Bouton d'action Premium
           let actionBtnHtml = '';
           if (!user.isBlacklisted) {
             if (hasUserPremium || isUserLifetime) {
@@ -579,7 +648,6 @@
             }
           }
 
-          // Bouton d'action Blacklist (Bannir / Débannir)
           let blacklistBtnHtml = '';
           if (user.isBlacklisted) {
             blacklistBtnHtml = `<button onclick="toggleBlacklist('${user.discordId}', false)" class="btn-action-premium btn-unblacklist">Débannir</button>`;
@@ -607,7 +675,10 @@
           container.appendChild(row);
         });
 
+        addLog("Liste des membres chargée.", "success");
+
       } catch (error) {
+        addLog("Impossible de charger la liste des membres.", "error");
         alert("Accès refusé. Cette console est réservée au Staff OMNIX.");
         window.location.href = '/dashboard';
       }
@@ -627,6 +698,8 @@
         durationInDays: grant ? duration : 0
       };
 
+      addLog(`Tentative d'ajustement du Premium pour l'ID : ${discordId}...`);
+
       try {
         const response = await fetch('/api/admin/premium', {
           method: 'POST',
@@ -641,15 +714,17 @@
           const errData = await response.json().catch(() => ({}));
           throw new Error(errData.details || errData.error || `Erreur HTTP ${response.status}`);
         }
+        addLog("Droits de l'utilisateur modifiés avec succès.", "success");
         loadUsers();
 
       } catch (error) {
-        alert("Échec de la modification des privilèges :\n\n" + error.message);
+        addLog(`Échec de modification : ${error.message}`, "error");
+        alert("Impossible de modifier les privilèges :\n\n" + error.message);
       }
     }
 
-    // Fonction d'action : Blacklister / Débannir de la plateforme
     async function toggleBlacklist(discordId, blacklist) {
+      addLog(`Ajustement du statut de bannissement pour l'ID : ${discordId}...`);
       try {
         const response = await fetch('/api/admin/blacklist', {
           method: 'POST',
@@ -664,9 +739,11 @@
           const errData = await response.json().catch(() => ({}));
           throw new Error(errData.details || errData.error || `Erreur HTTP ${response.status}`);
         }
+        addLog("Statut de bannissement mis à jour.", "success");
         loadUsers();
 
       } catch (error) {
+        addLog(`Échec de modification : ${error.message}`, "error");
         alert("Échec de la modification du statut de bannissement :\n\n" + error.message);
       }
     }
