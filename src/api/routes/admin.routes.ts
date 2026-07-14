@@ -1,9 +1,3 @@
-/**
- * ====================================================================
- * CONFIGURATION DES ROUTES DE L'API D'ADMINISTRATION GLOBALE
- * ====================================================================
- */
-
 import { Router, Response, NextFunction } from 'express';
 import { AdminController } from '../controllers/admin.controller';
 import { isAuthenticated, AuthenticatedRequest } from '../middlewares/auth';
@@ -18,7 +12,7 @@ function requireBotOwner(req: AuthenticatedRequest, res: Response, next: NextFun
   next();
 }
 
-// Routes d'administration sécurisées
+// Routes d'administration sécurisées (JWT + requireBotOwner)
 router.get('/monitoring', isAuthenticated as any, requireBotOwner as any, AdminController.getMonitoring);
 router.post('/premium', isAuthenticated as any, requireBotOwner as any, AdminController.togglePremium);
 router.post('/announce', isAuthenticated as any, requireBotOwner as any, AdminController.sendGlobalAnnouncement);
