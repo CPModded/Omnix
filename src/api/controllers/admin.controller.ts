@@ -1,9 +1,3 @@
-/**
- * ====================================================================
- * CONTRÔLEUR D'ADMINISTRATION GLOBALE (OMNIX STAFF CORE - STABLE)
- * ====================================================================
- */
-
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import { GuildConfig } from '../../models/GuildConfig';
@@ -46,7 +40,7 @@ export class AdminController {
           let expiresAt: Date | null = null;
           if (durationInDays > 0) {
             expiresAt = new Date();
-            expiresAt.setDate(expiresAt.getDate() + durationInDays);
+            expiresAt.setDate(now.getDate() + durationInDays);
           }
 
           const rand = Math.random().toString(36).substring(2, 8).toUpperCase();
