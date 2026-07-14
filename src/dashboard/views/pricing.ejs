@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OMNIX - Abonnements</title>
+  <style>
+    /* Styles CSS natifs */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #030712;
+      color: #f1f5f9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+    .halo {
+      position: absolute;
+      top: -150px;
+      left: -150px;
+      width: 500px;
+      height: 500px;
+      background: rgba(124, 58, 237, 0.05);
+      filter: blur(100px);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    header {
+      border-bottom: 1px solid #1e293b;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .logo-area { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .logo-img { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; }
+    .logo-text {
+      font-weight: 800;
+      letter-spacing: 1px;
+      background: linear-gradient(to right, #60a5fa, #22d3ee, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 18px;
+    }
+    
+    .btn-burger { background: none; border: none; color: #94a3b8; cursor: pointer; }
+    .burger-icon { width: 24px; height: 24px; fill: currentColor; }
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: -300px;
+      width: 280px;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-left: 1px solid rgba(255, 255, 255, 0.04);
+      z-index: 1000;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+    .drawer.open { transform: translateX(-300px); }
+    .btn-close-drawer { background: none; border: none; color: #64748b; font-size: 28px; cursor: pointer; }
+    .drawer-links { display: flex; flex-direction: column; gap: 16px; }
+    .drawer-links a {
+      text-decoration: none;
+      color: #94a3b8;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .drawer-links a:hover { background: rgba(255,255,255,0.02); color: white; }
+    .drawer-links a.active { color: #38bdf8; background: rgba(56, 189, 248, 0.05); }
+
+    main {
+      flex: 1;
+      max-width: 1000px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 60px 24px;
+      text-align: center;
+      z-index: 10;
+    }
+    h2 { font-size: 32px; font-weight: 900; color: white; margin-bottom: 8px; }
+    p.subtitle { font-size: 14px; color: #64748b; margin-bottom: 48px; }
+
+    /* Grille de Prix à 4 colonnes */
+    .pricing-grid {
+      display: grid;
+      grid-template-cols: 1fr;
+      gap: 24px;
+    }
+    @media (min-width: 600px) {
+      .pricing-grid { grid-template-cols: repeat(2, 1fr); }
+    }
+    @media (min-width: 900px) {
+      .pricing-grid { grid-template-cols: repeat(4, 1fr); }
+    }
+    .price-card {
+      background: rgba(15, 23, 42, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 20px;
+      padding: 32px 20px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .price-card:hover {
+      border-color: rgba(6, 182, 212, 0.25);
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.1);
+    }
+    .price-card.featured {
+      border-color: rgba(139, 92, 246, 0.3);
+      box-shadow: 0 0 25px rgba(139, 92, 246, 0.15);
+    }
+    .card-title { font-size: 16px; font-weight: 800; color: white; margin-bottom: 8px; }
+    .card-price { font-size: 28px; font-weight: 900; color: white; margin-bottom: 16px; }
+    .card-price span { font-size: 11px; font-weight: 600; color: #475569; }
+    .features-list { list-style: none; text-align: left; margin-bottom: 24px; font-size: 11px; color: #94a3b8; }
+    .features-list li { margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    
+    .btn-buy {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #06b6d4, #4f46e5);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      display: block;
+      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
+    }
+    .btn-buy:active { transform: scale(0.98); }
+
+    footer { border-top: 1px solid #0f172a; padding: 24px; text-align: center; font-size: 12px; color: #475569; }
+  </style>
+</head>
+<body>
+
+  <div class="halo"></div>
+
+  <!-- En-tête -->
+  <header>
+    <a href="/" class="logo-area">
+      <img src="/logo.png" id="logo-main-img" onerror="this.style.display='none'; document.getElementById('logo-fallback-box').style.display='flex';" class="logo-img" alt="OMNIX Logo">
+      <div id="logo-fallback-box" style="display: none; width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #06b6d4, #7c3aed); align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 18px; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);">O</div>
+      <span class="logo-text">OMNIX</span>
+    </a>
+    
+    <button onclick="toggleDrawer(true)" class="btn-burger">
+      <svg class="burger-icon" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+    </button>
+  </header>
+
+  <!-- MENU TIROIR -->
+  <div id="side-drawer" class="drawer">
+    <div class="drawer-header">
+      <span class="logo-text">Menu</span>
+      <button onclick="toggleDrawer(false)" class="btn-close-drawer">&times;</button>
+    </div>
+    <div class="drawer-links" id="drawer-nav">
+      <a href="/">Accueil</a>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/pricing" class="active">Abonnements</a>
+      <a href="/founder">Founder</a>
+    </div>
+  </div>
+
+  <main>
+    <h2>Abonnements OMNIX Premium</h2>
+    <p class="subtitle">Débloquez l'intégralité des 24 fonctionnalités d'automatisation et d'IA.</p>
+
+    <!-- LES 4 OFFRES DE PAIEMENTS STRIPE LIÉES AVEC VOS LIENS RÉELS -->
+    <div class="pricing-grid">
+      
+      <!-- Offre 1 : 30 Jours -->
+      <div class="price-card">
+        <div>
+          <h3 class="card-title">OMNIX Premium</h3>
+          <p class="card-price">4.99 € <span>/ 30 jours</span></p>
+          <ul class="features-list">
+            <li>✔ Module IA (GPT) actif</li>
+            <li>✔ Sauvegardes & Restauration</li>
+            <li>✔ Boutique d'économie</li>
+            <li>✔ Création de tickets illimités</li>
+          </ul>
+        </div>
+        <a href="https://buy.stripe.com/4gM5kD5MOf3531o9bh73G04" target="_blank" class="btn-buy">S'abonner (30j)</a>
+      </div>
+
+      <!-- Offre 2 : 90 Jours -->
+      <div class="price-card">
+        <div>
+          <h3 class="card-title">OMNIX Trimestre</h3>
+          <p class="card-price">12.99 € <span>/ 90 jours</span></p>
+          <ul class="features-list">
+            <li>✔ Module IA (GPT) actif</li>
+            <li>✔ Sauvegardes & Restauration</li>
+            <li>✔ Boutique d'économie</li>
+            <li>✔ Création de tickets illimités</li>
+          </ul>
+        </div>
+        <a href="https://buy.stripe.com/14A28rdfgg791Xk87d73G05" target="_blank" class="btn-buy">S'abonner (90j)</a>
+      </div>
+
+      <!-- Offre 3 : 180 Jours -->
+      <div class="price-card featured">
+        <div>
+          <h3 class="card-title" style="color: #a78bfa;">OMNIX Semestre</h3>
+          <p class="card-price">22.99 € <span>/ 180 jours</span></p>
+          <ul class="features-list">
+            <li>✔ Module IA (GPT) actif</li>
+            <li>✔ Sauvegardes & Restauration</li>
+            <li>✔ Boutique d'économie</li>
+            <li>✔ Création de tickets illimités</li>
+          </ul>
+        </div>
+        <a href="https://buy.stripe.com/bJebJ18Z0bQTeK673973G07" target="_blank" class="btn-buy" style="background: linear-gradient(135deg, #06b6d4, #7c3aed);">S'abonner (180j)</a>
+      </div>
+
+      <!-- Offre 4 : 1 An -->
+      <div class="price-card">
+        <div>
+          <h3 class="card-title">OMNIX Annuel</h3>
+          <p class="card-price">44.99 € <span>/ 365 jours</span></p>
+          <ul class="features-list">
+            <li>✔ Module IA (GPT) actif</li>
+            <li>✔ Sauvegardes & Restauration</li>
+            <li>✔ Boutique d'économie</li>
+            <li>✔ Création de tickets illimités</li>
+          </ul>
+        </div>
+        <a href="https://buy.stripe.com/aFa8wP1wyf35bxUfzF73G08" target="_blank" class="btn-buy">S'abonner (1 an)</a>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 OMNIX. Tous droits réservés.</p>
+  </footer>
+
+  <script>
+    function toggleDrawer(open) {
+      const drawer = document.getElementById('side-drawer');
+      if (open) {
+        drawer.classList.add('open');
+      } else {
+        drawer.classList.remove('open');
+      }
+    }
+
+    // Décodeur de jeton pour le Staff Link
+    function parseJwt(token) {
+      if (!token || token === 'null' || token === 'undefined' || !token.includes('.')) return null;
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const pad = base64.length % 4;
+        const paddedBase64 = pad ? base64 + '='.repeat(4 - pad) : base64;
+        const rawBinary = window.atob(paddedBase64);
+        const bytes = new Uint8Array(rawBinary.length);
+        for (let i = 0; i < rawBinary.length; i++) {
+          bytes[i] = rawBinary.charCodeAt(i);
+        }
+        const decoder = new TextDecoder('utf-8');
+        return JSON.parse(decoder.decode(bytes));
+      } catch (e) {
+        return null;
+      }
+    }
+
+    const jwtToken = localStorage.getItem('jwt_token');
+    if (jwtToken) {
+      const payload = parseJwt(jwtToken);
+      if (payload && payload.isAdmin) {
+        const nav = document.getElementById('drawer-nav');
+        if (nav && !document.getElementById('nav-admin-link')) {
+          const adminLink = document.createElement('a');
+          adminLink.href = '/admin';
+          adminLink.id = 'nav-admin-link';
+          adminLink.className = 'admin-nav-link';
+          adminLink.innerText = 'Staff Panel';
+          nav.appendChild(adminLink);
+        }
+      }
+    }
+  </script>
+</body>
+</html>
