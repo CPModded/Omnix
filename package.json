@@ -1,7 +1,7 @@
 {
-  "name": "discord-ecosystem-platform",
-  "version": "1.0.0",
-  "description": "Plateforme Discord multi-tenant avec API, Bot, Dashboard et Real-Time",
+  "name": "omnix-platform",
+  "version": "2.4.0",
+  "description": "Plateforme SaaS Multi-Tenant OMNIX",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
