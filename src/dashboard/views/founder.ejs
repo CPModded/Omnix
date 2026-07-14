@@ -358,7 +358,6 @@
       }
     }
 
-    // Décodeur de jeton
     function parseJwt(token) {
       if (!token || token === 'null' || token === 'undefined' || !token.includes('.')) return null;
       try {
@@ -378,7 +377,7 @@
       }
     }
 
-    // Injection de l'onglet Admin dans le menu tiroir si l'utilisateur est Admin
+    const jwtToken = localStorage.getItem('jwt_token');
     if (jwtToken) {
       const payload = parseJwt(jwtToken);
       if (payload && payload.isAdmin) {

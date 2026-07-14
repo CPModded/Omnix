@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OMNIX - Panel Staff</title>
   <style>
-    /* Styles CSS natifs - Sans dépendance externe (100% stable sur Safari iOS) */
+    /* Styles CSS natifs */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -30,13 +30,12 @@
       left: -150px;
       width: 500px;
       height: 500px;
-      background: rgba(139, 92, 246, 0.04); /* Violet */
+      background: rgba(139, 92, 246, 0.04);
       filter: blur(100px);
       border-radius: 50%;
       pointer-events: none;
     }
 
-    /* En-tête */
     header {
       border-bottom: 1px solid #1e293b;
       background: rgba(15, 23, 42, 0.7);
@@ -72,7 +71,6 @@
       font-size: 16px;
     }
 
-    /* Menu Tiroir (Drawer) Latéral Droit */
     .btn-burger {
       background: none;
       border: none;
@@ -89,7 +87,7 @@
     .drawer {
       position: fixed;
       top: 0;
-      right: -300px; /* Masqué à l'origine */
+      right: -300px;
       width: 280px;
       height: 100vh;
       background: rgba(15, 23, 42, 0.85);
@@ -105,7 +103,7 @@
       gap: 32px;
     }
     .drawer.open {
-      transform: translateX(-300px); /* Glissement */
+      transform: translateX(-300px);
     }
     .drawer-header {
       display: flex;
@@ -192,7 +190,6 @@
       margin-top: 8px;
     }
 
-    /* Barre de recherche */
     .search-box-container {
       margin-bottom: 24px;
     }
@@ -237,7 +234,7 @@
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
     }
-    @media (min-width: 600px) {
+    @media (min-width: 768px) {
       .user-row {
         flex-direction: row;
         gap: 0;
@@ -294,7 +291,27 @@
       background: rgba(148, 163, 184, 0.05);
       border: 1px solid rgba(148, 163, 184, 0.1);
     }
+    .badge-blacklist {
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.15);
+    }
 
+    /* Contrôles d'actions */
+    .controls-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    select.duration-select {
+      background-color: #030712;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+    }
     .btn-action-premium {
       padding: 10px 18px;
       border: none;
@@ -316,6 +333,16 @@
       color: #f87171;
       border: 1px solid rgba(220, 38, 38, 0.25);
     }
+    .btn-blacklist {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+    .btn-unblacklist {
+      background: rgba(52, 211, 153, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(52, 211, 153, 0.2);
+    }
     .btn-action-premium:active {
       transform: scale(0.97);
     }
@@ -331,19 +358,6 @@
 </head>
 <body>
 
-  <!-- Écouteur d'erreurs -->
-  <script>
-    window.onerror = function(message, source, lineno, colno, error) {
-      const debugConsole = document.getElementById('debug-container');
-      const debugMsg = document.getElementById('debug-msg');
-      if (debugConsole && debugMsg) {
-        debugConsole.style.display = 'block';
-        debugMsg.innerText = `${message} (Ligne ${lineno}:${colno})`;
-      }
-      return false;
-    };
-  </script>
-
   <div class="halo-top"></div>
 
   <!-- En-tête -->
@@ -354,13 +368,12 @@
       <span class="logo-text">OMNIX Staff Panel</span>
     </a>
     
-    <!-- Bouton d'ouverture du Menu Tiroir -->
     <button onclick="toggleDrawer(true)" class="btn-burger">
       <svg class="burger-icon" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
     </button>
   </header>
 
-  <!-- MENU TIROIR DE NAVIGATION DROIT -->
+  <!-- MENU TIROIR DE NAVIGATION DROIT (Désormais sur toutes les pages) -->
   <div id="side-drawer" class="drawer">
     <div class="drawer-header">
       <span class="logo-text">Menu</span>
@@ -370,7 +383,6 @@
       <a href="/">Accueil</a>
       <a href="/dashboard">Dashboard</a>
       <a href="/founder">Founder</a>
-      <!-- L'onglet Admin s'injecte ici automatiquement si la session est Admin -->
     </div>
   </div>
 
@@ -420,7 +432,6 @@
       window.location.href = '/';
     }
 
-    // Gestion de l'affichage du menu tiroir
     function toggleDrawer(open) {
       const drawer = document.getElementById('side-drawer');
       if (open) {
@@ -430,7 +441,6 @@
       }
     }
 
-    // Décodeur de jeton
     function parseJwt(token) {
       if (!token || token === 'null' || token === 'undefined' || !token.includes('.')) return null;
       try {
@@ -450,7 +460,6 @@
       }
     }
 
-    // Injection de l'onglet Admin dans le menu tiroir si l'utilisateur est Admin
     function renderDrawerMenu() {
       const payload = parseJwt(jwtToken);
       if (payload && payload.isAdmin) {
@@ -466,7 +475,6 @@
       }
     }
 
-    // Filtrage dynamique de la recherche
     function filterUsers() {
       const query = document.getElementById('user-search-input').value.toLowerCase().trim();
       const rows = document.querySelectorAll('.user-row');
@@ -483,7 +491,6 @@
       });
     }
 
-    // Chargement des données de monitoring
     async function loadMonitoring() {
       try {
         const response = await fetch('/api/admin/monitoring', {
@@ -498,11 +505,10 @@
         document.getElementById('stats-ping').innerText = `${stats.bot.ping} ms`;
 
       } catch (error) {
-        console.error("[Staff Panel Error] : Échec de chargement.");
+        console.error("[Staff Panel Error] : Échec.");
       }
     }
 
-    // Chargement de la liste des utilisateurs
     async function loadUsers() {
       try {
         const response = await fetch('/api/admin/users', {
@@ -516,14 +522,13 @@
         container.innerHTML = '';
 
         if (users.length === 0) {
-          container.innerHTML = `<div style="text-align: center; color: #64748b; padding: 32px 0;">Aucun utilisateur inscrit en base de données.</div>`;
+          container.innerHTML = `<div style="text-align: center; color: #64748b; padding: 32px 0;">Aucun utilisateur inscrit.</div>`;
           return;
         }
 
         users.forEach(user => {
           const row = document.createElement('div');
           row.className = "user-row";
-          
           row.setAttribute('data-username', user.username.toLowerCase());
           row.setAttribute('data-discordid', user.discordId);
 
@@ -537,17 +542,49 @@
           }
 
           const hasUserPremium = user.licenses && user.licenses.some(lic => lic.status === 'active' && lic.activatedGuildId === null);
-          if (hasUserPremium) {
+          const isUserLifetime = user.licenses && user.licenses.some(lic => lic.status === 'active' && lic.tier === 'lifetime');
+
+          if (isUserLifetime) {
+            badgesHtml += `<span class="badge badge-premium">Lifetime</span>`;
+          } else if (hasUserPremium) {
             badgesHtml += `<span class="badge badge-premium">Premium User</span>`;
           } else {
             badgesHtml += `<span class="badge badge-free">Free User</span>`;
           }
 
+          if (user.isBlacklisted) {
+            badgesHtml += `<span class="badge badge-blacklist">Banni</span>`;
+          }
+
+          // Sélecteur de durée Premium de secours
+          let durationSelectorHtml = '';
+          if (!hasUserPremium && !user.isBlacklisted) {
+            durationSelectorHtml = `
+              <select id="duration-${user.discordId}" class="duration-select">
+                <option value="30">30 Jours</option>
+                <option value="90">90 Jours</option>
+                <option value="365">365 Jours</option>
+                <option value="0">À Vie (Lifetime)</option>
+              </select>
+            `;
+          }
+
+          // Bouton d'action Premium
           let actionBtnHtml = '';
-          if (hasUserPremium) {
-            actionBtnHtml = `<button onclick="toggleUserPremium('${user.discordId}', false)" class="btn-action-premium btn-revoke-premium">Retirer Premium</button>`;
+          if (!user.isBlacklisted) {
+            if (hasUserPremium || isUserLifetime) {
+              actionBtnHtml = `<button onclick="toggleUserPremium('${user.discordId}', false)" class="btn-action-premium btn-revoke-premium">Retirer Premium</button>`;
+            } else {
+              actionBtnHtml = `<button onclick="toggleUserPremium('${user.discordId}', true)" class="btn-action-premium btn-give-premium">Donner Premium</button>`;
+            }
+          }
+
+          // Bouton d'action Blacklist (Bannir / Débannir)
+          let blacklistBtnHtml = '';
+          if (user.isBlacklisted) {
+            blacklistBtnHtml = `<button onclick="toggleBlacklist('${user.discordId}', false)" class="btn-action-premium btn-unblacklist">Débannir</button>`;
           } else {
-            actionBtnHtml = `<button onclick="toggleUserPremium('${user.discordId}', true)" class="btn-action-premium btn-give-premium">Donner Premium</button>`;
+            blacklistBtnHtml = `<button onclick="toggleBlacklist('${user.discordId}', true)" class="btn-action-premium btn-blacklist">Blacklister</button>`;
           }
 
           row.innerHTML = `
@@ -561,26 +598,33 @@
                 </div>
               </div>
             </div>
-            <div>
+            <div class="controls-group">
+              ${durationSelectorHtml}
               ${actionBtnHtml}
+              ${blacklistBtnHtml}
             </div>
           `;
           container.appendChild(row);
         });
 
       } catch (error) {
-        alert("Accès refusé. Cette console est strictement réservée au Staff OMNIX.");
+        alert("Accès refusé. Cette console est réservée au Staff OMNIX.");
         window.location.href = '/dashboard';
       }
     }
 
-    // Action d'octroi de Premium (Diagnostic d'erreur intégré)
     async function toggleUserPremium(discordId, grant) {
+      let duration = 30;
+      const selector = document.getElementById(`duration-${discordId}`);
+      if (selector) {
+        duration = parseInt(selector.value, 10);
+      }
+
       const payload = {
         guildId: "USER_LICENSE",
         isPremium: grant,
-        tier: grant ? 'premium' : 'free',
-        durationInDays: grant ? 365 : 0
+        tier: duration === 0 ? 'lifetime' : 'premium',
+        durationInDays: grant ? duration : 0
       };
 
       try {
@@ -597,11 +641,33 @@
           const errData = await response.json().catch(() => ({}));
           throw new Error(errData.details || errData.error || `Erreur HTTP ${response.status}`);
         }
-
         loadUsers();
 
       } catch (error) {
-        alert("Impossible de modifier les privilèges :\n\n" + error.message);
+        alert("Échec de la modification des privilèges :\n\n" + error.message);
+      }
+    }
+
+    // Fonction d'action : Blacklister / Débannir de la plateforme
+    async function toggleBlacklist(discordId, blacklist) {
+      try {
+        const response = await fetch('/api/admin/blacklist', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${jwtToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ userId: discordId, isBlacklisted: blacklist })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.details || errData.error || `Erreur HTTP ${response.status}`);
+        }
+        loadUsers();
+
+      } catch (error) {
+        alert("Échec de la modification du statut de bannissement :\n\n" + error.message);
       }
     }
 

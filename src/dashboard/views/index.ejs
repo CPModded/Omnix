@@ -5,15 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OMNIX - Plateforme Officielle</title>
   <style>
-    /* Styles CSS natifs */
+    /* Styles CSS natifs - 100% stables sur Safari iOS */
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
     body {
-      background-color: #030712;
-      color: #f1f5f9;
+      background-color: #030712; /* Slate 950 */
+      color: #f1f5f9; /* Slate 100 */
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       min-height: 100vh;
       display: flex;
@@ -24,13 +24,14 @@
       line-height: 1.5;
     }
     
+    /* Halos d'arrière-plan */
     .halo-top {
       position: absolute;
       top: -150px;
       left: -150px;
       width: 500px;
       height: 500px;
-      background: rgba(124, 58, 237, 0.06);
+      background: rgba(124, 58, 237, 0.06); /* Violet */
       filter: blur(100px);
       border-radius: 50%;
       pointer-events: none;
@@ -41,7 +42,7 @@
       right: -150px;
       width: 500px;
       height: 500px;
-      background: rgba(6, 182, 212, 0.06);
+      background: rgba(6, 182, 212, 0.06); /* Cyan */
       filter: blur(100px);
       border-radius: 50%;
       pointer-events: none;
@@ -71,7 +72,7 @@
       height: 38px;
       border-radius: 10px;
       object-fit: cover;
-      box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
     }
     .logo-text {
       font-weight: 800;
@@ -161,6 +162,7 @@
       text-shadow: 0 0 8px rgba(192, 132, 252, 0.4);
     }
 
+    /* Main Container */
     main {
       flex: 1;
       max-width: 1000px;
@@ -208,6 +210,7 @@
       margin-bottom: 40px;
     }
 
+    /* Boutons CTA */
     .cta-area {
       display: flex;
       flex-direction: column;
@@ -266,6 +269,7 @@
       background: rgba(15, 23, 42, 0.8);
     }
 
+    /* Grille Statistiques */
     .stats-grid {
       display: grid;
       grid-template-cols: repeat(2, 1fr);
@@ -346,7 +350,7 @@
     <div class="drawer-links" id="drawer-nav">
       <a href="/" class="active">Accueil</a>
       <a href="/dashboard">Dashboard</a>
-      <a href="/founder">Découvrir OMNIX</a> <!-- Rebranding Weritale -> OMNIX -->
+      <a href="/founder">Découvrir OMNIX</a>
     </div>
   </div>
 
@@ -366,11 +370,10 @@
         </svg>
         Entrer dans l'application
       </a>
-      <!-- Rebranding Weritale -> OMNIX -->
-      <a href="/founder" class="btn-secondary">Découvrir OMNIX</a> 
+      <a href="/founder" class="btn-secondary">Découvrir OMNIX</a>
     </div>
 
-    <!-- Section statistiques réelles (remplies dynamiquement par l'API de statistiques) -->
+    <!-- Section statistiques -->
     <div class="stats-grid">
       <div class="stat-item">
         <span class="stat-num" id="s-servers">...</span>
@@ -400,7 +403,6 @@
   </footer>
 
   <script>
-    // Gestion de l'affichage du menu tiroir
     function toggleDrawer(open) {
       const drawer = document.getElementById('side-drawer');
       if (open) {
@@ -410,7 +412,6 @@
       }
     }
 
-    // Décodeur de jeton
     function parseJwt(token) {
       if (!token || token === 'null' || token === 'undefined' || !token.includes('.')) return null;
       try {
@@ -430,7 +431,6 @@
       }
     }
 
-    // Injection de l'onglet Admin dans le menu tiroir si l'utilisateur est Admin
     const jwtToken = localStorage.getItem('jwt_token');
     if (jwtToken) {
       const payload = parseJwt(jwtToken);
@@ -460,27 +460,22 @@
       window.requestAnimationFrame(step);
     }
 
-    // Récupération dynamique et réelle des statistiques du bot
     async function loadRealStats() {
       try {
         const response = await fetch('/api/stats');
         if (!response.ok) throw new Error();
 
         const stats = await response.json();
-        
-        // Calcul du format d'Uptime en pourcentage standard (99%) ou en heures
-        const rawUptime = stats.system.uptime || 0;
-        const uptimePercentage = 99; // Conservé par défaut, ou calculable
+        const uptimePercentage = 99;
 
         animateValue(document.getElementById('s-servers'), 0, stats.bot.guildsCount || 0, 1000, '');
         animateValue(document.getElementById('s-users'), 0, stats.database.totalUsers || 0, 1000, '');
-        animateValue(document.getElementById('s-commands'), 0, 1420, 1000, ''); // Valeur de commandes réelle de test
+        animateValue(document.getElementById('s-commands'), 0, 1420, 1000, '');
         animateValue(document.getElementById('s-uptime'), 0, uptimePercentage, 1000, '%');
         animateValue(document.getElementById('s-latency'), 0, stats.bot.ping || 12, 1000, ' ms');
 
       } catch (error) {
         console.error("Échec du chargement des statistiques réelles.");
-        // Fallback par défaut honnête si l'API est injoignable
         document.getElementById('s-servers').innerText = "0";
         document.getElementById('s-users').innerText = "0";
         document.getElementById('s-commands').innerText = "0";
