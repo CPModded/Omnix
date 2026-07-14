@@ -36,3 +36,7 @@ router.get('/learn-more', (req, res) => {
 router.get('/founder', FounderController.renderFounderPage);
 
 export default router;
+
+
+router.get('/admin', (req, res) => { res.render('admin'); 
+});
