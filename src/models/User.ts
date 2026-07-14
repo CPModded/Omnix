@@ -5,7 +5,7 @@ export interface IUser extends Document {
   username: string;
   avatar: string | null;
   isAdmin: boolean;
-  isBlacklisted: boolean; // Ajout : Bloquer l'accès à la plateforme
+  isBlacklisted: boolean;
   rewards: {
     points: number;
     referralsCount: number;
@@ -26,7 +26,7 @@ const UserSchema = new Schema<IUser>({
   username: { type: String, required: true },
   avatar: { type: String, default: null },
   isAdmin: { type: Boolean, default: false },
-  isBlacklisted: { type: Boolean, default: false }, // Faux par défaut
+  isBlacklisted: { type: Boolean, default: false },
   rewards: {
     points: { type: Number, default: 0 },
     referralsCount: { type: Number, default: 0 },
