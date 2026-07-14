@@ -1,14 +1,8 @@
-/**
- * ====================================================================
- * FILTRE DE SÉCURITÉ DE SERVEUR (TRAÇAGE CONSOLE ET CACHE DE SÉCURITÉ)
- * ====================================================================
- */
-
 import { Response, NextFunction } from 'express';
 import axios from 'axios';
 import { AuthenticatedRequest } from './auth';
 
-// Le cache des droits d'administration partagé et exporté (userId => { guildIds, expiresAt })
+// Cache des droits d'administration partagé et exporté (userId => { guildIds, expiresAt })
 export const adminAccessCache = new Map<string, { guilds: string[]; expiresAt: number }>();
 
 export async function canManageGuild(req: AuthenticatedRequest, res: Response, next: NextFunction) {
