@@ -1,6 +1,7 @@
 /**
  * ====================================================================
- * CONTRÔLEUR D'ADMINISTRATION GLOBALE (OMNIX STAFF CORE - STABLE)
+ * CONTRÔLEUR D'ADMINISTRATION GLOBALE (OMNIX STAFF CORE - PRODUCTION)
+ * Gère le monitoring, les annonces, les licences et la blacklist.
  * ====================================================================
  */
 
@@ -39,8 +40,7 @@ export class AdminController {
           return res.status(404).json({ error: 'Utilisateur introuvable.' });
         }
 
-        // CORRECTIF DE SÉCURITÉ MONGOOSE : On vide le tableau via la méthode officielle .set()
-        // Évite les plantages de types liés à l'assignation directe d'un tableau vide []
+        // On vide le tableau de licences via la méthode officielle .set()
         user.set('licenses', []);
         
         if (isPremium) {
@@ -52,8 +52,8 @@ export class AdminController {
           const rand = Math.random().toString(36).substring(2, 8).toUpperCase();
 
           user.licenses.push({
-            licenseKey: `WERI-USER-${rand}`,
-            tier: tier || 'premium',
+            licenseKey: `OMNIX-USER-${rand}`,
+            tier: durationInDays === 0 ? 'lifetime' : 'premium',
             status: 'active',
             activatedGuildId: null, // Licence d'utilisateur
             expiresAt: expiresAt
@@ -78,12 +78,10 @@ export class AdminController {
       }
 
       config.premium.isPremium = isPremium;
-      config.premium.tier = isPremium ? tier : 'free';
+      config.premium.tier = isPremium ? (durationInDays === 0 ? 'lifetime' : 'premium') : 'free';
       config.premium.expiresAt = expiresAt;
 
       await config.save();
-      console.log(`[Admin API] ✅ Licence serveur mise à jour pour ${guildId} (Premium: ${isPremium})`);
-
       return res.json({ message: `Statut premium du serveur ${guildId} mis à jour.`, config });
     } catch (error: any) {
       console.error('[Admin API] ❌ Erreur togglePremium :', error.message);
@@ -129,7 +127,33 @@ export class AdminController {
       return res.json(users);
     } catch (error: any) {
       console.error('[Admin API] ❌ Échec de récupération des utilisateurs :', error.message);
-      return res.status(500).json({ error: 'Impossible de récupérer la liste des utilisateurs.' });
+      return res.status(500).json({ error: 'Impossible de récupérer la liste.' });
+    }
+  }
+
+  // 5. Blacklister ou débannir un utilisateur de la plateforme
+  static async toggleBlacklist(req: AuthenticatedRequest, res: Response) {
+    const { userId, isBlacklisted } = req.body;
+
+    try {
+      const user = await User.findOne({ discordId: userId });
+      if (!user) {
+        return res.status(404).json({ error: 'Utilisateur introuvable.' });
+      }
+
+      // Les administrateurs ne peuvent pas être blacklistés par sécurité
+      if (user.isAdmin && isBlacklisted) {
+        return res.status(400).json({ error: 'Impossible de bannir un membre du staff.' });
+      }
+
+      user.isBlacklisted = isBlacklisted;
+      await user.save();
+
+      console.log(`[Admin API] 🛑 Statut Blacklist de ${user.username} modifié : ${isBlacklisted}`);
+      return res.json({ message: 'Statut de bannissement mis à jour avec succès.', user });
+    } catch (error: any) {
+      console.error('[Admin API] ❌ Erreur toggleBlacklist :', error.message);
+      return res.status(500).json({ error: 'Échec de la modification du bannissement.', details: error.message });
     }
   }
 }
