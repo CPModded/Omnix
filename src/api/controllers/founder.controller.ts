@@ -4,7 +4,7 @@ export class FounderController {
   static getFounderInfo(req: Request, res: Response) {
     return res.json({
       name: 'OMNIX',
-      description: 'Créateur et développeur du projet.',
+      description: 'Créateur et développeur de la plateforme OMNIX.',
       officialServer: 'https://discord.gg/naBuatEBJ5'
     });
   }
@@ -13,7 +13,7 @@ export class FounderController {
     return res.render('founder', {
       founder: {
         name: 'OMNIX',
-        description: 'Créateur et développeur du projet.',
+        description: 'Créateur et développeur de la plateforme OMNIX.',
         officialServer: 'https://discord.gg/naBuatEBJ5'
       }
     });
