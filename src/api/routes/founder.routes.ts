@@ -1,17 +1,16 @@
 /**
  * ====================================================================
- * CONFIGURATION DES ROUTES D'AFFICHAGE ET DE STATS OMNIX (EJS)
+ * CONFIGURATION DES ROUTES D'AFFICHAGE DU DASHBOARD (OMNIX CORE)
  * ====================================================================
  */
 
 import { Router } from 'express';
 import { FounderController } from '../controllers/founder.controller';
-import { SystemMonitor } from '../../utils/systemMonitor';
 import { CONFIG } from '../../config';
 
 const router = Router();
 
-// Rendu de la Landing Page OMNIX (Page de présentation à la racine)
+// Page d'accueil OMNIX
 router.get('/', (req, res) => {
   res.render('index', { 
     clientId: CONFIG.DISCORD.CLIENT_ID,
@@ -19,19 +18,14 @@ router.get('/', (req, res) => {
   });
 });
 
-// API Publique de Statistiques Réelles (Honnêteté des données)
-router.get('/api/stats', async (req, res) => {
-  try {
-    const stats = await SystemMonitor.getStats();
-    return res.json(stats);
-  } catch (error) {
-    // Fallback par défaut en cas d'erreur de récupération
-    return res.json({
-      system: { uptime: process.uptime() },
-      bot: { ping: 12, guildsCount: 0, usersCached: 0 },
-      database: { totalUsers: 0 }
-    });
-  }
+// Page d'Abonnements & Tarifs (Stripe)
+router.get('/pricing', (req, res) => {
+  res.render('pricing', { clientId: CONFIG.DISCORD.CLIENT_ID });
+});
+
+// Page de documentation (En savoir plus)
+router.get('/learn-more', (req, res) => {
+  res.render('learn-more');
 });
 
 // Page de sélection du serveur
