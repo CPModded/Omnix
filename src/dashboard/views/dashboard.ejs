@@ -367,18 +367,8 @@
     </button>
   </header>
 
-  <!-- MENU TIROIR DE NAVIGATION DROIT -->
-  <div id="side-drawer" class="drawer">
-    <div class="drawer-header">
-      <span class="logo-text">Menu</span>
-      <button onclick="toggleDrawer(false)" class="btn-close-drawer">&times;</button>
-    </div>
-    <div class="drawer-links" id="drawer-nav">
-      <a href="/">Accueil</a>
-      <a href="/dashboard" class="active">Dashboard</a>
-      <a href="/founder">Founder</a>
-    </div>
-  </div>
+  <!-- LIAISON DE LA BARRE LATÉRALE CENTRALISÉE -->
+  <%- include('partials/sidebar') %>
 
   <!-- Contenu Principal -->
   <main>
@@ -406,46 +396,6 @@
   <script>
     const clientId = "<%= clientId %>";
 
-    function toggleDrawer(open) {
-      const drawer = document.getElementById('side-drawer');
-      if (open) {
-        drawer.classList.add('open');
-      } else {
-        drawer.classList.remove('open');
-      }
-    }
-
-    // Gestion du double stockage Jeton
-    function setToken(value) {
-      try {
-        localStorage.setItem('jwt_token', value);
-      } catch (e) {
-        document.cookie = `jwt_token=${value}; path=/; max-age=604800; SameSite=Lax`;
-      }
-    }
-
-    function getToken() {
-      try {
-        const localToken = localStorage.getItem('jwt_token');
-        if (localToken) return localToken;
-      } catch (e) {}
-      return getCookie('jwt_token');
-    }
-
-    function getCookie(name) {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop().split(';').shift();
-      return null;
-    }
-
-    function removeToken() {
-      try {
-        localStorage.removeItem('jwt_token');
-      } catch (e) {}
-      document.cookie = "jwt_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    }
-
     // Fonction d'initialisation
     function startDashboard() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -462,7 +412,6 @@
         return;
       }
 
-      renderDrawerMenu(jwtToken); // Lance l'en-tête du menu tiroir
       renderUserProfile(jwtToken);
       loadGuilds(jwtToken);
     }
@@ -471,41 +420,6 @@
       document.addEventListener('DOMContentLoaded', startDashboard);
     } else {
       startDashboard();
-    }
-
-    // Décodeur de jeton
-    function parseJwt(token) {
-      if (!token || token === 'null' || token === 'undefined' || !token.includes('.')) return null;
-      try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const pad = base64.length % 4;
-        const paddedBase64 = pad ? base64 + '='.repeat(4 - pad) : base64;
-        const rawBinary = window.atob(paddedBase64);
-        const bytes = new Uint8Array(rawBinary.length);
-        for (let i = 0; i < rawBinary.length; i++) {
-          bytes[i] = rawBinary.charCodeAt(i);
-        }
-        const decoder = new TextDecoder('utf-8');
-        return JSON.parse(decoder.decode(bytes));
-      } catch (e) {
-        return null;
-      }
-    }
-
-    function renderDrawerMenu(jwtToken) {
-      const payload = parseJwt(jwtToken);
-      if (payload && payload.isAdmin) {
-        const nav = document.getElementById('drawer-nav');
-        if (nav && !document.getElementById('nav-admin-link')) {
-          const adminLink = document.createElement('a');
-          adminLink.href = '/admin';
-          adminLink.id = 'nav-admin-link';
-          adminLink.className = 'admin-nav-link';
-          adminLink.innerText = 'Staff Panel';
-          nav.appendChild(adminLink);
-        }
-      }
     }
 
     function renderUserProfile(jwtToken) {
@@ -586,11 +500,6 @@
         document.getElementById('loading-label').innerText = "Session expirée. Redirection...";
         setTimeout(() => logout(), 1500);
       }
-    }
-
-    function logout() {
-      removeToken();
-      window.location.href = '/';
     }
   </script>
 </body>
