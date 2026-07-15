@@ -25,7 +25,7 @@
     header {
       border-bottom: 1px solid #1e293b;
       background: rgba(15, 23, 42, 0.7);
-      backdrop-blur: blur(12px);
+      backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       padding: 16px 24px;
       display: flex;
@@ -189,8 +189,7 @@
   <!-- En-tête -->
   <header>
     <a href="/" class="logo-area">
-      <!-- TRIPLE-LIAISON : URL envoyée -> /logo.png -> Box dégradée par défaut de secours -->
-      <img src="https://chatgpt.com/s/m_6a526fbfd3888191a898a0f06acf156b" id="logo-main-img" onerror="this.onerror=null; this.src='/logo.png'; this.onerror=function(){ this.style.display='none'; document.getElementById('logo-fallback-box').style.display='flex'; };" class="logo-img" alt="OMNIX Logo">
+      <img src="/logo.png" id="logo-main-img" onerror="this.style.display='none'; document.getElementById('logo-fallback-box').style.display='flex';" class="logo-img" alt="OMNIX Logo">
       <div id="logo-fallback-box" style="display: none; width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #06b6d4, #7c3aed); align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 18px; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);">O</div>
       <span class="logo-text">OMNIX</span>
     </a>
@@ -203,20 +202,8 @@
     </div>
   </header>
 
-  <!-- MENU TIROIR DE NAVIGATION DROIT (Désormais avec Déconnexion si connecté) -->
-  <div id="side-drawer" class="drawer">
-    <div class="drawer-header">
-      <span class="logo-text">Menu</span>
-      <button onclick="toggleDrawer(false)" class="btn-close-drawer">&times;</button>
-    </div>
-    <div class="drawer-links" id="drawer-nav">
-      <a href="/" class="active">Accueil</a>
-      <a href="/dashboard">Dashboard</a>
-      <a href="/pricing">Abonnements</a>
-      <a href="/learn-more">En savoir plus</a>
-      <a href="/founder">Découvrir OMNIX</a>
-    </div>
-  </div>
+  <!-- LIAISON UNIQUE DE LA BARRE LATÉRALE REUTILISABLE (SIDEBAR) -->
+  <%- include('partials/sidebar') %>
 
   <!-- Hero & Présentation -->
   <main>
@@ -258,56 +245,8 @@
   </footer>
 
   <script>
-    function toggleDrawer(open) {
-      const drawer = document.getElementById('side-drawer');
-      if (open) { drawer.classList.add('open'); } else { drawer.classList.remove('open'); }
-    }
-
-    function setToken(value) {
-      try {
-        localStorage.setItem('jwt_token', value);
-      } catch (e) {
-        document.cookie = `jwt_token=${value}; path=/; max-age=604800; SameSite=Lax`;
-      }
-    }
-
-    function getToken() {
-      try {
-        const local = localStorage.getItem('jwt_token');
-        if (local) return local;
-      } catch (e) {}
-      return getCookie('jwt_token');
-    }
-
-    function getCookie(name) {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop().split(';').shift();
-      return null;
-    }
-
-    function removeToken() {
-      try {
-        localStorage.removeItem('jwt_token');
-      } catch (e) {}
-      document.cookie = "jwt_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    }
-
-    function parseJwt(token) {
-      if (!token || token === 'null' || token === 'undefined' || !token.includes('.')) return null;
-      try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const pad = base64.length % 4;
-        const paddedBase64 = pad ? base64 + '='.repeat(4 - pad) : base64;
-        const rawBinary = window.atob(paddedBase64);
-        const bytes = new Uint8Array(rawBinary.length);
-        for (let i = 0; i < rawBinary.length; i++) { bytes[i] = rawBinary.charCodeAt(i); }
-        const decoder = new TextDecoder('utf-8');
-        return JSON.parse(decoder.decode(bytes));
-      } catch (e) { return null; }
-    }
-
+    // Ces fonctions d'authentification (getToken, parseJwt, logout, etc.) sont héritées dynamiquement du partial sidebar.
+    
     function setupDynamicButtons() {
       const jwtToken = getToken();
       const headerArea = document.getElementById('auth-buttons-header');
@@ -325,37 +264,6 @@
             <a href="/dashboard" class="btn-primary" style="background: linear-gradient(135deg, #059669, #10b981);">Accéder au Dashboard</a>
             <a href="/founder" class="btn-secondary">Découvrir OMNIX</a>
           `;
-
-          // Injection dynamique des onglets Staff & Déconnexion dans le menu tiroir mobile
-          const nav = document.getElementById('drawer-nav');
-          if (nav) {
-            if (payload.isAdmin && !document.getElementById('nav-admin-link')) {
-              const adminLink = document.createElement('a');
-              adminLink.href = '/admin';
-              adminLink.id = 'nav-admin-link';
-              adminLink.className = 'admin-nav-link';
-              adminLink.innerText = 'Staff Panel';
-              nav.appendChild(adminLink);
-            }
-            if (!document.getElementById('nav-logout-btn')) {
-              const logoutBtn = document.createElement('button');
-              logoutBtn.id = 'nav-logout-btn';
-              logoutBtn.innerText = 'Déconnexion';
-              logoutBtn.style.background = 'rgba(220, 38, 38, 0.15)';
-              logoutBtn.style.color = '#f87171';
-              logoutBtn.style.border = '1px solid rgba(220, 38, 38, 0.25)';
-              logoutBtn.style.width = '100%';
-              logoutBtn.style.padding = '12px';
-              logoutBtn.style.borderRadius = '10px';
-              logoutBtn.style.fontSize = '12px';
-              logoutBtn.style.fontWeight = '700';
-              logoutBtn.style.textTransform = 'uppercase';
-              logoutBtn.style.marginTop = '24px';
-              logoutBtn.style.cursor = 'pointer';
-              logoutBtn.onclick = logout;
-              nav.appendChild(logoutBtn);
-            }
-          }
           return;
         }
       }
@@ -370,11 +278,6 @@
         </a>
         <a href="/founder" class="btn-secondary">Découvrir OMNIX</a>
       `;
-    }
-
-    function logout() {
-      removeToken();
-      window.location.href = '/';
     }
 
     function animateValue(obj, start, end, duration, suffix = '') {
