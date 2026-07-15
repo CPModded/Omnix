@@ -9,6 +9,7 @@ import paymentRoutes from './routes/payment.routes';
 import licenseRoutes from './routes/license.routes';
 import adminRoutes from './routes/admin.routes';
 import backupRoutes from './routes/backup.routes';
+import { CONFIG } from './config';
 
 const app = express();
 
@@ -40,6 +41,13 @@ app.use(express.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../dashboard/views'));
 app.use(express.static(path.join(__dirname, '../dashboard/public')));
+
+// CORRECTIF DE SECURITE EJS : Injection de variables globales pour éviter les crashs sur n'importe quelle page
+app.use((req, res, next) => {
+  res.locals.clientId = CONFIG.DISCORD.CLIENT_ID;
+  res.locals.redirectUri = encodeURIComponent(CONFIG.DISCORD.REDIRECT_URI);
+  next();
+});
 
 // 5. Montage des routes de l'API et du Dashboard
 app.use('/api/auth', authRoutes);
