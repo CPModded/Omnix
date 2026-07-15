@@ -1,3 +1,9 @@
+/**
+ * ====================================================================
+ * CONTRÔLEUR D'ADMINISTRATION GLOBALE (OMNIX STAFF CORE - STABLE)
+ * ====================================================================
+ */
+
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import { GuildConfig } from '../../models/GuildConfig';
@@ -33,29 +39,28 @@ export class AdminController {
           return res.status(404).json({ error: 'Utilisateur introuvable.' });
         }
 
+        // CORRECTIF DE SÉCURITÉ MONGOOSE : On vide le tableau via la méthode officielle .set()
         user.set('licenses', []);
         
         if (isPremium) {
-          // Gestion de la durée : Si durationInDays est égal à 0, c'est une licence LIFETIME (à vie)
-          let expiresAt: Date | null = null;
-          if (durationInDays > 0) {
-            expiresAt = new Date();
-            expiresAt.setDate(now.getDate() + durationInDays);
-          }
+          const now = new Date();
+          const expiresAt = new Date();
+          expiresAt.setDate(now.getDate() + durationInDays);
 
+          // Génération d'une clé d'utilisateur unique
           const rand = Math.random().toString(36).substring(2, 8).toUpperCase();
 
           user.licenses.push({
             licenseKey: `OMNIX-USER-${rand}`,
             tier: durationInDays === 0 ? 'lifetime' : 'premium',
             status: 'active',
-            activatedGuildId: null,
+            activatedGuildId: null, // Licence d'utilisateur
             expiresAt: expiresAt
           });
         }
 
         await user.save();
-        console.log(`[Admin API] ✅ Licence utilisateur mise à jour pour ${user.username} (Premium: ${isPremium}, Durée: ${durationInDays} jours)`);
+        console.log(`[Admin API] ✅ Licence utilisateur mise à jour pour ${user.username} (Premium: ${isPremium})`);
         return res.json({ message: 'Licence utilisateur mise à jour.', user });
       }
 

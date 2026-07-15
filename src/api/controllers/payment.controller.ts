@@ -1,3 +1,9 @@
+/**
+ * ====================================================================
+ * CONTRÔLEUR DES PAIEMENTS ET LIVRAISON AUTOMATIQUE (STRIPE)
+ * ====================================================================
+ */
+
 import { Request, Response } from 'express';
 import Stripe from 'stripe';
 import { CONFIG } from '../../config';
@@ -6,11 +12,11 @@ import { AuthenticatedRequest } from '../middlewares/auth';
 import crypto from 'crypto';
 
 const stripe = new Stripe(CONFIG.PAYMENTS.STRIPE_KEY, {
-  apiVersion: '2025-01-27' as any // Utilisation d'une version récente de l'API Stripe
+  apiVersion: '2025-01-27' as any
 });
 
 export class PaymentController {
-  // 1. Initialise un tunnel d'achat Stripe Checkout
+  // 1. Initialise une session de paiement Stripe Checkout
   static async createCheckoutSession(req: AuthenticatedRequest, res: Response) {
     const { tier, durationInDays, priceId } = req.body;
     const user = req.user;
@@ -29,18 +35,18 @@ export class PaymentController {
           tier: tier,
           durationInDays: durationInDays.toString()
         },
-        success_url: `${process.env.CLIENT_URL || 'http://localhost:3000'}/dashboard?payment=success`,
-        cancel_url: `${process.env.CLIENT_URL || 'http://localhost:3000'}/dashboard?payment=cancel`,
+        success_url: `${CONFIG.CLIENT_URL}/dashboard?payment=success`,
+        cancel_url: `${CONFIG.CLIENT_URL}/dashboard?payment=cancel`,
       });
 
       return res.json({ id: session.id, url: session.url });
     } catch (error: any) {
-      console.error('Erreur de session Stripe Checkout:', error.message);
+      console.error('Erreur session Stripe Checkout:', error.message);
       return res.status(500).json({ error: 'Création de la session de paiement impossible.' });
     }
   }
 
-  // 2. Traitement du Webhook Stripe pour l'activation ou livraison automatique
+  // 2. Écoute de l'événement webhook Stripe pour la livraison de la clé
   static async handleWebhook(req: Request, res: Response) {
     const sig = req.headers['stripe-signature'];
     let event: Stripe.Event;
@@ -50,18 +56,17 @@ export class PaymentController {
     }
 
     try {
-      // Validation cryptographique de l'origine de l'appel
       event = stripe.webhooks.constructEvent(
         req.body,
         sig,
-        CONFIG.PAYMENTS.STRIPE_WEBHOOK
+        CONFIG.PAYMENTS.STRIPE_WEBHOOK_SECRET
       );
     } catch (err: any) {
       console.error('Erreur signature webhook Stripe:', err.message);
       return res.status(400).send(`Erreur Signature Webhook: ${err.message}`);
     }
 
-    // Capture de la complétion du paiement
+    // Si le paiement est réussi, on génère et stocke la clé de licence
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
       
@@ -71,9 +76,9 @@ export class PaymentController {
 
       if (userId && tier) {
         try {
-          // Génération d'une clé de licence unique (ex: WERI-XXXX-XXXX-XXXX)
+          // Génération cryptographique d'une clé de licence unique d'OMNIX
           const randomBytes = crypto.randomBytes(8).toString('hex').toUpperCase();
-          const licenseKey = `WERI-${randomBytes.slice(0, 4)}-${randomBytes.slice(4, 8)}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+          const licenseKey = `OMNIX-${randomBytes.slice(0, 4)}-${randomBytes.slice(4, 8)}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 
           const newLicense = new License({
             key: licenseKey,
@@ -84,11 +89,10 @@ export class PaymentController {
           });
 
           await newLicense.save();
-          console.log(`[Stripe Webhook] Licence ${licenseKey} générée automatiquement pour l'utilisateur ${userId}`);
+          console.log(`[Stripe Webhook] 💎 Licence ${licenseKey} créée de manière automatisée pour l'utilisateur : ${userId}`);
 
-          // Optionnel : Envoyer un message privé sur Discord via le bot pour lui donner sa clé
         } catch (dbError) {
-          console.error('[Stripe Webhook Error] Échec de sauvegarde de la licence:', dbError);
+          console.error('[Stripe Webhook Error] Échec de l\'enregistrement de la licence :', dbError);
           return res.status(500).send('Erreur d\'écriture en base de données.');
         }
       }
