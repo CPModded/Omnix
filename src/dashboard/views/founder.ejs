@@ -114,7 +114,7 @@
       flex-direction: column;
       gap: 32px;
     }
-    .drawer.open { transform: translateX(-300px); /* Glissement */ }
+    .drawer.open { transform: translateX(-300px); }
     .drawer-header {
       display: flex;
       justify-content: space-between;
@@ -198,7 +198,7 @@
       -webkit-backdrop-filter: blur(16px);
     }
 
-    /* Correction anti-image cassée */
+    /* Image de profil d'OMNIX avec triple-liaison de secours */
     .avatar {
       width: 90px;
       height: 90px;
@@ -271,7 +271,6 @@
       fill: currentColor;
     }
 
-    /* Bouton d'achat interactif "Acheter OMNIX Premium" */
     .btn-buy-premium {
       width: 100%;
       padding: 14px 24px;
@@ -308,7 +307,8 @@
   <!-- En-tête -->
   <header>
     <a href="/" class="logo-area">
-      <img src="/logo.png" id="logo-main-img" onerror="this.style.display='none'; document.getElementById('logo-fallback-box').style.display='flex';" class="logo-img" alt="OMNIX Logo">
+      <!-- TRIPLE-LIAISON DE SÉCURITÉ POUR LE LOGO -->
+      <img src="https://chatgpt.com/s/m_6a526fbfd3888191a898a0f06acf156b" id="logo-main-img" onerror="this.onerror=null; this.src='/logo.png'; this.onerror=function(){ this.style.display='none'; document.getElementById('logo-fallback-box').style.display='flex'; };" class="logo-img" alt="OMNIX Logo">
       <div id="logo-fallback-box" style="display: none; width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #06b6d4, #7c3aed); align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 18px; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);">O</div>
       <span class="logo-text">OMNIX</span>
     </a>
@@ -328,6 +328,7 @@
       <a href="/">Accueil</a>
       <a href="/dashboard">Dashboard</a>
       <a href="/pricing">Abonnements</a>
+      <a href="/learn-more">En savoir plus</a>
       <a href="/founder" class="active">Découvrir OMNIX</a>
     </div>
   </div>
@@ -338,9 +339,9 @@
       <div class="card-glow"></div>
       <div class="card">
         
-        <!-- Image de Profil : Logo d'OMNIX avec sécurité anti-image cassée -->
+        <!-- Image de Profil avec triple-liaison de secours -->
         <div class="avatar">
-          <img src="/logo.png" id="logo-avatar-img" onerror="this.style.display='none'; document.getElementById('avatar-fallback-box').style.display='flex';" class="avatar-img" alt="OMNIX Logo">
+          <img src="https://chatgpt.com/s/m_6a526fbfd3888191a898a0f06acf156b" id="logo-avatar-img" onerror="this.onerror=null; this.src='/logo.png'; this.onerror=function(){ this.style.display='none'; document.getElementById('avatar-fallback-box').style.display='flex'; };" class="avatar-img" alt="OMNIX Logo">
           <div id="avatar-fallback-box" style="display: none; width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg, #06b6d4, #7c3aed); align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 40px; box-shadow: 0 8px 16px rgba(124, 58, 237, 0.2);">O</div>
         </div>
 

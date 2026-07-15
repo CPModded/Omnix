@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OMNIX - Plateforme Officielle</title>
   <style>
-    /* Styles CSS natifs - Sans dépendance CDN */
+    /* Styles CSS natifs */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background-color: #030712; /* Slate 950 */
@@ -25,7 +25,7 @@
     header {
       border-bottom: 1px solid #1e293b;
       background: rgba(15, 23, 42, 0.7);
-      backdrop-filter: blur(12px);
+      backdrop-blur: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       padding: 16px 24px;
       display: flex;
@@ -67,6 +67,7 @@
       gap: 32px;
     }
     .drawer.open { transform: translateX(-300px); }
+    .drawer-header { display: flex; justify-content: space-between; align-items: center; }
     .btn-close-drawer { background: none; border: none; color: #64748b; font-size: 28px; cursor: pointer; }
     .drawer-links { display: flex; flex-direction: column; gap: 16px; }
     .drawer-links a {
@@ -188,23 +189,21 @@
   <!-- En-tête -->
   <header>
     <a href="/" class="logo-area">
-      <img src="/logo.png" id="logo-main-img" onerror="this.style.display='none'; document.getElementById('logo-fallback-box').style.display='flex';" class="logo-img" alt="OMNIX Logo">
+      <!-- TRIPLE-LIAISON : URL envoyée -> /logo.png -> Box dégradée par défaut de secours -->
+      <img src="https://chatgpt.com/s/m_6a526fbfd3888191a898a0f06acf156b" id="logo-main-img" onerror="this.onerror=null; this.src='/logo.png'; this.onerror=function(){ this.style.display='none'; document.getElementById('logo-fallback-box').style.display='flex'; };" class="logo-img" alt="OMNIX Logo">
       <div id="logo-fallback-box" style="display: none; width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #06b6d4, #7c3aed); align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 18px; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);">O</div>
       <span class="logo-text">OMNIX</span>
     </a>
     
     <div class="header-controls">
-      <!-- Zone d'affichage dynamique du bouton de connexion / déconnexion -->
-      <div id="auth-buttons-header" style="display: flex; align-items: center; gap: 16px;">
-        <!-- Injecté dynamiquement par JS -->
-      </div>
+      <div id="auth-buttons-header" style="display: flex; align-items: center; gap: 16px;"></div>
       <button onclick="toggleDrawer(true)" class="btn-burger">
         <svg class="burger-icon" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
       </button>
     </div>
   </header>
 
-  <!-- MENU TIROIR DE NAVIGATION DROIT (Drawer complet à 5 liens) -->
+  <!-- MENU TIROIR DE NAVIGATION DROIT (Désormais avec Déconnexion si connecté) -->
   <div id="side-drawer" class="drawer">
     <div class="drawer-header">
       <span class="logo-text">Menu</span>
@@ -222,15 +221,13 @@
   <!-- Hero & Présentation -->
   <main>
     <span class="tag">Plateforme Intégrée SaaS</span>
-    <h1>Gérez votre communauté avec <span>OMNIX</span></h1>
+    <h1>Gerez votre communauté avec <span>OMNIX</span></h1>
     <p class="subtitle">
       OMNIX n’est pas un simple bot Discord. C’est une plateforme intelligente conçue pour automatiser, protéger et développer votre communauté. Gérez l’intégralité de votre serveur depuis une interface moderne, profitez d’outils avancés de modération, d’une économie complète, d’une IA intégrée et d’un tableau de bord puissant. Rejoignez les milliers de communautés qui font déjà confiance à OMNIX.
     </p>
 
     <!-- Zone d'appel à l'action dynamique -->
-    <div class="cta-area" id="cta-action-area">
-      <!-- Injecté dynamiquement en JS (Se connecter ou Accéder au Dashboard) -->
-    </div>
+    <div class="cta-area" id="cta-action-area"></div>
 
     <!-- BANNIÈRE GRAPHIQUE SAAS OMNIX -->
     <div class="saas-banner">
@@ -261,15 +258,19 @@
   </footer>
 
   <script>
-    const clientId = "<%= clientId %>";
-    const redirectUri = "<%= redirectUri %>";
-
     function toggleDrawer(open) {
       const drawer = document.getElementById('side-drawer');
       if (open) { drawer.classList.add('open'); } else { drawer.classList.remove('open'); }
     }
 
-    // Double stockage Jeton
+    function setToken(value) {
+      try {
+        localStorage.setItem('jwt_token', value);
+      } catch (e) {
+        document.cookie = `jwt_token=${value}; path=/; max-age=604800; SameSite=Lax`;
+      }
+    }
+
     function getToken() {
       try {
         const local = localStorage.getItem('jwt_token');
@@ -283,6 +284,13 @@
       const parts = value.split(`; ${name}=`);
       if (parts.length === 2) return parts.pop().split(';').shift();
       return null;
+    }
+
+    function removeToken() {
+      try {
+        localStorage.removeItem('jwt_token');
+      } catch (e) {}
+      document.cookie = "jwt_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     }
 
     function parseJwt(token) {
@@ -300,7 +308,6 @@
       } catch (e) { return null; }
     }
 
-    // Gestion de l'affichage dynamique de la connexion/déconnexion et de l'onglet Staff
     function setupDynamicButtons() {
       const jwtToken = getToken();
       const headerArea = document.getElementById('auth-buttons-header');
@@ -310,21 +317,19 @@
       if (jwtToken) {
         const payload = parseJwt(jwtToken);
         if (payload) {
-          // Boutons du Header
           headerArea.innerHTML = `
             <a href="/dashboard" class="btn-nav-login" style="background-color: #059669;">Dashboard</a>
             <button onclick="logout()" class="btn-nav-logout">Déconnexion</button>
           `;
-          // Boutons CTA du Hero
           ctaArea.innerHTML = `
             <a href="/dashboard" class="btn-primary" style="background: linear-gradient(135deg, #059669, #10b981);">Accéder au Dashboard</a>
             <a href="/founder" class="btn-secondary">Découvrir OMNIX</a>
           `;
 
-          // Injection dynamique du Staff Panel dans le tiroir de droite
-          if (payload.isAdmin) {
-            const nav = document.getElementById('drawer-nav');
-            if (nav && !document.getElementById('nav-admin-link')) {
+          // Injection dynamique des onglets Staff & Déconnexion dans le menu tiroir mobile
+          const nav = document.getElementById('drawer-nav');
+          if (nav) {
+            if (payload.isAdmin && !document.getElementById('nav-admin-link')) {
               const adminLink = document.createElement('a');
               adminLink.href = '/admin';
               adminLink.id = 'nav-admin-link';
@@ -332,12 +337,29 @@
               adminLink.innerText = 'Staff Panel';
               nav.appendChild(adminLink);
             }
+            if (!document.getElementById('nav-logout-btn')) {
+              const logoutBtn = document.createElement('button');
+              logoutBtn.id = 'nav-logout-btn';
+              logoutBtn.innerText = 'Déconnexion';
+              logoutBtn.style.background = 'rgba(220, 38, 38, 0.15)';
+              logoutBtn.style.color = '#f87171';
+              logoutBtn.style.border = '1px solid rgba(220, 38, 38, 0.25)';
+              logoutBtn.style.width = '100%';
+              logoutBtn.style.padding = '12px';
+              logoutBtn.style.borderRadius = '10px';
+              logoutBtn.style.fontSize = '12px';
+              logoutBtn.style.fontWeight = '700';
+              logoutBtn.style.textTransform = 'uppercase';
+              logoutBtn.style.marginTop = '24px';
+              logoutBtn.style.cursor = 'pointer';
+              logoutBtn.onclick = logout;
+              nav.appendChild(logoutBtn);
+            }
           }
           return;
         }
       }
 
-      // Si non connecté
       headerArea.innerHTML = `
         <a href="${loginUrl}" class="btn-nav-login">Se connecter</a>
       `;
@@ -351,10 +373,7 @@
     }
 
     function logout() {
-      try {
-        localStorage.removeItem('jwt_token');
-      } catch (e) {}
-      document.cookie = "jwt_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      removeToken();
       window.location.href = '/';
     }
 
@@ -393,9 +412,8 @@
       }
     }
 
-    // Démarrage
     setupDynamicButtons();
-    loadRealStats();
+    window.addEventListener('DOMContentLoaded', loadRealStats);
   </script>
 </body>
 </html>
