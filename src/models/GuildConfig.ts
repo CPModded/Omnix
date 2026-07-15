@@ -1,10 +1,19 @@
 /**
  * ====================================================================
- * SCHÉMA DE CONFIGURATION DES SERVEURS (OMNIX CORE - 25 MODULES)
+ * SCHÉMA DE CONFIGURATION DES SERVEURS (OMNIX CORE - TICKETS ULTRA PRO)
  * ====================================================================
  */
 
 import { Schema, model, Document } from 'mongoose';
+
+export interface ITicketCategory {
+  id: string;             // Identifiant unique (ex: support_tech)
+  name: string;           // Nom de l'affichage (ex: Support technique)
+  emoji: string;          // Émoji d'affichage (ex: 🔧)
+  type: 'category' | 'channel' | 'thread'; // Type d'ouverture du ticket
+  targetId: string | null; // ID Discord du salon ou de la catégorie de destination
+  welcomeMessage: string; // Message d'accueil personnalisé modifiable depuis le site
+}
 
 export interface IGuildConfig extends Document {
   guildId: string;
@@ -15,7 +24,13 @@ export interface IGuildConfig extends Document {
   };
   modules: {
     moderation: { enabled: boolean; logChannelId: string | null };
-    tickets: { enabled: boolean; categoryId: string | null; counter: number };
+    tickets: { 
+      enabled: boolean; 
+      categoryId: string | null; // Catégorie de repli par défaut (Free)
+      counter: number;
+      // TABLEAU DYNAMIQUE DE CATÉGORIES (Ajout/Suppression/Édition depuis le Dashboard)
+      categoriesList: ITicketCategory[];
+    };
     giveaways: { enabled: boolean };
     suggestions: { enabled: boolean; channelId: string | null };
     logs: { enabled: boolean; generalChannelId: string | null; modChannelId: string | null };
@@ -39,7 +54,6 @@ export interface IGuildConfig extends Document {
     customCommands: { enabled: boolean; list: Array<{ trigger: string; response: string }> };
     statistics: { enabled: boolean };
     ping: { enabled: boolean };
-    // AJOUT : Option Honeypot
     honeypot: { enabled: boolean; channelId: string | null }; 
   };
   createdAt: Date;
@@ -55,7 +69,20 @@ const GuildConfigSchema = new Schema<IGuildConfig>({
   },
   modules: {
     moderation: { enabled: { type: Boolean, default: false }, logChannelId: { type: String, default: null } },
-    tickets: { enabled: { type: Boolean, default: false }, categoryId: { type: String, default: null }, counter: { type: Number, default: 0 } },
+    tickets: { 
+      enabled: { type: Boolean, default: false }, 
+      categoryId: { type: String, default: null }, 
+      counter: { type: Number, default: 0 },
+      // Déclaration du tableau de catégories dynamiques
+      categoriesList: [{
+        id: { type: String, required: true },
+        name: { type: String, required: true },
+        emoji: { type: String, default: '🎫' },
+        type: { type: String, enum: ['category', 'channel', 'thread'], default: 'category' },
+        targetId: { type: String, default: null },
+        welcomeMessage: { type: String, default: "Bonjour {user}, un conseiller va prendre en charge votre demande. Décrivez votre problème." }
+      }]
+    },
     giveaways: { enabled: { type: Boolean, default: false } },
     suggestions: { enabled: { type: Boolean, default: false }, channelId: { type: String, default: null } },
     logs: { enabled: { type: Boolean, default: false }, generalChannelId: { type: String, default: null }, modChannelId: { type: String, default: null } },
@@ -79,7 +106,6 @@ const GuildConfigSchema = new Schema<IGuildConfig>({
     customCommands: { enabled: { type: Boolean, default: false }, list: [{ trigger: { type: String, required: true }, response: { type: String, required: true } }] },
     statistics: { enabled: { type: Boolean, default: false } },
     ping: { enabled: { type: Boolean, default: true } },
-    // AJOUT : Stockage pour l'option Honeypot
     honeypot: { enabled: { type: Boolean, default: false }, channelId: { type: String, default: null } }
   }
 }, { timestamps: true });
