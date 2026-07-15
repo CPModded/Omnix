@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OMNIX - Plateforme Officielle</title>
   <style>
+    /* Styles CSS natifs - Sans dépendance CDN */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background-color: #030712;
-      color: #f1f5f9;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #030712; /* Slate 950 */
+      color: #f1f5f9; /* Slate 100 */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -20,6 +21,7 @@
     }
     .halo-top { position: absolute; top: -150px; left: -150px; width: 500px; height: 500px; background: rgba(124, 58, 237, 0.06); filter: blur(100px); border-radius: 50%; pointer-events: none; }
     .halo-bottom { position: absolute; bottom: -150px; right: -150px; width: 500px; height: 500px; background: rgba(6, 182, 212, 0.06); filter: blur(100px); border-radius: 50%; pointer-events: none; }
+
     header {
       border-bottom: 1px solid #1e293b;
       background: rgba(15, 23, 42, 0.7);
@@ -43,6 +45,8 @@
       -webkit-text-fill-color: transparent;
       font-size: 18px;
     }
+
+    /* Menu Tiroir (Drawer) Latéral Droit */
     .btn-burger { background: none; border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center; }
     .burger-icon { width: 24px; height: 24px; fill: currentColor; }
     .drawer {
@@ -71,13 +75,20 @@
       font-size: 13px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 1px;
       padding: 12px 16px;
       border-radius: 10px;
       transition: background 0.15s, color 0.15s;
     }
     .drawer-links a:hover { background: rgba(255,255,255,0.02); color: white; }
     .drawer-links a.active { color: #38bdf8; background: rgba(56, 189, 248, 0.05); }
+    .admin-nav-link { color: #c084fc !important; text-shadow: 0 0 8px rgba(192, 132, 252, 0.4); }
+
+    /* Boutons En-tête */
+    .header-controls { display: flex; align-items: center; gap: 12px; }
+    .btn-nav-login { padding: 10px 20px; background-color: #4f46e5; color: white; text-decoration: none; font-size: 13px; font-weight: 700; border-radius: 10px; transition: background 0.15s; }
+    .btn-nav-login:hover { background-color: #4338ca; }
+    .btn-nav-logout { background: none; border: none; color: #94a3b8; font-size: 13px; font-weight: 600; cursor: pointer; transition: color 0.15s; }
+    .btn-nav-logout:hover { color: white; }
 
     main {
       flex: 1;
@@ -104,72 +115,50 @@
       margin-bottom: 24px;
       display: inline-block;
     }
-    h1 {
-      font-size: 38px;
-      font-weight: 900;
-      line-height: 1.15;
-      letter-spacing: -1px;
-      color: white;
-      margin-bottom: 24px;
-      max-width: 800px;
-    }
-    h1 span {
-      background: linear-gradient(to right, #60a5fa, #22d3ee, #a78bfa);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    p.subtitle {
-      font-size: 16px;
-      color: #94a3b8;
-      max-width: 700px;
-      line-height: 1.6;
-      margin-bottom: 40px;
-    }
-    .cta-area {
+    h1 { font-size: 38px; font-weight: 900; line-height: 1.15; letter-spacing: -1px; color: white; margin-bottom: 24px; max-width: 800px; }
+    h1 span { background: linear-gradient(to right, #60a5fa, #22d3ee, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    p.subtitle { font-size: 16px; color: #94a3b8; max-width: 700px; line-height: 1.6; margin-bottom: 40px; }
+
+    .cta-area { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 400px; margin-bottom: 60px; }
+    @media (min-width: 600px) { .cta-area { flex-direction: row; max-width: 500px; } }
+
+    /* BANNIÈRE DE PRÉSENTATION SAAS D'OMNIX (CSS Graphique) */
+    .saas-banner {
+      width: 100%;
+      max-width: 850px;
+      height: 320px;
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 40px rgba(79, 70, 229, 0.1);
+      margin-bottom: 60px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      width: 100%;
-      max-width: 400px;
-      margin-bottom: 60px;
+      justify-content: space-between;
+      padding: 30px;
+      text-align: left;
+      position: relative;
+      overflow: hidden;
     }
-    @media (min-width: 600px) { .cta-area { flex-direction: row; max-width: 500px; } }
-    .btn-primary {
-      flex: 1;
-      padding: 16px 24px;
-      background: linear-gradient(135deg, #4f46e5, #7c3aed);
-      color: white;
-      font-size: 13px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      text-decoration: none;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      box-shadow: 0 4px 15px rgba(79, 70, 229, 0.25);
-      transition: transform 0.1s, box-shadow 0.15s;
+    .banner-glow {
+      position: absolute;
+      top: -50px;
+      right: -50px;
+      width: 250px;
+      height: 250px;
+      background: rgba(6, 182, 212, 0.15); /* Cyan */
+      filter: blur(50px);
+      border-radius: 50%;
     }
-    .btn-primary:hover { box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35); }
-    .btn-primary:active { transform: scale(0.98); }
-    .btn-secondary {
-      flex: 1;
-      padding: 16px 24px;
-      background: rgba(15, 23, 42, 0.5);
-      border: 1px solid #1e293b;
-      color: #cbd5e1;
-      font-size: 14px;
-      font-weight: 600;
-      text-decoration: none;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: border-color 0.15s, background 0.15s;
-    }
-    .btn-secondary:hover { border-color: #334155; background: rgba(15, 23, 42, 0.8); }
+    .banner-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 16px; }
+    .banner-tab { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #38bdf8; letter-spacing: 1px; }
+    .banner-badge { font-size: 10px; font-weight: 700; color: #34d399; background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.2); padding: 4px 12px; border-radius: 20px; }
+    .banner-body { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 8px; margin-top: 16px; }
+    .banner-title { font-size: 18px; font-weight: 800; color: white; }
+    .banner-desc { font-size: 13px; color: #64748b; max-width: 500px; }
+
     .stats-grid {
       display: grid;
       grid-template-cols: repeat(2, 1fr);
@@ -184,14 +173,9 @@
     }
     @media (min-width: 768px) { .stats-grid { grid-template-cols: repeat(5, 1fr); } }
     .stat-item { display: flex; flex-direction: column; align-items: center; }
-    .stat-num {
-      font-size: 28px;
-      font-weight: 800;
-      background: linear-gradient(to right, #38bdf8, #818cf8);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
+    .stat-num { font-size: 28px; font-weight: 800; background: linear-gradient(to right, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .stat-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
     footer { border-top: 1px solid #0f172a; padding: 24px; text-align: center; font-size: 12px; color: #475569; }
     .discord-svg { width: 18px; height: 18px; fill: currentColor; }
   </style>
@@ -209,12 +193,18 @@
       <span class="logo-text">OMNIX</span>
     </a>
     
-    <button onclick="toggleDrawer(true)" class="btn-burger">
-      <svg class="burger-icon" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
-    </button>
+    <div class="header-controls">
+      <!-- Zone d'affichage dynamique du bouton de connexion / déconnexion -->
+      <div id="auth-buttons-header" style="display: flex; align-items: center; gap: 16px;">
+        <!-- Injecté dynamiquement par JS -->
+      </div>
+      <button onclick="toggleDrawer(true)" class="btn-burger">
+        <svg class="burger-icon" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+      </button>
+    </div>
   </header>
 
-  <!-- MENU TIROIR DE NAVIGATION DROIT -->
+  <!-- MENU TIROIR DE NAVIGATION DROIT (Drawer complet à 5 liens) -->
   <div id="side-drawer" class="drawer">
     <div class="drawer-header">
       <span class="logo-text">Menu</span>
@@ -224,10 +214,12 @@
       <a href="/" class="active">Accueil</a>
       <a href="/dashboard">Dashboard</a>
       <a href="/pricing">Abonnements</a>
+      <a href="/learn-more">En savoir plus</a>
       <a href="/founder">Découvrir OMNIX</a>
     </div>
   </div>
 
+  <!-- Hero & Présentation -->
   <main>
     <span class="tag">Plateforme Intégrée SaaS</span>
     <h1>Gérez votre communauté avec <span>OMNIX</span></h1>
@@ -235,37 +227,32 @@
       OMNIX n’est pas un simple bot Discord. C’est une plateforme intelligente conçue pour automatiser, protéger et développer votre communauté. Gérez l’intégralité de votre serveur depuis une interface moderne, profitez d’outils avancés de modération, d’une économie complète, d’une IA intégrée et d’un tableau de bord puissant. Rejoignez les milliers de communautés qui font déjà confiance à OMNIX.
     </p>
 
-    <div class="cta-area">
-      <a href="https://discord.com/api/oauth2/authorize?client_id=<%= clientId %>&redirect_uri=<%= redirectUri %>&response_type=code&scope=identify+guilds" class="btn-primary">
-        <svg class="discord-svg" viewBox="0 0 127.14 96.36">
-          <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.43-5c.87-.64,1.71-1.32,2.51-2a75.4,75.4,0,0,0,72.71,0c.8.71,1.64,1.39,2.51,2a68.17,68.17,0,0,1-10.43,5,78.23,78.23,0,0,0,6.63,10.85,105.73,105.73,0,0,0,31.54-18.83C129,54.65,122.94,31.58,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.92,46,53.92,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.15,46,96.15,53,91,65.69,84.69,65.69Z"/>
-        </svg>
-        Entrer dans l'application
-      </a>
-      <a href="/founder" class="btn-secondary">Découvrir OMNIX</a>
+    <!-- Zone d'appel à l'action dynamique -->
+    <div class="cta-area" id="cta-action-area">
+      <!-- Injecté dynamiquement en JS (Se connecter ou Accéder au Dashboard) -->
     </div>
 
+    <!-- BANNIÈRE GRAPHIQUE SAAS OMNIX -->
+    <div class="saas-banner">
+      <div class="banner-glow"></div>
+      <div class="banner-header">
+        <span class="banner-tab">OMNIX Console — Aperçu de l'interface</span>
+        <span class="banner-badge">SaaS PRO</span>
+      </div>
+      <div class="banner-body">
+        <h4 class="banner-title">Double Sécurité & Intelligence</h4>
+        <p class="banner-desc">Activez l'AutoMod, configurez vos salons d'assistance privés par tickets et configurez les filtres de sécurité en 1 clic.</p>
+      </div>
+      <div style="font-size: 11px; color: #475569; font-weight: 700; text-transform: uppercase;">Mise à jour v2.4</div>
+    </div>
+
+    <!-- Section statistiques réelles -->
     <div class="stats-grid">
-      <div class="stat-item">
-        <span class="stat-num" id="s-servers">...</span>
-        <span class="stat-label">Serveurs</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-num" id="s-users">...</span>
-        <span class="stat-label">Membres</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-num" id="s-commands">...</span>
-        <span class="stat-label">Commandes</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-num" id="s-uptime">...</span>
-        <span class="stat-label">Uptime</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-num" id="s-latency">...</span>
-        <span class="stat-label">Latence</span>
-      </div>
+      <div class="stat-item"><span class="stat-num" id="s-servers">...</span><span class="stat-label">Serveurs</span></div>
+      <div class="stat-item"><span class="stat-num" id="s-users">...</span><span class="stat-label">Membres</span></div>
+      <div class="stat-item"><span class="stat-num" id="s-commands">...</span><span class="stat-label">Commandes</span></div>
+      <div class="stat-item"><span class="stat-num" id="s-uptime">...</span><span class="stat-label">Uptime</span></div>
+      <div class="stat-item"><span class="stat-num" id="s-latency">...</span><span class="stat-label">Latence</span></div>
     </div>
   </main>
 
@@ -274,13 +261,28 @@
   </footer>
 
   <script>
+    const clientId = "<%= clientId %>";
+    const redirectUri = "<%= redirectUri %>";
+
     function toggleDrawer(open) {
       const drawer = document.getElementById('side-drawer');
-      if (open) {
-        drawer.classList.add('open');
-      } else {
-        drawer.classList.remove('open');
-      }
+      if (open) { drawer.classList.add('open'); } else { drawer.classList.remove('open'); }
+    }
+
+    // Double stockage Jeton
+    function getToken() {
+      try {
+        const local = localStorage.getItem('jwt_token');
+        if (local) return local;
+      } catch (e) {}
+      return getCookie('jwt_token');
+    }
+
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+      return null;
     }
 
     function parseJwt(token) {
@@ -292,30 +294,68 @@
         const paddedBase64 = pad ? base64 + '='.repeat(4 - pad) : base64;
         const rawBinary = window.atob(paddedBase64);
         const bytes = new Uint8Array(rawBinary.length);
-        for (let i = 0; i < rawBinary.length; i++) {
-          bytes[i] = rawBinary.charCodeAt(i);
-        }
+        for (let i = 0; i < rawBinary.length; i++) { bytes[i] = rawBinary.charCodeAt(i); }
         const decoder = new TextDecoder('utf-8');
         return JSON.parse(decoder.decode(bytes));
-      } catch (e) {
-        return null;
-      }
+      } catch (e) { return null; }
     }
 
-    const jwtToken = localStorage.getItem('jwt_token');
-    if (jwtToken) {
-      const payload = parseJwt(jwtToken);
-      if (payload && payload.isAdmin) {
-        const nav = document.getElementById('drawer-nav');
-        if (nav && !document.getElementById('nav-admin-link')) {
-          const adminLink = document.createElement('a');
-          adminLink.href = '/admin';
-          adminLink.id = 'nav-admin-link';
-          adminLink.className = 'admin-nav-link';
-          adminLink.innerText = 'Staff Panel';
-          nav.appendChild(adminLink);
+    // Gestion de l'affichage dynamique de la connexion/déconnexion et de l'onglet Staff
+    function setupDynamicButtons() {
+      const jwtToken = getToken();
+      const headerArea = document.getElementById('auth-buttons-header');
+      const ctaArea = document.getElementById('cta-action-area');
+      const loginUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify+guilds`;
+
+      if (jwtToken) {
+        const payload = parseJwt(jwtToken);
+        if (payload) {
+          // Boutons du Header
+          headerArea.innerHTML = `
+            <a href="/dashboard" class="btn-nav-login" style="background-color: #059669;">Dashboard</a>
+            <button onclick="logout()" class="btn-nav-logout">Déconnexion</button>
+          `;
+          // Boutons CTA du Hero
+          ctaArea.innerHTML = `
+            <a href="/dashboard" class="btn-primary" style="background: linear-gradient(135deg, #059669, #10b981);">Accéder au Dashboard</a>
+            <a href="/founder" class="btn-secondary">Découvrir OMNIX</a>
+          `;
+
+          // Injection dynamique du Staff Panel dans le tiroir de droite
+          if (payload.isAdmin) {
+            const nav = document.getElementById('drawer-nav');
+            if (nav && !document.getElementById('nav-admin-link')) {
+              const adminLink = document.createElement('a');
+              adminLink.href = '/admin';
+              adminLink.id = 'nav-admin-link';
+              adminLink.className = 'admin-nav-link';
+              adminLink.innerText = 'Staff Panel';
+              nav.appendChild(adminLink);
+            }
+          }
+          return;
         }
       }
+
+      // Si non connecté
+      headerArea.innerHTML = `
+        <a href="${loginUrl}" class="btn-nav-login">Se connecter</a>
+      `;
+      ctaArea.innerHTML = `
+        <a href="${loginUrl}" class="btn-primary">
+          <svg class="discord-svg" viewBox="0 0 127.14 96.36"><path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.43-5c.87-.64,1.71-1.32,2.51-2a75.4,75.4,0,0,0,72.71,0c.8.71,1.64,1.39,2.51,2a68.17,68.17,0,0,1-10.43,5,78.23,78.23,0,0,0,6.63,10.85,105.73,105.73,0,0,0,31.54-18.83C129,54.65,122.94,31.58,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.92,46,53.92,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.15,46,96.15,53,91,65.69,84.69,65.69Z"/></svg>
+          Entrer dans l'application
+        </a>
+        <a href="/founder" class="btn-secondary">Découvrir OMNIX</a>
+      `;
+    }
+
+    function logout() {
+      try {
+        localStorage.removeItem('jwt_token');
+      } catch (e) {}
+      document.cookie = "jwt_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      window.location.href = '/';
     }
 
     function animateValue(obj, start, end, duration, suffix = '') {
@@ -324,9 +364,7 @@
         if (!startTimestamp) startTimestamp = timestamp;
         const progress = Math.min((timestamp - startTimestamp) / duration, 1);
         obj.innerHTML = Math.floor(progress * (end - start) + start) + suffix;
-        if (progress < 1) {
-          window.requestAnimationFrame(step);
-        }
+        if (progress < 1) { window.requestAnimationFrame(step); }
       };
       window.requestAnimationFrame(step);
     }
@@ -355,7 +393,9 @@
       }
     }
 
-    window.addEventListener('DOMContentLoaded', loadRealStats);
+    // Démarrage
+    setupDynamicButtons();
+    loadRealStats();
   </script>
 </body>
 </html>
