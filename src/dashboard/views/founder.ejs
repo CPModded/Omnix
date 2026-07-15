@@ -5,7 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OMNIX - Découvrir</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* Styles CSS natifs */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
     body {
       background-color: #030712; /* Slate 950 */
       color: #f1f5f9; /* Slate 100 */
@@ -18,8 +23,30 @@
       overflow-x: hidden;
       line-height: 1.5;
     }
-    .halo-top { position: absolute; top: -150px; left: -150px; width: 400px; height: 400px; background: rgba(124, 58, 237, 0.08); filter: blur(80px); border-radius: 50%; pointer-events: none; }
-    .halo-bottom { position: absolute; bottom: -150px; right: -150px; width: 400px; height: 400px; background: rgba(6, 182, 212, 0.08); filter: blur(80px); border-radius: 50%; pointer-events: none; }
+    
+    .halo-top {
+      position: absolute;
+      top: -150px;
+      left: -150px;
+      width: 400px;
+      height: 400px;
+      background: rgba(124, 58, 237, 0.08); /* Violet */
+      filter: blur(80px);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .halo-bottom {
+      position: absolute;
+      bottom: -150px;
+      right: -150px;
+      width: 400px;
+      height: 400px;
+      background: rgba(6, 182, 212, 0.08); /* Cyan */
+      filter: blur(80px);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
     header {
       border-bottom: 1px solid #1e293b;
       background: rgba(15, 23, 42, 0.7);
@@ -33,8 +60,19 @@
       top: 0;
       z-index: 50;
     }
-    .logo-area { display: flex; align-items: center; gap: 12px; text-decoration: none; }
-    .logo-img { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+    .logo-img {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      object-fit: cover;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
     .logo-text {
       font-weight: 800;
       letter-spacing: 1px;
@@ -43,18 +81,32 @@
       -webkit-text-fill-color: transparent;
       font-size: 18px;
     }
-    .btn-burger { background: none; border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center; }
-    .burger-icon { width: 24px; height: 24px; fill: currentColor; }
+
+    /* Menu Tiroir (Drawer) Latéral Droit */
+    .btn-burger {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+    .burger-icon {
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
+    }
     .drawer {
       position: fixed;
       top: 0;
-      right: -300px;
+      right: -300px; /* Masqué à l'origine */
       width: 280px;
       height: 100vh;
       background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
       border-left: 1px solid rgba(255, 255, 255, 0.04);
+      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
       z-index: 1000;
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       padding: 32px 24px;
@@ -62,26 +114,76 @@
       flex-direction: column;
       gap: 32px;
     }
-    .drawer.open { transform: translateX(-300px); }
-    .btn-close-drawer { background: none; border: none; color: #64748b; font-size: 28px; cursor: pointer; }
-    .drawer-links { display: flex; flex-direction: column; gap: 16px; }
+    .drawer.open { transform: translateX(-300px); /* Glissement */ }
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn-close-drawer {
+      background: none;
+      border: none;
+      color: #64748b;
+      font-size: 28px;
+      cursor: pointer;
+    }
+    .btn-close-drawer:hover {
+      color: white;
+    }
+    .drawer-links {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
     .drawer-links a {
       text-decoration: none;
       color: #94a3b8;
       font-size: 13px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 1px;
       padding: 12px 16px;
       border-radius: 10px;
       transition: background 0.15s, color 0.15s;
     }
-    .drawer-links a:hover { background: rgba(255,255,255,0.02); color: white; }
-    .drawer-links a.active { color: #38bdf8; background: rgba(56, 189, 248, 0.05); }
-    .admin-nav-link { color: #c084fc !important; text-shadow: 0 0 8px rgba(192, 132, 252, 0.4); }
-    main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 24px; z-index: 10; }
-    .card-container { position: relative; width: 100%; max-width: 400px; }
-    .card-glow { position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px; background: linear-gradient(135deg, #7c3aed, #06b6d4); border-radius: 24px; filter: blur(15px); opacity: 0.15; z-index: -1; }
+    .drawer-links a:hover {
+      background: rgba(255,255,255,0.02);
+      color: white;
+    }
+    .drawer-links a.active {
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.05);
+    }
+    .admin-nav-link {
+      color: #c084fc !important;
+      text-shadow: 0 0 8px rgba(192, 132, 252, 0.4);
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      z-index: 10;
+    }
+
+    .card-container {
+      position: relative;
+      width: 100%;
+      max-width: 400px;
+    }
+    .card-glow {
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(135deg, #7c3aed, #06b6d4);
+      border-radius: 24px;
+      filter: blur(15px);
+      opacity: 0.15;
+      z-index: -1;
+    }
     .card {
       background: rgba(15, 23, 42, 0.55);
       border: 1px solid rgba(255, 255, 255, 0.05);
@@ -95,11 +197,48 @@
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
     }
-    .avatar { width: 90px; height: 90px; border-radius: 50%; overflow: hidden; margin-bottom: 24px; box-shadow: 0 8px 16px rgba(124, 58, 237, 0.2); }
-    .avatar-img { width: 100%; height: 100%; object-fit: cover; }
-    h1 { font-size: 24px; font-weight: 800; color: white; margin-bottom: 8px; }
-    .badge { font-size: 11px; font-weight: 700; color: #a78bfa; background: rgba(124, 58, 237, 0.1); border: 1px solid rgba(124, 58, 237, 0.2); padding: 6px 14px; border-radius: 8px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; display: inline-block; }
-    p.description { font-size: 14px; color: #94a3b8; line-height: 1.6; margin-bottom: 32px; }
+
+    /* Correction anti-image cassée */
+    .avatar {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      overflow: hidden;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 16px rgba(124, 58, 237, 0.2);
+    }
+    .avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 8px;
+    }
+    .badge {
+      font-size: 11px;
+      font-weight: 700;
+      color: #a78bfa;
+      background: rgba(124, 58, 237, 0.1);
+      border: 1px solid rgba(124, 58, 237, 0.2);
+      padding: 6px 14px;
+      border-radius: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+      display: inline-block;
+    }
+    p.description {
+      font-size: 14px;
+      color: #94a3b8;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
     .btn-discord {
       width: 100%;
       padding: 14px 24px;
@@ -119,9 +258,20 @@
       box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
       margin-bottom: 12px;
     }
-    .btn-discord:hover { box-shadow: 0 6px 20px rgba(79, 70, 229, 0.3); transform: translateY(-1px); }
-    .btn-discord:active { transform: translateY(0) scale(0.98); }
-    .discord-svg { width: 18px; height: 18px; fill: currentColor; }
+    .btn-discord:hover {
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.3);
+      transform: translateY(-1px);
+    }
+    .btn-discord:active {
+      transform: translateY(0) scale(0.98);
+    }
+    .discord-svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    /* Bouton d'achat interactif "Acheter OMNIX Premium" */
     .btn-buy-premium {
       width: 100%;
       padding: 14px 24px;
@@ -141,7 +291,13 @@
       box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
     }
     .btn-buy-premium:active { transform: scale(0.98); }
-    footer { border-top: 1px solid #0f172a; padding: 24px; text-align: center; font-size: 12px; color: #475569; }
+    footer {
+      border-top: 1px solid #0f172a;
+      padding: 24px;
+      text-align: center;
+      font-size: 12px;
+      color: #475569;
+    }
   </style>
 </head>
 <body>
@@ -182,8 +338,10 @@
       <div class="card-glow"></div>
       <div class="card">
         
+        <!-- Image de Profil : Logo d'OMNIX avec sécurité anti-image cassée -->
         <div class="avatar">
-          <img src="/logo.png" class="avatar-img" alt="OMNIX Logo">
+          <img src="/logo.png" id="logo-avatar-img" onerror="this.style.display='none'; document.getElementById('avatar-fallback-box').style.display='flex';" class="avatar-img" alt="OMNIX Logo">
+          <div id="avatar-fallback-box" style="display: none; width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg, #06b6d4, #7c3aed); align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 40px; box-shadow: 0 8px 16px rgba(124, 58, 237, 0.2);">O</div>
         </div>
 
         <h1><%= founder.name %></h1>
@@ -202,7 +360,7 @@
           Serveur officiel Discord
         </a>
 
-        <!-- NOUVEAU BOUTON D'ACHAT INTERACTIF : Redirige vers la page d'abonnements -->
+        <!-- NOUVEAU BOUTON D'ACHAT INTERACTIF -->
         <a href="/pricing" class="btn-buy-premium">
           Obtenir OMNIX Premium
         </a>
