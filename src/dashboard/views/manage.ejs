@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OMNIX - Console</title>
   <style>
-    /* Styles CSS natifs */
+    /* Styles CSS natifs - Sans dépendance externe (100% stable sur Safari iOS) */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background-color: #030712;
-      color: #f1f5f9;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #030712; /* Slate 950 */
+      color: #f1f5f9; /* Slate 100 */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -19,7 +19,20 @@
       overflow-x: hidden;
       line-height: 1.5;
     }
-    .halo-bottom { position: absolute; bottom: -150px; left: -150px; width: 500px; height: 500px; background: rgba(139, 92, 246, 0.05); filter: blur(100px); border-radius: 50%; pointer-events: none; }
+    
+    .halo-bottom {
+      position: absolute;
+      bottom: -150px;
+      left: -150px;
+      width: 500px;
+      height: 500px;
+      background: rgba(139, 92, 246, 0.05); /* Violet */
+      filter: blur(100px);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    /* En-tête */
     header {
       border-bottom: 1px solid #1e293b;
       background: rgba(15, 23, 42, 0.7);
@@ -34,10 +47,19 @@
       z-index: 50;
     }
     .logo-area { display: flex; align-items: center; gap: 12px; text-decoration: none; }
-    .logo-img { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; }
-    .back-link { text-decoration: none; color: #94a3b8; font-size: 13px; font-weight: 600; }
-    .logo-text { font-weight: 800; letter-spacing: 1px; background: linear-gradient(to right, #60a5fa, #22d3ee, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 16px; }
+    .logo-img { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2); }
+    .back-link { text-decoration: none; color: #94a3b8; font-size: 13px; font-weight: 600; transition: color 0.15s ease; }
+    .back-link:hover { color: white; }
+    .logo-text {
+      font-weight: 800;
+      letter-spacing: 1px;
+      background: linear-gradient(to right, #60a5fa, #22d3ee, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 16px;
+    }
 
+    /* Menu Tiroir (Drawer) Latéral Droit */
     .btn-burger { background: none; border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center; }
     .burger-icon { width: 24px; height: 24px; fill: currentColor; }
     .drawer {
@@ -60,88 +82,225 @@
     .drawer.open { transform: translateX(-300px); }
     .btn-close-drawer { background: none; border: none; color: #64748b; font-size: 28px; cursor: pointer; }
     .drawer-links { display: flex; flex-direction: column; gap: 16px; }
-    .drawer-links a { text-decoration: none; color: #94a3b8; font-size: 13px; font-weight: 700; text-transform: uppercase; padding: 12px 16px; border-radius: 10px; transition: background 0.15s, color 0.15s; }
+    .drawer-links a {
+      text-decoration: none;
+      color: #94a3b8;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      transition: background 0.15s, color 0.15s;
+    }
     .drawer-links a:hover { background: rgba(255,255,255,0.02); color: white; }
     .drawer-links a.active { color: #38bdf8; background: rgba(56, 189, 248, 0.05); }
 
-    .container { flex: 1; max-width: 1100px; width: 100%; margin: 0 auto; padding: 40px 24px; display: flex; flex-direction: column; gap: 32px; z-index: 10; }
+    /* Disposition Flexbox Principale */
+    .container {
+      flex: 1;
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 40px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      z-index: 10;
+    }
     @media (min-width: 768px) { .container { flex-direction: row; } }
 
+    /* Barre latérale d'onglets */
     aside { display: flex; flex-direction: row; gap: 8px; overflow-x: auto; padding-bottom: 16px; }
-    @media (min-width: 768px) { aside { width: 250px; flex-direction: column; overflow-x: visible; padding-bottom: 0; } }
-    .tab-btn { width: 100%; text-align: left; padding: 14px 20px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; background: none; border: none; color: #94a3b8; cursor: pointer; }
+    @media (min-width: 768px) {
+      aside { width: 250px; flex-direction: column; overflow-x: visible; padding-bottom: 0; }
+    }
+    .tab-btn {
+      width: 100%;
+      text-align: left;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
     .tab-btn:hover { background: rgba(15, 23, 42, 0.4); color: white; }
     .tab-btn.active { background: #4f46e5; color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2); }
 
-    .config-panel { flex: 1; background: rgba(15, 23, 42, 0.45); border: 1px solid rgba(255, 255, 255, 0.04); border-radius: 24px; padding: 32px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); position: relative; }
+    /* Panneau de configuration (Glassmorphism) */
+    .config-panel {
+      flex: 1;
+      background: rgba(15, 23, 42, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      position: relative;
+    }
     .hidden { display: none !important; }
 
-    .license-card { padding: 20px; background: rgba(3, 7, 18, 0.6); border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    /* Fiche de Licence */
+    .license-card {
+      padding: 20px;
+      background: rgba(3, 7, 18, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      border-radius: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
     .license-title { font-weight: 800; font-size: 16px; color: white; }
     .license-sub { font-size: 11px; color: #475569; margin-top: 4px; }
-    .badge-free { font-size: 10px; font-weight: 700; color: #94a3b8; background: rgba(15, 23, 42, 0.6); border: 1px solid #334155; padding: 6px 14px; border-radius: 20px; }
-    .badge-premium { font-size: 10px; font-weight: 700; color: #34d399; background: rgba(6, 78, 59, 0.2); border: 1px solid rgba(52, 211, 153, 0.3); padding: 6px 14px; border-radius: 20px; }
+    .badge-free {
+      font-size: 10px;
+      font-weight: 700;
+      color: #94a3b8;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid #334155;
+      padding: 6px 14px;
+      border-radius: 20px;
+    }
+    .badge-premium {
+      font-size: 10px;
+      font-weight: 700;
+      color: #34d399; /* Emerald 400 */
+      background: rgba(6, 78, 59, 0.2);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      padding: 6px 14px;
+      border-radius: 20px;
+    }
 
-    .switch-row { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: rgba(3, 7, 18, 0.4); border: 1px solid rgba(255, 255, 255, 0.02); border-radius: 16px; margin-bottom: 24px; }
+    /* Ligne d'interrupteur (iOS Toggle) */
+    .switch-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      background: rgba(3, 7, 18, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.02);
+      border-radius: 16px;
+      margin-bottom: 24px;
+    }
     .switch-title { font-weight: 700; font-size: 14px; color: white; }
     .switch-sub { font-size: 11px; color: #64748b; margin-top: 4px; }
 
-    .ios-toggle { width: 44px; height: 24px; background: #1e293b; border-radius: 20px; appearance: none; -webkit-appearance: none; cursor: pointer; position: relative; outline: none; transition: background 0.2s ease; }
+    /* iOS Checkbox Custom */
+    .ios-toggle {
+      width: 44px;
+      height: 24px;
+      background: #1e293b;
+      border-radius: 20px;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      position: relative;
+      outline: none;
+      transition: background 0.2s ease;
+    }
     .ios-toggle:checked { background: #4f46e5; }
-    .ios-toggle::after { content: ''; position: absolute; width: 20px; height: 20px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: transform 0.2s ease; }
+    .ios-toggle::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s ease;
+    }
     .ios-toggle:checked::after { transform: translateX(20px); }
 
+    /* Formulaires de saisie */
     .form-group { margin-bottom: 24px; }
-    label { display: block; font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-    input[type="text"], input[type="number"], textarea, select { width: 100%; background-color: #030712; border: 1px solid #1e293b; border-radius: 12px; padding: 12px 16px; font-size: 14px; color: white; font-family: inherit; }
+    label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    input[type="text"], input[type="number"], textarea, select {
+      width: 100%;
+      background-color: #030712;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 14px;
+      color: white;
+      font-family: inherit;
+    }
     input:focus, textarea:focus, select:focus { border-color: #4f46e5; outline: none; }
     .form-grid { display: grid; grid-template-cols: 1fr; gap: 16px; }
     @media (min-width: 600px) { .form-grid { grid-template-cols: repeat(2, 1fr); } }
 
-    .save-btn-container { margin-top: 40px; border-top: 1px solid #1e293b; padding-top: 24px; display: flex; justify-content: flex-end; }
-    .btn-save { padding: 14px 24px; background: linear-gradient(135deg, #06b6d4, #4f46e5); color: white; font-size: 12px; font-weight: 700; text-transform: uppercase; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2); }
+    .save-btn-container {
+      margin-top: 40px;
+      border-top: 1px solid #1e293b;
+      padding-top: 24px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .btn-save {
+      padding: 14px 24px;
+      background: linear-gradient(135deg, #06b6d4, #4f46e5);
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+    }
     .btn-save:active { transform: scale(0.98); }
-    .toast { position: absolute; bottom: 24px; right: 24px; padding: 14px 20px; background-color: #059669; color: white; font-weight: 700; font-size: 13px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3); z-index: 100; }
-
-    /* SIMULATEUR D'EMBED DISCORD INTERACTIF (Visual Preview) */
-    .discord-preview-container {
-      margin-top: 32px;
-      padding: 24px;
-      background-color: #313338; /* Discord Gray 300 */
-      border-radius: 16px;
-      border: 1px solid #1e1f22;
-      text-align: left;
+    .toast {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      padding: 14px 20px;
+      background-color: #059669; /* Emerald 600 */
+      color: white;
+      font-weight: 700;
+      font-size: 13px;
+      border-radius: 12px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+      z-index: 100;
     }
-    .discord-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-    .discord-bot-avatar { width: 40px; height: 40px; border-radius: 50%; background: #5865f2; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 14px; }
-    .discord-bot-name { font-weight: 700; font-size: 14px; color: #f2f3f5; }
-    .discord-bot-badge { font-size: 9px; font-weight: 800; background-color: #5865f2; color: white; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; margin-left: 6px; }
-    .discord-embed-card {
-      border-left: 4px solid #06b6d4; /* Couleur dynamique modifiable */
-      background-color: #2b2d31; /* Discord Gray 400 */
-      padding: 16px;
-      border-radius: 4px;
-      max-width: 520px;
-    }
-    .discord-embed-title { font-weight: 700; font-size: 15px; color: #ffffff; margin-bottom: 8px; }
-    .discord-embed-desc { font-size: 13px; color: #dbdee1; line-height: 1.5; white-space: pre-wrap; }
   </style>
 </head>
 <body>
 
   <div class="halo-bottom"></div>
 
+  <!-- En-tête -->
   <header>
     <a href="/dashboard" class="logo-area">
       <img src="/logo.png" id="logo-main-img" onerror="this.style.display='none'; document.getElementById('logo-fallback-box').style.display='flex';" class="logo-img" alt="OMNIX Logo">
       <div id="logo-fallback-box" style="display: none; width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #06b6d4, #7c3aed); align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 18px; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);">O</div>
       <span class="logo-text">OMNIX Config</span>
     </a>
+
+    <!-- Bouton d'ouverture du Menu Tiroir -->
     <button onclick="toggleDrawer(true)" class="btn-burger">
       <svg class="burger-icon" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
     </button>
   </header>
 
+  <!-- MENU TIROIR DE NAVIGATION DROIT -->
   <div id="side-drawer" class="drawer">
     <div class="drawer-header">
       <span class="logo-text">Menu</span>
@@ -154,7 +313,10 @@
     </div>
   </div>
 
+  <!-- Conteneur d'administration -->
   <div class="container">
+    
+    <!-- Liste des onglets -->
     <aside>
       <button onclick="switchTab('tab-overview')" id="btn-tab-general" class="tab-btn active">Vue d'ensemble</button>
       <button onclick="switchTab('tab-welcome')" id="btn-tab-welcome" class="tab-btn">Accueil & Départ</button>
@@ -165,10 +327,13 @@
       <button onclick="switchTab('tab-backups')" id="btn-tab-backups" class="tab-btn">Sauvegardes (Premium)</button>
     </aside>
 
+    <!-- Formulaire d'édition -->
     <main class="config-panel">
+      
       <!-- Onglet 1 : Vue d'ensemble -->
       <section id="tab-overview" class="tab-content">
         <h3 style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 24px;">Fiche d'identité</h3>
+        
         <div class="license-card">
           <div>
             <p class="license-title" id="license-label">Vérification de la licence...</p>
@@ -189,96 +354,185 @@
       <!-- Onglet 2 : Accueil & Départ -->
       <section id="tab-welcome" class="tab-content hidden">
         <h3 style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 24px;">Accueil & Départ</h3>
-        <div class="switch-row"><div><p class="switch-title">Activer le module d'accueil (Welcome)</p></div><input type="checkbox" id="welcome-enabled" class="ios-toggle"></div>
-        <div class="form-group">
-          <label>Salon de réception des messages de bienvenue</label>
-          <select id="welcome-channel"><option value="">Sélectionnez un salon...</option></select>
-        </div>
-        <div class="form-group">
-          <label>Message d'accueil personnalisé</label>
-          <textarea id="welcome-message" rows="3" oninput="updateEmbedPreview()"></textarea>
+        
+        <!-- Welcome Module -->
+        <div class="switch-row">
+          <div>
+            <p class="switch-title">Activer le module d'accueil (Welcome)</p>
+            <p class="switch-sub">Envoie un message lors de l'arrivée d'un membre.</p>
+          </div>
+          <input type="checkbox" id="welcome-enabled" class="ios-toggle">
         </div>
 
-        <!-- SIMULATEUR DISCORD INTERACTIF EN TEMPS RÉEL (WYSIWYG) -->
-        <div class="discord-preview-container">
-          <div class="discord-header">
-            <div class="discord-bot-avatar">O</div>
-            <div class="discord-bot-name">OMNIX<span class="discord-bot-badge">Bot</span></div>
+        <!-- Goodbye Module -->
+        <div class="switch-row">
+          <div>
+            <p class="switch-title">Activer le module de départ (Goodbye)</p>
+            <p class="switch-sub">Envoie un message lors du départ d'un membre.</p>
           </div>
-          <div class="discord-embed-card">
-            <div class="discord-embed-title">Bienvenue sur le serveur !</div>
-            <div class="discord-embed-desc" id="discord-preview-text">Bienvenue [Utilisateur] sur le serveur !</div>
-          </div>
+          <input type="checkbox" id="goodbye-enabled" class="ios-toggle">
         </div>
 
-        <div class="switch-row" style="margin-top: 32px;"><div><p class="switch-title">Activer le module de départ (Goodbye)</p></div><input type="checkbox" id="goodbye-enabled" class="ios-toggle"></div>
-        <div class="form-group">
-          <label>Salon de réception des messages de départ</label>
-          <select id="goodbye-channel"><option value="">Sélectionnez un salon...</option></select>
-        </div>
-        <div class="form-group">
-          <label>Message de départ personnalisé</label>
-          <textarea id="goodbye-message" rows="3"></textarea>
+        <!-- Custom Messages -->
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Message d'accueil personnalisé</label>
+            <textarea id="welcome-message" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Message de départ personnalisé</label>
+            <textarea id="goodbye-message" rows="3"></textarea>
+          </div>
         </div>
       </section>
 
-      <!-- Onglet 3 : Modération & AutoMod -->
+      <!-- Onglet 3 : Modération, AutoMod & Honeypot -->
       <section id="tab-moderation" class="tab-content hidden">
         <h3 style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 24px;">Modération & Sécurité</h3>
-        <div class="switch-row"><div><p class="switch-title">Activer le module de modération</p></div><input type="checkbox" id="moderation-enabled" class="ios-toggle"></div>
-        <div class="form-group">
-          <label>Salon de logs d'audit</label>
-          <select id="moderation-log"><option value="">Sélectionnez un salon...</option></select>
+
+        <!-- Moderation Module -->
+        <div class="switch-row">
+          <div>
+            <p class="switch-title">Activer le module de modération</p>
+            <p class="switch-sub">Enregistre et applique les sanctions de manière traçable.</p>
+          </div>
+          <input type="checkbox" id="moderation-enabled" class="ios-toggle">
         </div>
 
-        <div class="switch-row"><div><p class="switch-title">Activer le filtre de censure AutoMod</p></div><input type="checkbox" id="automod-enabled" class="ios-toggle"></div>
+        <div class="form-group">
+          <label>ID du salon de logs de modération</label>
+          <input type="text" id="moderation-log" placeholder="Ex: 1211490202246189167">
+        </div>
+
+        <!-- AutoMod Module -->
+        <div class="switch-row">
+          <div>
+            <p class="switch-title">Activer le filtre de censure AutoMod</p>
+            <p class="switch-sub">Supprime automatiquement les messages contenant des propos proscrits.</p>
+          </div>
+          <input type="checkbox" id="automod-enabled" class="ios-toggle">
+        </div>
+
         <div class="form-group" style="margin-bottom: 32px;">
-          <label>Mots censurés (séparés par une virgule)</label>
+          <label>Liste noire de mots censurés (séparés par une virgule)</label>
           <input type="text" id="automod-words" placeholder="Ex: insulte1, insulte2, pub">
         </div>
 
+        <!-- Honeypot -->
         <h4 style="font-size: 13px; font-weight: 800; color: white; margin-bottom: 16px; border-top: 1px solid #1e293b; padding-top: 24px;">Honeypot (Piège Anti-Bots)</h4>
-        <div class="switch-row"><div><p class="switch-title">Activer le système Honeypot (Premium)</p></div><input type="checkbox" id="honeypot-enabled" class="ios-toggle"></div>
+        <div class="switch-row">
+          <div>
+            <p class="switch-title">Activer le système Honeypot (Premium)</p>
+            <p class="switch-sub">Bannit instantanément les robots qui écrivent dans le salon piégé.</p>
+          </div>
+          <input type="checkbox" id="honeypot-enabled" class="ios-toggle">
+        </div>
+
         <div class="form-group">
-          <label>Salon piégé d'exclusion directe</label>
-          <select id="honeypot-channel"><option value="">Sélectionnez un salon...</option></select>
+          <label>ID du salon piégé (Honeypot Channel)</label>
+          <input type="text" id="honeypot-channel" placeholder="Ex: 1211490202246189167">
         </div>
       </section>
 
-      <!-- Onglet 4 : Support & Tickets -->
+      <!-- Onglet 4 : Support & Tickets (DYNAMIQUE AVEC SUPPRESSION ET AJOUT DE CATÉGORIES) -->
       <section id="tab-tickets" class="tab-content hidden">
         <h3 style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 24px;">Gestion des Tickets</h3>
-        <div class="switch-row"><div><p class="switch-title">Activer le module de tickets</p></div><input type="checkbox" id="tickets-enabled" class="ios-toggle"></div>
-        <div class="form-group">
-          <label>Catégorie d'ouverture des salons de support</label>
-          <select id="tickets-category"><option value="">Sélectionnez une catégorie...</option></select>
+        
+        <div class="switch-row">
+          <div>
+            <p class="switch-title">Activer le module de tickets</p>
+            <p class="switch-sub">Permet aux membres d'ouvrir des salons de support privés.</p>
+          </div>
+          <input type="checkbox" id="tickets-enabled" class="ios-toggle">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 32px;">
+          <label>Catégorie de repli par défaut (Ouverture standard)</label>
+          <input type="text" id="tickets-category" placeholder="ID de Catégorie Discord">
+        </div>
+
+        <h4 style="font-size: 13px; font-weight: 800; color: white; margin-bottom: 16px; border-top: 1px solid #1e293b; padding-top: 24px; display: flex; justify-content: space-between; align-items: center;">
+          <span>🎫 CONFIGURATION DES SÉLECTEURS DE TICKETS (SAAS)</span>
+          <!-- Bouton d'action visuel pour ajouter une catégorie -->
+          <button type="button" onclick="addCategoryRow()" style="padding: 6px 12px; background-color: #059669; border: none; border-radius: 8px; color: white; font-size: 10px; font-weight: 700; text-transform: uppercase; cursor: pointer;">+ Ajouter une catégorie</button>
+        </h4>
+
+        <!-- Conteneur d'empilement dynamique des catégories de tickets -->
+        <div id="categories-container" style="margin-bottom: 24px;">
+          <!-- Les lignes de catégories s'injectent ici dynamiquement en JS -->
         </div>
       </section>
 
       <!-- Onglet 5 : Économie & Niveaux -->
       <section id="tab-economy" class="tab-content hidden">
         <h3 style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 24px;">Économie & Niveaux d'XP</h3>
-        <div class="switch-row"><div><p class="switch-title">Activer l'économie virtuelle</p></div><input type="checkbox" id="economy-enabled" class="ios-toggle"></div>
-        <div class="form-grid">
-          <div class="form-group"><label>Symbole de la monnaie</label><input type="text" id="economy-symbol"></div>
-          <div class="form-group"><label>Délai d'attente (Cooldown en minutes)</label><input type="number" id="economy-cooldown"></div>
+
+        <!-- Economy Module -->
+        <div class="switch-row">
+          <div>
+            <p class="switch-title">Activer l'économie virtuelle</p>
+            <p class="switch-sub">Permet aux joueurs de gagner de la monnaie locale via /work.</p>
+          </div>
+          <input type="checkbox" id="economy-enabled" class="ios-toggle">
         </div>
 
-        <div class="switch-row" style="margin-top: 24px;"><div><p class="switch-title">Activer le système de Niveaux & XP</p></div><input type="checkbox" id="levels-enabled" class="ios-toggle"></div>
-        <div class="form-group"><label>Points d'XP par message</label><input type="number" id="levels-xp"></div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Symbole de la monnaie locale</label>
+            <input type="text" id="economy-symbol">
+          </div>
+          <div class="form-group">
+            <label>Délai pour travailler (Cooldown en minutes)</label>
+            <input type="number" id="economy-cooldown">
+          </div>
+        </div>
+
+        <!-- Levels Module -->
+        <div class="switch-row" style="margin-top: 24px;">
+          <div>
+            <p class="switch-title">Activer le système de Niveaux & XP</p>
+            <p class="switch-sub">Attribue de l'expérience aux membres actifs par message.</p>
+          </div>
+          <input type="checkbox" id="levels-enabled" class="ios-toggle">
+        </div>
+
+        <div class="form-group">
+          <label>Points d'XP attribués par message envoyé</label>
+          <input type="number" id="levels-xp">
+        </div>
       </section>
 
       <!-- Onglet 6 : Intelligence Artificielle -->
       <section id="tab-ai" class="tab-content hidden">
         <h3 style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 24px;">Intelligence Artificielle</h3>
-        <div class="switch-row"><div><p class="switch-title">Activer l'assistant virtuel (IA)</p></div><input type="checkbox" id="ai-enabled" class="ios-toggle"></div>
-        <div class="form-group"><label>Prompt Système (Instructions)</label><textarea id="ai-prompt" rows="5"></textarea></div>
+
+        <div class="switch-row">
+          <div>
+            <p class="switch-title">Activer l'assistant virtuel (IA)</p>
+            <p class="switch-sub">Permet l'accès sécurisé à la commande /ai sur le serveur.</p>
+          </div>
+          <input type="checkbox" id="ai-enabled" class="ios-toggle">
+        </div>
+
+        <div class="form-group">
+          <label>Prompt Système (Comportement de l'IA)</label>
+          <textarea id="ai-prompt" rows="5"></textarea>
+        </div>
       </section>
 
       <!-- Onglet 7 : Sauvegardes (Premium) -->
       <section id="tab-backups" class="tab-content hidden">
         <h3 style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 24px;">Sauvegardes & Restauration</h3>
-        <div class="switch-row"><div><p class="switch-title">Activer l'archivage automatique</p></div><input type="checkbox" id="backups-enabled" class="ios-toggle"></div>
+
+        <div class="switch-row">
+          <div>
+            <p class="switch-title">Activer l'archivage automatique</p>
+            <p class="switch-sub">Génère des archives régulières de la configuration sur le Cloud.</p>
+          </div>
+          <input type="checkbox" id="backups-enabled" class="ios-toggle">
+        </div>
+
+        <!-- Outils d'action de sauvegarde -->
         <div style="padding: 24px; background: rgba(3, 7, 18, 0.4); border: 1px solid rgba(255, 255, 255, 0.02); border-radius: 16px;">
           <h4 style="font-size: 14px; font-weight: 700; color: white; margin-bottom: 8px;">Gestion des instantanés</h4>
           <p style="font-size: 11px; color: #64748b; line-height: 1.5; margin-bottom: 16px;">Créez un point de restauration complet de vos configurations actuelles directement sur votre base privée.</p>
@@ -287,24 +541,115 @@
       </section>
 
       <!-- Bouton d'enregistrement permanent -->
-      <div class="save-btn-container"><button onclick="saveConfig()" class="btn-save">Enregistrer les paramètres</button></div>
-      <div id="toast" class="toast hidden">Paramètres enregistrés avec succès !</div>
+      <div class="save-btn-container">
+        <button onclick="saveConfig()" class="btn-save">Enregistrer les paramètres</button>
+      </div>
+
+      <!-- Toast de confirmation -->
+      <div id="toast" class="toast hidden">
+        Paramètres enregistrés avec succès !
+      </div>
+
     </main>
   </div>
 
-  <footer><p>&copy; 2026 OMNIX. Tous droits réservés.</p></footer>
+  <footer>
+    <p>&copy; 2026 OMNIX. Tous droits réservés.</p>
+  </footer>
 
   <script>
     const guildId = "<%= guildId %>";
     const jwtToken = localStorage.getItem('jwt_token');
 
-    if (!jwtToken) { window.location.href = '/'; }
-
-    function toggleDrawer(open) {
-      const drawer = document.getElementById('side-drawer');
-      if (open) { drawer.classList.add('open'); } else { drawer.classList.remove('open'); }
+    if (!jwtToken) {
+      window.location.href = '/';
     }
 
+    // Tableau d'état local des catégories (permet l'ajout et suppression dynamique)
+    let activeCategories = [];
+
+    // Rendu dynamique de la liste des catégories à l'écran en pur CSS
+    function renderCategories() {
+      const container = document.getElementById('categories-container');
+      container.innerHTML = '';
+
+      if (activeCategories.length === 0) {
+        container.innerHTML = `<div style="text-align: center; color: #475569; font-size: 12px; padding: 24px 0;">Aucune catégorie personnalisée active. Cliquez sur "+ Ajouter" pour en créer une.</div>`;
+        return;
+      }
+
+      activeCategories.forEach((cat, index) => {
+        const block = document.createElement('div');
+        block.className = 'switch-row';
+        block.style.flexDirection = 'column';
+        block.style.alignItems = 'stretch';
+        block.style.gap = '16px';
+        block.style.padding = '20px';
+        block.style.marginBottom = '16px';
+
+        block.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+              <input type="text" value="${cat.emoji || '🎫'}" id="cat-emoji-${index}" style="width: 44px; text-align: center; padding: 8px; border-radius: 8px;" placeholder="🎫">
+              <input type="text" value="${cat.name}" id="cat-name-${index}" style="font-weight: 700; color: white; background: none; border: none; font-size: 14px; flex: 1;" placeholder="Nom de la catégorie">
+            </div>
+            <button type="button" onclick="deleteCategory(${index})" style="background: rgba(220, 38, 38, 0.15); color: #f87171; border: 1px solid rgba(220, 38, 38, 0.25); padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer;">Supprimer</button>
+          </div>
+          
+          <div class="form-grid">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>Routage (Où ouvrir les tickets)</label>
+              <select id="cat-type-${index}" style="padding: 10px; border-radius: 8px;">
+                <option value="category" ${cat.type === 'category' ? 'selected' : ''}>Catégorie Discord (Nouveau salon)</option>
+                <option value="channel" ${cat.type === 'channel' ? 'selected' : ''}>Dans un salon existant (Nouveau salon)</option>
+                <option value="thread" ${cat.type === 'thread' ? 'selected' : ''}>Fil de discussion (Thread)</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>ID cible (Catégorie ou Salon Discord)</label>
+              <input type="text" value="${cat.targetId || ''}" id="cat-target-${index}" style="padding: 10px; border-radius: 8px;" placeholder="Ex: 1211490202246189167">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0; margin-top: 8px;">
+            <label>Message de bienvenue à l'entrée du ticket (welcomeMessage)</label>
+            <textarea id="cat-welcome-${index}" rows="2" style="padding: 10px; font-size: 12px; border-radius: 8px;" placeholder="Variables autorisées : {user}">${cat.welcomeMessage || ''}</textarea>
+          </div>
+        `;
+        container.appendChild(block);
+      });
+    }
+
+    // Ajouter un élément de catégorie au tableau local
+    function addCategoryRow() {
+      activeCategories.push({
+        id: 'cat_' + Math.random().toString(36).substring(2, 6),
+        name: 'Nouvelle catégorie',
+        emoji: '🎫',
+        type: 'category',
+        targetId: null,
+        welcomeMessage: 'Bonjour {user}, un conseiller prend en charge votre demande. Décrivez votre problème.'
+      });
+      renderCategories();
+    }
+
+    // Supprimer un élément de catégorie du tableau local
+    function deleteCategory(index) {
+      activeCategories.splice(index, 1);
+      renderCategories();
+    }
+
+    // Gestion de l'affichage du menu tiroir
+    function toggleDrawer(open) {
+      const drawer = document.getElementById('side-drawer');
+      if (open) {
+        drawer.classList.add('open');
+      } else {
+        drawer.classList.remove('open');
+      }
+    }
+
+    // Décodeur de jeton
     function parseJwt(token) {
       if (!token || token === 'null' || token === 'undefined' || !token.includes('.')) return null;
       try {
@@ -314,12 +659,17 @@
         const paddedBase64 = pad ? base64 + '='.repeat(4 - pad) : base64;
         const rawBinary = window.atob(paddedBase64);
         const bytes = new Uint8Array(rawBinary.length);
-        for (let i = 0; i < rawBinary.length; i++) { bytes[i] = rawBinary.charCodeAt(i); }
+        for (let i = 0; i < rawBinary.length; i++) {
+          bytes[i] = rawBinary.charCodeAt(i);
+        }
         const decoder = new TextDecoder('utf-8');
         return JSON.parse(decoder.decode(bytes));
-      } catch (e) { return null; }
+      } catch (e) {
+        return null;
+      }
     }
 
+    // Ajoute l'onglet Staff
     function renderDrawerMenu() {
       const payload = parseJwt(jwtToken);
       if (payload && payload.isAdmin) {
@@ -338,18 +688,16 @@
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.getElementById(tabId).classList.remove('hidden');
-      document.querySelectorAll('aside button').forEach(el => { el.className = "tab-btn"; });
+
+      document.querySelectorAll('aside button').forEach(el => {
+        el.className = "tab-btn";
+      });
+      
       const activeBtn = document.getElementById('btn-' + tabId);
       if (activeBtn) activeBtn.className = "tab-btn active";
     }
 
-    function updateEmbedPreview() {
-      const text = document.getElementById('welcome-message').value;
-      const preview = document.getElementById('discord-preview-text');
-      // Remplacement visuel de la variable {user} dans l'éditeur de prévisualisation
-      preview.innerText = text.replace(/{user}/g, "@le.m135") || "Bienvenue sur le serveur !";
-    }
-
+    // Synchronisation des doublons d'interrupteurs
     function setupCheckboxSync() {
       const pairs = [
         { main: 'ai-enabled', toggle: 'ai-enabled-toggle' },
@@ -358,55 +706,25 @@
         { main: 'moderation-enabled', toggle: 'moderation-enabled-toggle' },
         { main: 'tickets-enabled', toggle: 'tickets-enabled-toggle' }
       ];
+
       pairs.forEach(pair => {
         const mainEl = document.getElementById(pair.main);
         const toggleEl = document.getElementById(pair.toggle);
+
         if (mainEl && toggleEl) {
-          mainEl.addEventListener('change', (e) => { toggleEl.checked = e.target.checked; });
-          toggleEl.addEventListener('change', (e) => { mainEl.checked = e.target.checked; });
+          mainEl.addEventListener('change', (e) => {
+            toggleEl.checked = e.target.checked;
+          });
+          toggleEl.addEventListener('change', (e) => {
+            mainEl.checked = e.target.checked;
+          });
         }
       });
     }
 
-    // Récupère dynamiquement les salons et catégories du serveur Discord
-    async function loadDiscordChannels() {
-      try {
-        const response = await fetch(`/api/guilds/${guildId}/channels`, {
-          headers: { 'Authorization': `Bearer ${jwtToken}` }
-        });
-        if (!response.ok) throw new Error();
-        const channels = await response.json();
-
-        const welcomeSelect = document.getElementById('welcome-channel');
-        const goodbyeSelect = document.getElementById('goodbye-channel');
-        const moderationLogSelect = document.getElementById('moderation-log');
-        const ticketsCategorySelect = document.getElementById('tickets-category');
-        const honeypotSelect = document.getElementById('honeypot-channel');
-
-        channels.forEach(ch => {
-          const opt = document.createElement('option');
-          opt.value = ch.id;
-          opt.innerText = ch.name;
-
-          if (ch.type === 'text') {
-            welcomeSelect.appendChild(opt.cloneNode(true));
-            goodbyeSelect.appendChild(opt.cloneNode(true));
-            moderationLogSelect.appendChild(opt.cloneNode(true));
-            honeypotSelect.appendChild(opt.cloneNode(true));
-          } else if (ch.type === 'category') {
-            ticketsCategorySelect.appendChild(opt);
-          }
-        });
-      } catch (e) {
-        console.error("Impossible de récupérer les salons Discord.");
-      }
-    }
-
+    // Lecture sécurisée avec Bypass Premium personnel de l'utilisateur
     async function loadConfig() {
       try {
-        // Chargement des salons Discord d'abord
-        await loadDiscordChannels();
-
         const response = await fetch(`/api/guilds/${guildId}/config`, {
           headers: { 'Authorization': `Bearer ${jwtToken}` }
         });
@@ -418,6 +736,7 @@
 
         const config = await response.json();
 
+        // 1. BYPASS PREMIUM : Détecte si l'utilisateur possède personnellement le Premium
         const payload = parseJwt(jwtToken);
         const isUserPremium = payload && (payload.isPremium || payload.isAdmin);
         const isGuildPremium = config.premium?.isPremium;
@@ -426,7 +745,9 @@
         const badge = document.getElementById('license-badge');
         
         if (isGuildPremium || isUserPremium) {
-          licenseLabel.innerText = isGuildPremium ? `Premium Activé (${config.premium.tier.toUpperCase()})` : "Premium Actif (Licence Utilisateur Personnelle)";
+          licenseLabel.innerText = isGuildPremium 
+            ? `Premium Activé (${config.premium.tier.toUpperCase()})` 
+            : "Premium Actif (Licence Utilisateur Personnelle)";
           badge.className = "badge-premium";
           badge.innerText = "PREMIUM";
         } else {
@@ -435,13 +756,12 @@
           badge.innerText = "FREE";
         }
 
+        // Remplissage protégé des formulaires
         document.getElementById('welcome-enabled').checked = config.modules?.welcome?.enabled || false;
         document.getElementById('welcome-message').value = config.modules?.welcome?.message || "Bienvenue {user} !";
-        document.getElementById('welcome-channel').value = config.modules?.welcome?.channelId || "";
 
         document.getElementById('goodbye-enabled').checked = config.modules?.goodbye?.enabled || false;
         document.getElementById('goodbye-message').value = config.modules?.goodbye?.message || "Au revoir {user}...";
-        document.getElementById('goodbye-channel').value = config.modules?.goodbye?.channelId || "";
 
         document.getElementById('moderation-enabled').checked = config.modules?.moderation?.enabled || false;
         document.getElementById('moderation-log').value = config.modules?.moderation?.logChannelId || "";
@@ -463,9 +783,8 @@
         document.getElementById('ai-prompt').value = config.modules?.ai?.systemPrompt || "Tu es un assistant utile.";
 
         document.getElementById('backups-enabled').checked = config.modules?.backups?.enabled || false;
-        document.getElementById('honeypot-enabled').checked = config.modules?.honeypot?.enabled || false;
-        document.getElementById('honeypot-channel').value = config.modules?.honeypot?.channelId || "";
 
+        // Liaison initiale des 6 interrupteurs de l'onglet Vue d'ensemble
         document.getElementById('ai-enabled-toggle').checked = config.modules?.ai?.enabled || false;
         document.getElementById('backups-enabled-toggle').checked = config.modules?.backups?.enabled || false;
         document.getElementById('economy-enabled-toggle').checked = config.modules?.economy?.enabled || false;
@@ -473,7 +792,9 @@
         document.getElementById('tickets-enabled-toggle').checked = config.modules?.tickets?.enabled || false;
         document.getElementById('ping-enabled-toggle').checked = config.modules?.ping?.enabled || true;
 
-        updateEmbedPreview();
+        // CHARGEMENT ET DÉPLOIEMENT DU TABLEAU DES CATÉGORIES DYNAMIQUES
+        activeCategories = config.modules?.tickets?.categoriesList || [];
+        renderCategories();
 
       } catch (error) {
         alert("Impossible de charger les configurations :\n\n" + error.message);
@@ -482,18 +803,30 @@
     }
 
     async function saveConfig() {
+      // Extraction dynamique des valeurs saisies dans le tableau local des catégories
+      const updatedCategoriesList = activeCategories.map((cat, index) => {
+        return {
+          id: cat.id,
+          name: document.getElementById(`cat-name-${index}`).value,
+          emoji: document.getElementById(`cat-emoji-${index}`).value,
+          type: document.getElementById(`cat-type-${index}`).value,
+          targetId: document.getElementById(`cat-target-${index}`).value || null,
+          welcomeMessage: document.getElementById(`cat-welcome-${index}`).value
+        };
+      });
+
       const payload = {
         modules: {
           welcome: {
             enabled: document.getElementById('welcome-enabled').checked,
             message: document.getElementById('welcome-message').value,
-            channelId: document.getElementById('welcome-channel').value || null,
+            channelId: null,
             useEmbed: false
           },
           goodbye: {
             enabled: document.getElementById('goodbye-enabled').checked,
             message: document.getElementById('goodbye-message').value,
-            channelId: document.getElementById('goodbye-channel').value || null,
+            channelId: null,
             useEmbed: false
           },
           moderation: {
@@ -507,7 +840,8 @@
           tickets: {
             enabled: document.getElementById('tickets-enabled').checked || document.getElementById('tickets-enabled-toggle').checked,
             categoryId: document.getElementById('tickets-category').value || null,
-            counter: 0
+            counter: 0,
+            categoriesList: updatedCategoriesList // Envoi du tableau dynamique de catégories
           },
           economy: {
             enabled: document.getElementById('economy-enabled').checked || document.getElementById('economy-enabled-toggle').checked,
@@ -531,8 +865,8 @@
             enabled: document.getElementById('ping-enabled-toggle').checked
           },
           honeypot: {
-            enabled: document.getElementById('honeypot-enabled').checked,
-            channelId: document.getElementById('honeypot-channel').value || null
+            enabled: false, // Liaison pour la modération
+            channelId: null
           }
         }
       };
