@@ -1,4 +1,11 @@
-import { Events, ChatInputCommandInteraction } from 'discord.js';
+/**
+ * ====================================================================
+ * GESTIONNAIRE D'INTERACTIONS GLOBAL (BOT DISCORD)
+ * Gère l'intercepteur de commandes et de boutons de Tickets.
+ * ====================================================================
+ */
+
+import { Events, ChatInputCommandInteraction, ButtonInteraction, ChannelType, PermissionFlagsBits } from 'discord.js';
 import { ExtendedClient } from '../client';
 import { GuildConfig } from '../../models/GuildConfig';
 import { User } from '../../models/User';
@@ -8,7 +15,76 @@ const PREMIUM_COMMANDS = ['ai', 'backup', 'stats', 'schedule', 'honeypot'];
 
 export default {
   name: Events.InteractionCreate,
-  async execute(interaction: ChatInputCommandInteraction, client: ExtendedClient) {
+  async execute(interaction: ChatInputCommandInteraction | ButtonInteraction, client: ExtendedClient) {
+    
+    // ----------------------------------------------------
+    // SCÉNARIO A : COMPORTEMENT DES BOUTONS DE TICKETS (INTERACTIF)
+    // ----------------------------------------------------
+    if (interaction.isButton()) {
+      if (interaction.customId === 'ticket_open_btn') {
+        await interaction.deferReply({ ephemeral: true });
+
+        const guild = interaction.guild!;
+        const userId = interaction.user.id;
+
+        try {
+          // Chargement de la configuration
+          let guildConfig = await GuildConfig.findOne({ guildId: interaction.guildId });
+          if (!guildConfig) {
+            guildConfig = new GuildConfig({ guildId: interaction.guildId });
+            await guildConfig.save();
+          }
+
+          // Vérifie si le module de ticket est actif en base
+          if (!guildConfig.modules.tickets.enabled) {
+            return interaction.editReply({ content: "❌ Le module de support par ticket est actuellement désactivé sur ce serveur." });
+          }
+
+          // Incrémente le compteur
+          guildConfig.modules.tickets.counter += 1;
+          await guildConfig.save();
+
+          const ticketNumber = guildConfig.modules.tickets.counter;
+          const channelName = `ticket-${ticketNumber.toString().padStart(4, '0')}`;
+
+          // Création du salon textuel privé
+          const ticketChannel = await guild.channels.create({
+            name: channelName,
+            type: ChannelType.GuildText,
+            parent: guildConfig.modules.tickets.categoryId || undefined,
+            permissionOverwrites: [
+              {
+                id: guild.roles.everyone.id,
+                deny: [PermissionFlagsBits.ViewChannel]
+              },
+              {
+                id: userId,
+                allow: [
+                  PermissionFlagsBits.ViewChannel,
+                  PermissionFlagsBits.SendMessages,
+                  PermissionFlagsBits.ReadMessageHistory
+                ]
+              }
+            ]
+          });
+
+          await ticketChannel.send({
+            content: `👋 Bonjour <@${userId}>, bienvenue dans votre salon de support.\nDécrivez votre demande, un membre de l'équipe va vous répondre.`
+          });
+
+          return interaction.editReply({ content: `✅ Votre ticket a été créé avec succès : ${ticketChannel}` });
+
+        } catch (err: any) {
+          console.error('[Bot Ticket Button Error] :', err.message);
+          return interaction.editReply({ content: "❌ Échec de la création de votre salon de ticket de support." });
+        }
+      }
+      return;
+    }
+
+    // ----------------------------------------------------
+    // SCÉNARIO B : COMPORTEMENT DES COMMANDES SLASH STANDARD
+    // ----------------------------------------------------
     if (!interaction.isChatInputCommand()) return;
 
     const command = client.commands.get(interaction.commandName);
@@ -29,6 +105,7 @@ export default {
         await guildConfig.save();
       }
 
+      // VÉRIFICATION DE LA SÉCURITÉ PREMIUM
       if (PREMIUM_COMMANDS.includes(interaction.commandName)) {
         const isGuildPremium = guildConfig.premium.isPremium;
         let isMemberPremium = false;
