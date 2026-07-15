@@ -1,9 +1,3 @@
-/**
- * ====================================================================
- * CONTRÔLEUR D'AUTHENTIFICATION OAUTH2 (DÉPLOIEMENT CLOUD SÉCURISÉ)
- * ====================================================================
- */
-
 import { Request, Response } from 'express';
 import axios from 'axios';
 import jwt from 'jsonwebtoken';
@@ -11,26 +5,26 @@ import { CONFIG } from '../../config';
 import { User } from '../../models/User';
 
 export class AuthController {
-  // 1. URL de connexion Discord
+  // Génère l'URL d'autorisation Discord
   static getLoginUrl(req: Request, res: Response) {
     const url = `https://discord.com/api/oauth2/authorize?client_id=${CONFIG.DISCORD.CLIENT_ID}&redirect_uri=${encodeURIComponent(CONFIG.DISCORD.REDIRECT_URI)}&response_type=code&scope=identify%20guilds`;
     console.log(`[OAuth2] 🔄 URL de connexion générée.`);
     return res.json({ url });
   }
 
-  // 2. Échange du code (Doit impérativement détenir le mot-clé "async")
+  // Échange du code d'autorisation contre les tokens de session
   static async handleCallback(req: Request, res: Response) {
     const { code } = req.query;
 
-    console.log(`[OAuth2] 🔄 Callback reçu depuis Discord.`);
+    console.log(`[OAuth2] 🔄 Callback d'authentification reçu.`);
 
     if (!code) {
-      console.warn(`[OAuth2] ⚠️ Code d'autorisation absent.`);
+      console.warn(`[OAuth2] ⚠️ Échec du callback : Code d'autorisation manquant.`);
       return res.redirect('/?error=code_manquant');
     }
 
     try {
-      console.log(`[OAuth2] 🌐 Échange du code d'autorisation contre un Access Token...`);
+      // 1. Échange du code contre l'Access Token de Discord
       const tokenResponse = await axios.post(
         'https://discord.com/api/oauth2/token',
         new URLSearchParams({
@@ -46,9 +40,10 @@ export class AuthController {
       );
 
       const { access_token } = tokenResponse.data;
-      console.log(`[OAuth2] ✅ Access Token récupéré de Discord.`);
+      console.log(`[OAuth2] ✅ Access Token de Discord récupéré.`);
 
-      console.log(`[OAuth2] 📥 Récupération du profil @me de l'utilisateur...`);
+      // 2. Récupération du profil Discord de l'utilisateur
+      console.log(`[OAuth2] 📥 Récupération du profil Discord utilisateur (@me)...`);
       const userResponse = await axios.get('https://discord.com/api/users/@me', {
         headers: { Authorization: `Bearer ${access_token}` },
       });
@@ -57,7 +52,8 @@ export class AuthController {
       const isAdmin = CONFIG.DISCORD.OWNER_IDS.includes(discordUser.id);
       console.log(`[OAuth2] ✅ Profil Discord récupéré : ${discordUser.username} (${discordUser.id})`);
 
-      console.log(`[Database] 💾 Recherche ou mise à jour du compte de ${discordUser.username}...`);
+      // 3. Enregistrement ou mise à jour de l'utilisateur en base de données
+      console.log(`[Database] 💾 Recherche ou création de la fiche utilisateur de ${discordUser.username}...`);
       let user = await User.findOne({ discordId: discordUser.id });
 
       if (!user) {
@@ -68,7 +64,7 @@ export class AuthController {
           isAdmin,
         });
       } else {
-        // Blocage de sécurité si l'utilisateur est banni
+        // Blocage de sécurité si l'utilisateur est banni (Blacklist)
         if (user.isBlacklisted) {
           console.warn(`[OAuth2] 🚫 Connexion refusée pour l'utilisateur banni : ${user.username}`);
           return res.redirect('/?error=blacklist_actif');
@@ -78,15 +74,15 @@ export class AuthController {
         user.isAdmin = isAdmin;
       }
       await user.save();
-      console.log(`[Database] 💾 Données utilisateur enregistrées.`);
+      console.log(`[Database] 💾 Données de l'utilisateur enregistrées.`);
 
-      // Vérification Premium de l'utilisateur
+      // Vérification du statut Premium de l'utilisateur
       const isPremium = user.licenses.some(
         lic => lic.status === 'active' && lic.activatedGuildId === null
       );
-      console.log(`[Database] 💎 Statut Premium personnel de ${discordUser.username} : ${isPremium}`);
+      console.log(`[Database] 💎 Statut Premium de l'utilisateur ${discordUser.username} : ${isPremium}`);
 
-      // Génération du JWT
+      // Génération de notre jeton JWT local (session)
       const token = jwt.sign(
         {
           discordId: user.discordId,
@@ -99,11 +95,12 @@ export class AuthController {
         CONFIG.JWT_SECRET,
         { expiresIn: '7d' }
       );
-      console.log(`[OAuth2] 🔑 Jeton JWT généré. Envoi de la page de redirection native...`);
+      console.log(`[OAuth2] 🔑 Jeton JWT généré. Envoi du redirigeur HTML de sécurité...`);
 
-      // Utilisation forcée de l'adresse absolue HTTP configurée
+      // Adresse de redirection forcée en HTTP absolu (Bypass le forçage HTTPS de Safari)
       const targetUrl = `${CONFIG.CLIENT_URL}/dashboard`;
 
+      // Rendu de la mini-page HTML de contournement d'HSTS Safari
       return res.send(`
         <!DOCTYPE html>
         <html lang="fr">
@@ -173,6 +170,7 @@ export class AuthController {
           </div>
 
           <script>
+            // Sauvegarde de secours double-canal (LocalStorage + Cookie)
             try {
               localStorage.setItem('jwt_token', '${token}');
             } catch(e) {
