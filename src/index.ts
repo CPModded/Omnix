@@ -26,9 +26,6 @@ io.on('connection', (socket) => {
 
 async function bootstrap() {
   console.log('======================================================');
-  console.log('         DÉMARRAGE DE LA PLATEFORME OMNIX             ');
-  console.log('======================================================');
-
   try {
     console.log('[Database] Connexion à MongoDB Atlas...');
     if (!CONFIG.MONGO_URI) {
