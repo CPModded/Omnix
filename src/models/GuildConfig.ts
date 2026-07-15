@@ -1,3 +1,9 @@
+/**
+ * ====================================================================
+ * SCHÉMA DE CONFIGURATION DES SERVEURS (OMNIX CORE - 25 MODULES)
+ * ====================================================================
+ */
+
 import { Schema, model, Document } from 'mongoose';
 
 export interface IGuildConfig extends Document {
@@ -33,6 +39,8 @@ export interface IGuildConfig extends Document {
     customCommands: { enabled: boolean; list: Array<{ trigger: string; response: string }> };
     statistics: { enabled: boolean };
     ping: { enabled: boolean };
+    // AJOUT : Option Honeypot
+    honeypot: { enabled: boolean; channelId: string | null }; 
   };
   createdAt: Date;
   updatedAt: Date;
@@ -70,7 +78,9 @@ const GuildConfigSchema = new Schema<IGuildConfig>({
     backups: { enabled: { type: Boolean, default: false } },
     customCommands: { enabled: { type: Boolean, default: false }, list: [{ trigger: { type: String, required: true }, response: { type: String, required: true } }] },
     statistics: { enabled: { type: Boolean, default: false } },
-    ping: { enabled: { type: Boolean, default: true } }
+    ping: { enabled: { type: Boolean, default: true } },
+    // AJOUT : Stockage pour l'option Honeypot
+    honeypot: { enabled: { type: Boolean, default: false }, channelId: { type: String, default: null } }
   }
 }, { timestamps: true });
 
