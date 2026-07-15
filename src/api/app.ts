@@ -9,7 +9,7 @@ import paymentRoutes from './routes/payment.routes';
 import licenseRoutes from './routes/license.routes';
 import adminRoutes from './routes/admin.routes';
 import backupRoutes from './routes/backup.routes';
-import { CONFIG } from './config';
+import { CONFIG } from '../config';
 
 const app = express();
 
