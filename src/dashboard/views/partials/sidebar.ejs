@@ -1,0 +1,177 @@
+<!-- MENU TIROIR DE NAVIGATION DROIT -->
+<div id="side-drawer" class="drawer">
+  <div class="drawer-header">
+    <span class="logo-text">Menu</span>
+    <button onclick="toggleDrawer(false)" class="btn-close-drawer">&times;</button>
+  </div>
+  <div class="drawer-links" id="drawer-nav">
+    <a href="/" id="nav-home">Accueil</a>
+    <a href="/dashboard" id="nav-dashboard">Dashboard</a>
+    <a href="/pricing" id="nav-pricing">Abonnements</a>
+    <a href="/learn-more" id="nav-learn-more">En savoir plus</a>
+    <a href="/founder" id="nav-founder">Découvrir OMNIX</a>
+  </div>
+</div>
+
+<script>
+  // Fonctions globales de gestion du menu et de l'authentification
+  function toggleDrawer(open) {
+    const drawer = document.getElementById('side-drawer');
+    if (drawer) {
+      if (open) {
+        drawer.classList.add('open');
+      } else {
+        drawer.classList.remove('open');
+      }
+    }
+  }
+
+  function setToken(value) {
+    try {
+      localStorage.setItem('jwt_token', value);
+    } catch (e) {
+      document.cookie = `jwt_token=${value}; path=/; max-age=604800; SameSite=Lax`;
+    }
+  }
+
+  function getToken() {
+    try {
+      const localToken = localStorage.getItem('jwt_token');
+      if (localToken) return localToken;
+    } catch (e) {}
+    return getCookie('jwt_token');
+  }
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+  }
+
+  function removeToken() {
+    try {
+      localStorage.removeItem('jwt_token');
+    } catch (e) {}
+    document.cookie = "jwt_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  }
+
+  function parseJwt(token) {
+    if (!token || token === 'null' || token === 'undefined' || !token.includes('.')) return null;
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const pad = base64.length % 4;
+      const paddedBase64 = pad ? base64 + '='.repeat(4 - pad) : base64;
+      const rawBinary = window.atob(paddedBase64);
+      const bytes = new Uint8Array(rawBinary.length);
+      for (let i = 0; i < rawBinary.length; i++) {
+        bytes[i] = rawBinary.charCodeAt(i);
+      }
+      const decoder = new TextDecoder('utf-8');
+      return JSON.parse(decoder.decode(bytes));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function logout() {
+    removeToken();
+    window.location.href = '/';
+  }
+
+  // Initialisation dynamique de la barre latérale
+  function initSidebar() {
+    const path = window.location.pathname;
+    
+    // 1. Gestion de la classe Active sur l'onglet courant
+    const linksMap = {
+      '/': 'nav-home',
+      '/dashboard': 'nav-dashboard',
+      '/pricing': 'nav-pricing',
+      '/learn-more': 'nav-learn-more',
+      '/founder': 'nav-founder'
+    };
+    
+    Object.values(linksMap).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('active');
+    });
+    
+    const currentId = linksMap[path] || (path.startsWith('/dashboard/') ? 'nav-dashboard' : null);
+    if (currentId) {
+      const activeEl = document.getElementById(currentId);
+      if (activeEl) activeEl.classList.add('active');
+    }
+
+    // 2. Gestion dynamique des boutons d'auth et Staff Panel
+    const jwtToken = getToken();
+    const nav = document.getElementById('drawer-nav');
+    
+    if (jwtToken) {
+      const payload = parseJwt(jwtToken);
+      if (payload) {
+        // Ajout du bouton Staff Panel si l'utilisateur est admin
+        if (payload.isAdmin && !document.getElementById('nav-admin-link')) {
+          const adminLink = document.createElement('a');
+          adminLink.href = '/admin';
+          adminLink.id = 'nav-admin-link';
+          adminLink.className = 'admin-nav-link';
+          adminLink.innerText = 'Staff Panel';
+          if (path === '/admin') adminLink.classList.add('active');
+          nav.appendChild(adminLink);
+        }
+        
+        // Ajout du bouton Déconnexion dans le tiroir
+        if (!document.getElementById('nav-logout-btn')) {
+          const logoutBtn = document.createElement('button');
+          logoutBtn.id = 'nav-logout-btn';
+          logoutBtn.innerText = 'Déconnexion';
+          logoutBtn.style.background = 'rgba(220, 38, 38, 0.15)';
+          logoutBtn.style.color = '#f87171';
+          logoutBtn.style.border = '1px solid rgba(220, 38, 38, 0.25)';
+          logoutBtn.style.width = '100%';
+          logoutBtn.style.padding = '12px';
+          logoutBtn.style.borderRadius = '10px';
+          logoutBtn.style.fontSize = '12px';
+          logoutBtn.style.fontWeight = '700';
+          logoutBtn.style.textTransform = 'uppercase';
+          logoutBtn.style.marginTop = '24px';
+          logoutBtn.style.cursor = 'pointer';
+          logoutBtn.style.fontFamily = 'inherit';
+          logoutBtn.onclick = logout;
+          nav.appendChild(logoutBtn);
+        }
+        return;
+      }
+    }
+
+    // Ajout du bouton Se Connecter dans le tiroir si non connecté
+    if (!document.getElementById('nav-login-btn')) {
+      const loginUrl = `https://discord.com/api/oauth2/authorize?client_id=<%= clientId %>&redirect_uri=<%= redirectUri %>&response_type=code&scope=identify+guilds`;
+      const loginBtn = document.createElement('a');
+      loginBtn.id = 'nav-login-btn';
+      loginBtn.href = loginUrl;
+      loginBtn.innerText = 'Se connecter';
+      loginBtn.style.display = 'block';
+      loginBtn.style.textAlign = 'center';
+      loginBtn.style.background = 'linear-gradient(135deg, #06b6d4, #4f46e5)';
+      loginBtn.style.color = 'white';
+      loginBtn.style.width = '100%';
+      loginBtn.style.padding = '12px';
+      loginBtn.style.borderRadius = '10px';
+      loginBtn.style.fontSize = '12px';
+      loginBtn.style.fontWeight = '700';
+      loginBtn.style.textTransform = 'uppercase';
+      loginBtn.style.marginTop = '24px';
+      loginBtn.style.textDecoration = 'none';
+      nav.appendChild(loginBtn);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSidebar);
+  } else {
+    initSidebar();
+  }
+</script>
