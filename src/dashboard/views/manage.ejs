@@ -6,11 +6,7 @@
   <title>OMNIX - Console</title>
   <style>
     /* Styles CSS natifs - Sans dépendance externe (100% stable sur Safari iOS) */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background-color: #030712; /* Slate 950 */
       color: #f1f5f9; /* Slate 100 */
@@ -23,7 +19,6 @@
       overflow-x: hidden;
       line-height: 1.5;
     }
-    
     .halo-bottom {
       position: absolute;
       bottom: -150px;
@@ -35,8 +30,6 @@
       border-radius: 50%;
       pointer-events: none;
     }
-
-    /* En-tête */
     header {
       border-bottom: 1px solid #1e293b;
       background: rgba(15, 23, 42, 0.7);
@@ -50,29 +43,10 @@
       top: 0;
       z-index: 50;
     }
-    .logo-area {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      text-decoration: none;
-    }
-    .logo-img {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
-      object-fit: cover;
-      box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
-    }
-    .back-link {
-      text-decoration: none;
-      color: #94a3b8;
-      font-size: 13px;
-      font-weight: 600;
-      transition: color 0.15s ease;
-    }
-    .back-link:hover {
-      color: white;
-    }
+    .logo-area { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .logo-img { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2); }
+    .back-link { text-decoration: none; color: #94a3b8; font-size: 13px; font-weight: 600; transition: color 0.15s ease; }
+    .back-link:hover { color: white; }
     .logo-text {
       font-weight: 800;
       letter-spacing: 1px;
@@ -83,30 +57,18 @@
     }
 
     /* Menu Tiroir (Drawer) Latéral Droit */
-    .btn-burger {
-      background: none;
-      border: none;
-      color: #94a3b8;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-    }
-    .burger-icon {
-      width: 24px;
-      height: 24px;
-      fill: currentColor;
-    }
+    .btn-burger { background: none; border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center; }
+    .burger-icon { width: 24px; height: 24px; fill: currentColor; }
     .drawer {
       position: fixed;
       top: 0;
-      right: -300px; /* Masqué à l'origine */
+      right: -300px;
       width: 280px;
       height: 100vh;
       background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
       border-left: 1px solid rgba(255, 255, 255, 0.04);
-      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
       z-index: 1000;
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       padding: 32px 24px;
@@ -114,29 +76,9 @@
       flex-direction: column;
       gap: 32px;
     }
-    .drawer.open {
-      transform: translateX(-300px); /* Glissement */
-    }
-    .drawer-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .btn-close-drawer {
-      background: none;
-      border: none;
-      color: #64748b;
-      font-size: 28px;
-      cursor: pointer;
-    }
-    .btn-close-drawer:hover {
-      color: white;
-    }
-    .drawer-links {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
+    .drawer.open { transform: translateX(-300px); }
+    .btn-close-drawer { background: none; border: none; color: #64748b; font-size: 28px; cursor: pointer; }
+    .drawer-links { display: flex; flex-direction: column; gap: 16px; }
     .drawer-links a {
       text-decoration: none;
       color: #94a3b8;
@@ -148,18 +90,8 @@
       border-radius: 10px;
       transition: background 0.15s, color 0.15s;
     }
-    .drawer-links a:hover {
-      background: rgba(255,255,255,0.02);
-      color: white;
-    }
-    .drawer-links a.active {
-      color: #38bdf8;
-      background: rgba(56, 189, 248, 0.05);
-    }
-    .admin-nav-link {
-      color: #c084fc !important;
-      text-shadow: 0 0 8px rgba(192, 132, 252, 0.4);
-    }
+    .drawer-links a:hover { background: rgba(255,255,255,0.02); color: white; }
+    .drawer-links a.active { color: #38bdf8; background: rgba(56, 189, 248, 0.05); }
 
     /* Disposition Flexbox Principale */
     .container {
@@ -173,27 +105,12 @@
       gap: 32px;
       z-index: 10;
     }
-    @media (min-width: 768px) {
-      .container {
-        flex-direction: row;
-      }
-    }
+    @media (min-width: 768px) { .container { flex-direction: row; } }
 
     /* Barre latérale d'onglets */
-    aside {
-      display: flex;
-      flex-direction: row;
-      gap: 8px;
-      overflow-x: auto;
-      padding-bottom: 16px;
-    }
+    aside { display: flex; flex-direction: row; gap: 8px; overflow-x: auto; padding-bottom: 16px; }
     @media (min-width: 768px) {
-      aside {
-        width: 250px;
-        flex-direction: column;
-        overflow-x: visible;
-        padding-bottom: 0;
-      }
+      aside { width: 250px; flex-direction: column; overflow-x: visible; padding-bottom: 0; }
     }
     .tab-btn {
       width: 100%;
@@ -208,20 +125,12 @@
       border: none;
       color: #94a3b8;
       cursor: pointer;
-      transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+      transition: background 0.15s, color 0.15s;
       white-space: nowrap;
     }
-    .tab-btn:hover {
-      background: rgba(15, 23, 42, 0.4);
-      color: white;
-    }
-    .tab-btn.active {
-      background: #4f46e5;
-      color: white;
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
-    }
+    .tab-btn:hover { background: rgba(15, 23, 42, 0.4); color: white; }
+    .tab-btn.active { background: #4f46e5; color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2); }
 
-    /* Panneau de configuration (Glassmorphism) */
     .config-panel {
       flex: 1;
       background: rgba(15, 23, 42, 0.45);
@@ -233,11 +142,8 @@
       -webkit-backdrop-filter: blur(16px);
       position: relative;
     }
-    .hidden {
-      display: none !important;
-    }
+    .hidden { display: none !important; }
 
-    /* Fiche de Licence */
     .license-card {
       padding: 20px;
       background: rgba(3, 7, 18, 0.6);
@@ -248,16 +154,8 @@
       align-items: center;
       margin-bottom: 24px;
     }
-    .license-title {
-      font-weight: 800;
-      font-size: 16px;
-      color: white;
-    }
-    .license-sub {
-      font-size: 11px;
-      color: #475569;
-      margin-top: 4px;
-    }
+    .license-title { font-weight: 800; font-size: 16px; color: white; }
+    .license-sub { font-size: 11px; color: #475569; margin-top: 4px; }
     .badge-free {
       font-size: 10px;
       font-weight: 700;
@@ -277,7 +175,6 @@
       border-radius: 20px;
     }
 
-    /* Ligne d'interrupteur (iOS Toggle) */
     .switch-row {
       display: flex;
       justify-content: space-between;
@@ -288,18 +185,9 @@
       border-radius: 16px;
       margin-bottom: 24px;
     }
-    .switch-title {
-      font-weight: 700;
-      font-size: 14px;
-      color: white;
-    }
-    .switch-sub {
-      font-size: 11px;
-      color: #64748b;
-      margin-top: 4px;
-    }
+    .switch-title { font-weight: 700; font-size: 14px; color: white; }
+    .switch-sub { font-size: 11px; color: #64748b; margin-top: 4px; }
 
-    /* iOS Checkbox Custom */
     .ios-toggle {
       width: 44px;
       height: 24px;
@@ -312,9 +200,7 @@
       outline: none;
       transition: background 0.2s ease;
     }
-    .ios-toggle:checked {
-      background: #4f46e5;
-    }
+    .ios-toggle:checked { background: #4f46e5; }
     .ios-toggle::after {
       content: '';
       position: absolute;
@@ -326,14 +212,9 @@
       left: 2px;
       transition: transform 0.2s ease;
     }
-    .ios-toggle:checked::after {
-      transform: translateX(20px);
-    }
+    .ios-toggle:checked::after { transform: translateX(20px); }
 
-    /* Formulaires de saisie */
-    .form-group {
-      margin-bottom: 24px;
-    }
+    .form-group { margin-bottom: 24px; }
     label {
       display: block;
       font-size: 10px;
@@ -352,26 +233,11 @@
       font-size: 14px;
       color: white;
       font-family: inherit;
-      transition: border-color 0.15s ease;
     }
-    input:focus, textarea:focus {
-      border-color: #4f46e5;
-      outline: none;
-    }
+    input:focus, textarea:focus { border-color: #4f46e5; outline: none; }
+    .form-grid { display: grid; grid-template-cols: 1fr; gap: 16px; }
+    @media (min-width: 600px) { .form-grid { grid-template-cols: repeat(2, 1fr); } }
 
-    /* Grille de formulaires */
-    .form-grid {
-      display: grid;
-      grid-template-cols: 1fr;
-      gap: 16px;
-    }
-    @media (min-width: 600px) {
-      .form-grid {
-        grid-template-cols: repeat(2, 1fr);
-      }
-    }
-
-    /* Bouton d'action de sauvegarde */
     .save-btn-container {
       margin-top: 40px;
       border-top: 1px solid #1e293b;
@@ -391,13 +257,8 @@
       border-radius: 12px;
       cursor: pointer;
       box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
-      transition: transform 0.1s;
     }
-    .btn-save:active {
-      transform: scale(0.98);
-    }
-
-    /* Alerte de notification Toast */
+    .btn-save:active { transform: scale(0.98); }
     .toast {
       position: absolute;
       bottom: 24px;
@@ -410,15 +271,6 @@
       border-radius: 12px;
       box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
       z-index: 100;
-    }
-
-    /* Pied de page */
-    footer {
-      border-top: 1px solid #0f172a;
-      padding: 24px;
-      text-align: center;
-      font-size: 12px;
-      color: #475569;
     }
   </style>
 </head>
@@ -440,7 +292,7 @@
     </button>
   </header>
 
-  <!-- MENU TIROIR DE NAVIGATION DROIT -->
+  <!-- MENU TIROIR -->
   <div id="side-drawer" class="drawer">
     <div class="drawer-header">
       <span class="logo-text">Menu</span>
@@ -448,8 +300,8 @@
     </div>
     <div class="drawer-links" id="drawer-nav">
       <a href="/">Accueil</a>
-      <a href="/dashboard" class="active">Dashboard</a>
-      <a href="/founder">Découvrir OMNIX</a>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/founder">Founder</a>
     </div>
   </div>
 
@@ -470,7 +322,7 @@
     <!-- Formulaire d'édition -->
     <main class="config-panel">
       
-      <!-- Onglet 1 : Vue d'ensemble -->
+      <!-- Onglet 1 : Vue d'ensemble (Liaison des 6 Toggles de commandes + Honeypot) -->
       <section id="tab-overview" class="tab-content">
         <h3 style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 24px;">Fiche d'identité</h3>
         
@@ -482,7 +334,6 @@
           <span id="license-badge" class="badge-free">FREE</span>
         </div>
 
-        <!-- 6 INTERRUPTEURS ON/OFF DE COMMANDES ET MODULES INDIVIDUELS (IA, backup, economy, modération, ping, ticket) -->
         <h4 style="font-size: 13px; font-weight: 800; color: white; margin-top: 32px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.8px;">Activation des Commandes</h4>
         
         <!-- Toggle 1 : AI -->
@@ -575,9 +426,9 @@
         </div>
       </section>
 
-      <!-- Onglet 3 : Modération & AutoMod -->
+      <!-- Onglet 3 : Modération, AutoMod & Honeypot -->
       <section id="tab-moderation" class="tab-content hidden">
-        <h3 style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 24px;">Modération & AutoMod</h3>
+        <h3 style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 24px;">Modération & Sécurité</h3>
 
         <!-- Moderation Module -->
         <div class="switch-row">
@@ -602,9 +453,24 @@
           <input type="checkbox" id="automod-enabled" class="ios-toggle">
         </div>
 
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom: 32px;">
           <label>Liste noire de mots censurés (séparés par une virgule)</label>
           <input type="text" id="automod-words" placeholder="Ex: insulte1, insulte2, pub">
+        </div>
+
+        <!-- AJOUT : Module Honeypot -->
+        <h4 style="font-size: 13px; font-weight: 800; color: white; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.8px; border-top: 1px solid #1e293b; pt: 24px; padding-top: 24px;">Système Honeypot (Piège)</h4>
+        <div class="switch-row">
+          <div>
+            <p class="switch-title">Activer le système Honeypot (Premium)</p>
+            <p class="switch-sub">Bannit instantanément les robots qui écrivent dans le salon piégé.</p>
+          </div>
+          <input type="checkbox" id="honeypot-enabled" class="ios-toggle">
+        </div>
+
+        <div class="form-group">
+          <label>ID du salon piégé (Honeypot Channel)</label>
+          <input type="text" id="honeypot-channel" placeholder="Ex: 1211490202246189167">
         </div>
       </section>
 
@@ -695,7 +561,7 @@
           <input type="checkbox" id="backups-enabled" class="ios-toggle">
         </div>
 
-        <!-- Outils d'action de sauvegarde en jeu -->
+        <!-- Outils d'action de sauvegarde -->
         <div style="padding: 24px; background: rgba(3, 7, 18, 0.4); border: 1px solid rgba(255, 255, 255, 0.02); border-radius: 16px;">
           <h4 style="font-size: 14px; font-weight: 700; color: white; margin-bottom: 8px;">Gestion des instantanés</h4>
           <p style="font-size: 11px; color: #64748b; line-height: 1.5; margin-bottom: 16px;">Créez un point de restauration complet de vos configurations actuelles directement sur votre base privée.</p>
@@ -738,7 +604,7 @@
       }
     }
 
-    // Décodeur de jeton de session pour ajouter dynamiquement l'onglet Staff
+    // Décodeur de jeton de session
     function parseJwt(token) {
       if (!token || token === 'null' || token === 'undefined' || !token.includes('.')) return null;
       try {
@@ -758,7 +624,7 @@
       }
     }
 
-    // Vérifie et ajoute l'onglet Staff de l'en-tête
+    // Ajoute l'onglet Staff
     function renderDrawerMenu() {
       const payload = parseJwt(jwtToken);
       if (payload && payload.isAdmin) {
@@ -786,7 +652,32 @@
       if (activeBtn) activeBtn.className = "tab-btn active";
     }
 
-    // CORRECTIF SÉCURISÉ DOUBLE-CANAL & BYPASS PREMIUM UTILISATEUR
+    // Synchronisation mutuelle de toutes les paires d'interrupteurs en temps réel
+    function setupCheckboxSync() {
+      const pairs = [
+        { main: 'ai-enabled', toggle: 'ai-enabled-toggle' },
+        { main: 'backups-enabled', toggle: 'backups-enabled-toggle' },
+        { main: 'economy-enabled', toggle: 'economy-enabled-toggle' },
+        { main: 'moderation-enabled', toggle: 'moderation-enabled-toggle' },
+        { main: 'tickets-enabled', toggle: 'tickets-enabled-toggle' }
+      ];
+
+      pairs.forEach(pair => {
+        const mainEl = document.getElementById(pair.main);
+        const toggleEl = document.getElementById(pair.toggle);
+
+        if (mainEl && toggleEl) {
+          mainEl.addEventListener('change', (e) => {
+            toggleEl.checked = e.target.checked;
+          });
+          toggleEl.addEventListener('change', (e) => {
+            mainEl.checked = e.target.checked;
+          });
+        }
+      });
+    }
+
+    // Lecture sécurisée (Anti-crash et Bypass Premium Utilisateur)
     async function loadConfig() {
       try {
         const response = await fetch(`/api/guilds/${guildId}/config`, {
@@ -800,7 +691,7 @@
 
         const config = await response.json();
 
-        // 1. Décodage local du JWT utilisateur pour vérifier s'il détient personnellement le Premium
+        // 1. Décodage local pour bypass Premium
         const payload = parseJwt(jwtToken);
         const isUserPremium = payload && (payload.isPremium || payload.isAdmin);
         const isGuildPremium = config.premium?.isPremium;
@@ -808,7 +699,6 @@
         const licenseLabel = document.getElementById('license-label');
         const badge = document.getElementById('license-badge');
         
-        // CORRECTION DYNAMIQUE PREMIUM : Si le serveur OU l'utilisateur est Premium, on affiche le badge vert
         if (isGuildPremium || isUserPremium) {
           licenseLabel.innerText = isGuildPremium 
             ? `Premium Activé (${config.premium.tier.toUpperCase()})` 
@@ -821,7 +711,7 @@
           badge.innerText = "FREE";
         }
 
-        // Remplissage sécurisé et protégé des variables EJS pour éviter tout conflit de schéma
+        // Remplissage protégé des formulaires (Chaînage optionnel ?. pour éviter tout crash de schéma)
         document.getElementById('welcome-enabled').checked = config.modules?.welcome?.enabled || false;
         document.getElementById('welcome-message').value = config.modules?.welcome?.message || "Bienvenue {user} !";
 
@@ -849,13 +739,16 @@
 
         document.getElementById('backups-enabled').checked = config.modules?.backups?.enabled || false;
 
-        // Liaison des 6 interrupteurs de l'onglet Vue d'ensemble
+        // Liaison des modules de sécurité Honeypot
+        document.getElementById('honeypot-enabled').checked = config.modules?.honeypot?.enabled || false;
+        document.getElementById('honeypot-channel').value = config.modules?.honeypot?.channelId || "";
+
+        // Liaison initiale des 6 interrupteurs de l'onglet Vue d'ensemble
         document.getElementById('ai-enabled-toggle').checked = config.modules?.ai?.enabled || false;
         document.getElementById('backups-enabled-toggle').checked = config.modules?.backups?.enabled || false;
         document.getElementById('economy-enabled-toggle').checked = config.modules?.economy?.enabled || false;
         document.getElementById('moderation-enabled-toggle').checked = config.modules?.moderation?.enabled || false;
         document.getElementById('tickets-enabled-toggle').checked = config.modules?.tickets?.enabled || false;
-        // Optionnel : ping n'a pas de module de base, on l'allume ou le lie s'il existe
         document.getElementById('ping-enabled-toggle').checked = config.modules?.ping?.enabled || true;
 
       } catch (error) {
@@ -880,7 +773,6 @@
             useEmbed: false
           },
           moderation: {
-            // Se synchronise à la fois depuis l'onglet Modération et la Vue d'ensemble (Toggles rapides)
             enabled: document.getElementById('moderation-enabled').checked || document.getElementById('moderation-enabled-toggle').checked,
             logChannelId: document.getElementById('moderation-log').value || null
           },
@@ -911,9 +803,13 @@
           backups: {
             enabled: document.getElementById('backups-enabled').checked || document.getElementById('backups-enabled-toggle').checked
           },
-          // Liaison facultative pour le ping
           ping: {
             enabled: document.getElementById('ping-enabled-toggle').checked
+          },
+          // AJOUT : Sauvegarde des configurations du module Honeypot
+          honeypot: {
+            enabled: document.getElementById('honeypot-enabled').checked,
+            channelId: document.getElementById('honeypot-channel').value || null
           }
         }
       };
@@ -944,7 +840,6 @@
       }
     }
 
-    // Déclenchement manuel de sauvegarde
     async function triggerBackup() {
       try {
         const response = await fetch(`/api/guilds/${guildId}/backups`, {
@@ -965,6 +860,7 @@
 
     // Initialisation
     renderDrawerMenu();
+    setupCheckboxSync();
     loadConfig();
   </script>
 </body>
