@@ -1,3 +1,20 @@
+/**
+ * ====================================================================
+ * SCHÉMA DE CONFIGURATION DES SERVEURS (OMNIX CORE - TICKETS ULTRA PRO)
+ * ====================================================================
+ */
+
+import { Schema, model, Document } from 'mongoose';
+
+export interface ITicketCategory {
+  id: string;             // Identifiant unique (ex: support_tech)
+  name: string;           // Nom de l'affichage (ex: Support technique)
+  emoji: string;          // Émoji d'affichage (ex: 🔧)
+  type: 'category' | 'channel' | 'thread'; // Type d'ouverture du ticket
+  targetId: string | null; // ID Discord du salon ou de la catégorie de destination
+  welcomeMessage: string; // Message d'accueil personnalisé modifiable depuis le site
+}
+
 export interface IGuildConfig extends Document {
   guildId: string;
   premium: {
@@ -8,9 +25,9 @@ export interface IGuildConfig extends Document {
   modules: {
     tickets: {
       enabled: boolean;
-      categoryId: string | null; // Catégorie par défaut
-      counter: number;           // Compteur de tickets ouverts
-      categoriesList: ITicketCategory[]; // Tableau des catégories dynamiques
+      categoryId: string | null;         // Catégorie de repli par défaut
+      counter: number;                   // Compteur pour les numéros de tickets
+      categoriesList: ITicketCategory[]; // Liste des catégories de tickets créées
     };
     antiRaid: {
       enabled: boolean;
@@ -87,3 +104,119 @@ export interface IGuildConfig extends Document {
     };
   };
 }
+
+// Schéma secondaire pour les catégories de tickets
+const TicketCategorySchema = new Schema<ITicketCategory>({
+  id: { type: String, required: true },
+  name: { type: String, required: true },
+  emoji: { type: String, default: '' },
+  type: { type: String, enum: ['category', 'channel', 'thread'], default: 'channel' },
+  targetId: { type: String, default: null },
+  welcomeMessage: { type: String, default: 'Bienvenue dans votre ticket.' }
+}, { _id: false });
+
+// Schéma principal de configuration du serveur
+const GuildConfigSchema = new Schema<IGuildConfig>({
+  guildId: { type: String, required: true, unique: true, index: true },
+  premium: {
+    isPremium: { type: Boolean, default: false },
+    tier: { type: String, enum: ['free', 'premium', 'lifetime', 'enterprise'], default: 'free' },
+    expiresAt: { type: Date, default: null }
+  },
+  modules: {
+    tickets: {
+      enabled: { type: Boolean, default: false },
+      categoryId: { type: String, default: null },
+      counter: { type: Number, default: 0 },
+      categoriesList: [TicketCategorySchema]
+    },
+    antiRaid: {
+      enabled: { type: Boolean, default: false },
+      thresholdCount: { type: Number, default: 5 },
+      thresholdSeconds: { type: Number, default: 10 }
+    },
+    antiSpam: {
+      enabled: { type: Boolean, default: false },
+      maxMessages: { type: Number, default: 5 },
+      windowSeconds: { type: Number, default: 5 }
+    },
+    antiLink: {
+      enabled: { type: Boolean, default: false },
+      allowedDomains: [{ type: String }]
+    },
+    autoMod: {
+      enabled: { type: Boolean, default: false },
+      blacklistedWords: [{ type: String }]
+    },
+    levels: {
+      enabled: { type: Boolean, default: false },
+      xpPerMessage: { type: Number, default: 15 },
+      rewardRoles: [{
+        level: { type: Number, required: true },
+        roleId: { type: String, required: true }
+      }]
+    },
+    economy: {
+      enabled: { type: Boolean, default: false },
+      currencySymbol: { type: String, default: '$' },
+      workCooldownMinutes: { type: Number, default: 60 }
+    },
+    music: {
+      enabled: { type: Boolean, default: false }
+    },
+    ai: {
+      enabled: { type: Boolean, default: false },
+      systemPrompt: { type: String, default: 'Tu es un assistant utile.' },
+      contextLimit: { type: Number, default: 10 }
+    },
+    counting: {
+      enabled: { type: Boolean, default: false },
+      channelId: { type: String, default: null },
+      currentNumber: { type: Number, default: 0 }
+    },
+    autoReactions: {
+      enabled: { type: Boolean, default: false },
+      rules: [{
+        trigger: { type: String, required: true },
+        emojis: [{ type: String }]
+      }]
+    },
+    scheduledMessages: {
+      enabled: { type: Boolean, default: false },
+      list: [{
+        message: { type: String, required: true },
+        cronPattern: { type: String, required: true },
+        channelId: { type: String, required: true }
+      }]
+    },
+    polls: {
+      enabled: { type: Boolean, default: false }
+    },
+    verification: {
+      enabled: { type: Boolean, default: false },
+      roleId: { type: String, default: null }
+    },
+    backups: {
+      enabled: { type: Boolean, default: false }
+    },
+    customCommands: {
+      enabled: { type: Boolean, default: false },
+      list: [{
+        trigger: { type: String, required: true },
+        response: { type: String, required: true }
+      }]
+    },
+    statistics: {
+      enabled: { type: Boolean, default: false }
+    },
+    ping: {
+      enabled: { type: Boolean, default: true }
+    },
+    honeypot: {
+      enabled: { type: Boolean, default: false },
+      channelId: { type: String, default: null }
+    }
+  }
+}, { timestamps: true });
+
+export const GuildConfig = model<IGuildConfig>('GuildConfig', GuildConfigSchema);
