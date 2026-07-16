@@ -1,22 +1,39 @@
-import { Router, Response, NextFunction } from 'express';
-import { AdminController } from '../controllers/admin.controller';
-import { isAuthenticated, AuthenticatedRequest } from '../middlewares/auth';
+import { Router } from 'express';
+import { client as botClient } from '../../bot/client';
+import { EmbedBuilder, TextChannel } from 'discord.js';
 
 const router = Router();
 
-function requireBotOwner(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  if (!req.user || !req.user.isAdmin) {
-    console.warn(`[API Auth] 🚫 Tentative d'accès non autorisé par : ${req.user?.username || 'Inconnu'}`);
-    return res.status(403).json({ error: 'Accès restreint. Permissions de niveau Owner requises.' });
-  }
-  next();
-}
+// Route sécurisée pour pousser une mise à jour dans le salon #changelog
+router.post('/api/admin/deploy-changelog', async (req, res) => {
+  const { secret, version, description, author } = req.body;
+  const changelogChannelId = "VOTRE_CHANNEL_ID_CHANGELOG"; // ID du salon #changelog sur votre serveur officiel
 
-// Routes d'administration sécurisées (JWT + requireBotOwner)
-router.get('/monitoring', isAuthenticated as any, requireBotOwner as any, AdminController.getMonitoring);
-router.post('/premium', isAuthenticated as any, requireBotOwner as any, AdminController.togglePremium);
-router.post('/announce', isAuthenticated as any, requireBotOwner as any, AdminController.sendGlobalAnnouncement);
-router.get('/users', isAuthenticated as any, requireBotOwner as any, AdminController.getUsers);
-router.post('/blacklist', isAuthenticated as any, requireBotOwner as any, AdminController.toggleBlacklist);
+  // Validation de sécurité simple via clé secrète
+  if (secret !== process.env.JWT_SECRET) {
+    return res.status(401).json({ error: 'Non autorisé.' });
+  }
+
+  try {
+    const channel = await botClient.channels.fetch(changelogChannelId) as TextChannel;
+    if (!channel) {
+      return res.status(404).json({ error: 'Salon changelog introuvable.' });
+    }
+
+    const changelogEmbed = new EmbedBuilder()
+      .setTitle(`🚀 NOUVELLE MISE À JOUR — VERSION ${version}`)
+      .setColor(0x7c3aed) // Violet royal
+      .setDescription(description)
+      .addFields({ name: 'Déployeur', value: `🔧 ${author || 'OMNIX Engine'}`, inline: true })
+      .setFooter({ text: 'OMNIX Auto-Changelog' })
+      .setTimestamp();
+
+    await channel.send({ embeds: [changelogEmbed] });
+    return res.json({ message: 'Changelog poussé avec succès sur Discord.' });
+  } catch (err: any) {
+    console.error('[Changelog Webhook Error] :', err.message);
+    return res.status(500).json({ error: 'Échec de la publication.' });
+  }
+});
 
 export default router;
