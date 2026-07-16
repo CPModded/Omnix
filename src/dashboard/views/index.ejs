@@ -206,11 +206,11 @@
       color: white;
     }
 
-    /* BANNIÈRE DE PRÉSENTATION SAAS D'OMNIX (CSS Graphique & Hauteur dynamique) */
+    /* BANNIÈRE DE PRÉSENTATION SAAS D'OMNIX */
     .saas-banner {
       width: 100%;
       max-width: 850px;
-      min-height: 280px; /* Utilisation d'une hauteur minimale pour éviter les débordements de texte sur mobile */
+      min-height: 280px;
       background: rgba(15, 23, 42, 0.4);
       border: 1px solid rgba(255, 255, 255, 0.04);
       border-radius: 24px;
@@ -221,7 +221,7 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 24px; /* Marges réduites sur mobile */
+      padding: 24px;
       text-align: left;
       position: relative;
       overflow: hidden;
@@ -239,7 +239,7 @@
       right: -50px;
       width: 250px;
       height: 250px;
-      background: rgba(6, 182, 212, 0.15); /* Cyan */
+      background: rgba(6, 182, 212, 0.15);
       filter: blur(50px);
       border-radius: 50%;
     }
@@ -253,7 +253,7 @@
     /* Grille de statistiques adaptative à 3 niveaux */
     .stats-grid {
       display: grid;
-      grid-template-cols: 1fr; /* Une seule colonne sur écrans minuscules */
+      grid-template-cols: 1fr;
       gap: 16px;
       width: 100%;
       max-width: 800px;
@@ -265,12 +265,12 @@
     }
     @media (min-width: 480px) {
       .stats-grid {
-        grid-template-cols: repeat(2, 1fr); /* Deux colonnes sur mobile normal */
+        grid-template-cols: repeat(2, 1fr);
       }
     }
     @media (min-width: 768px) { 
       .stats-grid { 
-        grid-template-cols: repeat(5, 1fr); /* Cinq colonnes sur ordinateur */
+        grid-template-cols: repeat(5, 1fr);
       } 
     }
     .stat-item { display: flex; flex-direction: column; align-items: center; }
@@ -310,7 +310,7 @@
     <span class="tag">Plateforme Intégrée SaaS</span>
     <h1>Gerez votre communauté avec <span>OMNIX</span></h1>
     <p class="subtitle">
-      OMNIX n’est pas un simple bot Discord. C’est une plateforme intelligente conçue pour automatiser, protéger et développer votre communauté. Gérez l’intégralité de votre serveur depuis une interface moderne, profitez d’outils avancés de modération, d’une économie complète, d’une IA intégrée et d’un tableau de bord puissant. Rejoignez les milieux de communautés qui font déjà confiance à OMNIX.
+      OMNIX n’est pas un simple bot Discord. C’est une plateforme intelligente conçue pour automatiser, protéger et développer votre communauté. Gérez l’intégralité de votre serveur depuis une interface moderne, profitez d’outils avancés de modération, d’une économie complète, d’une IA intégrée et d’un tableau de bord puissant. Rejoignez les milliers de communautés qui font déjà confiance à OMNIX.
     </p>
 
     <!-- Zone d'appel à l'action dynamique -->
@@ -338,39 +338,82 @@
       <div class="stat-item"><span class="stat-num" id="s-uptime">...</span><span class="stat-label">Uptime</span></div>
       <div class="stat-item"><span class="stat-num" id="s-latency">...</span><span class="stat-label">Latence</span></div>
     </div>
-  </main>
 
-  <!-- PANNEAU DE DIAGNOSTIC VISUEL EN VITE FAIT (DEBUG CONSOLE) -->
-  <div id="omnix-debug-panel" style="position: fixed; bottom: 20px; right: 20px; background: rgba(15, 23, 42, 0.96); border: 1px solid #3b82f6; border-radius: 12px; padding: 16px; max-width: 380px; width: calc(100% - 40px); z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,0.6); font-family: monospace; font-size: 11px; color: #94a3b8; text-align: left; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 8px; margin-bottom: 8px;">
-      <span style="color: #38bdf8; font-weight: bold; font-size: 12px;">🛠️ OMNIX AUTH CONSOLE DEBUG</span>
-      <button onclick="document.getElementById('omnix-debug-panel').style.display='none'" style="background: none; border: none; color: #64748b; cursor: pointer; font-size: 16px;">&times;</button>
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 6px;">
-      <div><strong>Page Actuelle :</strong> <span id="debug-url" style="color: #f1f5f9;"></span></div>
-      <div><strong>Paramètres URL :</strong> <span id="debug-params" style="color: #38bdf8; word-break: break-all;"></span></div>
-      <div><strong>LocalStorage token :</strong> <span id="debug-localstorage" style="color: #f1f5f9;"></span></div>
-      <div><strong>Cookie `jwt_token` :</strong> <span id="debug-cookie" style="color: #f1f5f9;"></span></div>
-      <div><strong>Payload Jeton :</strong> <pre id="debug-payload" style="background: rgba(0,0,0,0.3); padding: 6px; border-radius: 4px; color: #c084fc; margin-top: 4px; max-height: 80px; overflow-y: auto; font-size: 10px; line-height: 1.3;"></pre></div>
-      <div style="border-top: 1px solid #1e293b; padding-top: 8px; margin-top: 4px;">
-        <strong style="color: #f59e0b;">🔍 Analyse et Résolution :</strong>
-        <div id="debug-advice" style="color: #34d399; margin-top: 4px; line-height: 1.4;">Analyse en cours...</div>
+    <!-- CONSOLE INFORMATIQUE DE DÉVELOPPEMENT DYNAMIQUE (DEBUG TERMINAL) -->
+    <div id="omnix-terminal" style="width: 100%; max-width: 850px; background: #020617; border: 1px solid #1e293b; border-radius: 12px; margin-top: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); overflow: hidden; text-align: left; font-family: 'Courier New', Courier, monospace; z-index: 50;">
+      <div style="background: #0f172a; border-bottom: 1px solid #1e293b; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444; display: inline-block;"></span>
+          <span style="width: 10px; height: 10px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span>
+          <span style="width: 10px; height: 10px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+          <span style="color: #64748b; font-size: 11px; font-weight: bold; margin-left: 8px; letter-spacing: 1px;">OMNIX DECI-ENGINE TERMINAL v2.4</span>
+        </div>
+        <span style="color: #38bdf8; font-size: 10px; font-weight: bold;">LIVE LOGS DEB</span>
+      </div>
+      <div id="terminal-screen" style="padding: 16px; height: 260px; overflow-y: auto; font-size: 12px; color: #a3e635; line-height: 1.5; background: #030712;">
+        <!-- Injecté dynamiquement par JS -->
       </div>
     </div>
-  </div>
+  </main>
 
   <footer>
     <p>&copy; 2026 OMNIX. Tous droits réservés.</p>
   </footer>
 
-  <!-- BLOC JAVASCRIPT TECHNIQUE STRICTEMENT ENCADRÉ -->
   <script>
-    // Module de diagnostic automatique visible à l'écran
+    // Moteur d'écriture de logs dans la console EJS d'accueil
+    function addTerminalLog(type, message) {
+      const screen = document.getElementById('terminal-screen');
+      if (!screen) return;
+      
+      const time = new Date().toLocaleTimeString();
+      let color = '#a3e635'; // Vert (INFO)
+      let label = 'INFO';
+      
+      if (type === 'warn') {
+        color = '#f59e0b'; // Orange (WARN)
+        label = 'WARN';
+      } else if (type === 'error') {
+        color = '#ef4444'; // Rouge (ERROR)
+        label = 'ERROR';
+      } else if (type === 'debug') {
+        color = '#38bdf8'; // Bleu (DEBUG)
+        label = 'DEBUG';
+      } else if (type === 'success') {
+        color = '#10b981'; // Vert vif (SUCCESS)
+        label = 'SUCCESS';
+      }
+      
+      const line = document.createElement('div');
+      line.style.color = color;
+      line.style.marginBottom = '6px';
+      line.innerHTML = `[${time}] [${label}] ${message}`;
+      
+      screen.appendChild(line);
+      screen.scrollTop = screen.scrollHeight;
+    }
+
     function runAuthDiagnostic() {
+      addTerminalLog('info', "Démarrage de l'analyseur de session de l'application OMNIX...");
+      
       const path = window.location.pathname;
       const params = window.location.search;
-      const localToken = localStorage.getItem('jwt_token');
+      addTerminalLog('debug', `Chemin courant : <strong>${path}</strong>`);
       
+      if (params) {
+        addTerminalLog('debug', `Paramètres d'URL détectés : <strong>${params}</strong>`);
+      } else {
+        addTerminalLog('info', "Aucun paramètre d'URL détecté.");
+      }
+
+      const localToken = localStorage.getItem('jwt_token');
+      if (localToken) {
+        addTerminalLog('success', `Jeton de session trouvé dans le LocalStorage : <code>${localToken.substring(0, 24)}...</code>`);
+      } else {
+        addTerminalLog('warn', "Aucun jeton de session dans le LocalStorage de votre navigateur.");
+      }
+
+      // Détection du Cookie de session jwt_token
       const getCookieHelper = (name) => {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
@@ -378,12 +421,14 @@
         return null;
       };
       const cookieToken = getCookieHelper('jwt_token');
+      
+      if (cookieToken) {
+        addTerminalLog('success', `Cookie <code>jwt_token</code> détecté : <code>${cookieToken.substring(0, 24)}...</code>`);
+      } else {
+        addTerminalLog('error', "Cookie de session <code>jwt_token</code> absent de votre navigateur.");
+      }
 
-      document.getElementById('debug-url').innerText = path;
-      document.getElementById('debug-params').innerText = params || 'Aucun';
-      document.getElementById('debug-localstorage').innerText = localToken ? (localToken.substring(0, 24) + '...') : '❌ Absente';
-      document.getElementById('debug-cookie').innerText = cookieToken ? (cookieToken.substring(0, 24) + '...') : '❌ Absent (Safari a peut-être bloqué le stockage)';
-
+      // Décodage de la signature
       let payload = null;
       if (localToken || cookieToken) {
         const activeToken = localToken || cookieToken;
@@ -391,35 +436,38 @@
           const base64Url = activeToken.split('.')[1];
           const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
           payload = JSON.parse(window.atob(base64));
-          document.getElementById('debug-payload').innerText = JSON.stringify(payload, null, 2);
+          addTerminalLog('success', `Session décodée localement avec succès pour l'utilisateur : <strong>@${payload.username}</strong> (ID: ${payload.discordId}, Admin: ${payload.isAdmin})`);
         } catch (e) {
-          document.getElementById('debug-payload').innerText = '❌ Erreur : Signature JWT corrompue ou split '=' incomplet';
+          addTerminalLog('error', "Impossible de décoder la signature du jeton (le secret a peut-être changé).");
         }
-      } else {
-        document.getElementById('debug-payload').innerText = 'Aucune session décodée';
       }
 
-      const adviceEl = document.getElementById('debug-advice');
+      // Diagnostic d'erreur de redirection
       const urlParams = new URLSearchParams(params);
       const errorParam = urlParams.get('error');
 
       if (errorParam === 'unauthorized') {
+        addTerminalLog('error', "Le serveur Web a refusé l'accès et a renvoyé l'erreur <code>unauthorized</code>.");
+        
         if (cookieToken) {
-          adviceEl.innerHTML = "<span style='color: #f87171;'>Le serveur a reçu votre cookie mais a refusé l'accès.</span><br>💡 **Cause probable :** La clé de sécurité `JWT_SECRET` dans le fichier `.env` de Render ne correspond plus au jeton généré par l'API Discord OAuth2 au moment de la connexion.";
+          addTerminalLog('warn', "<strong>ÉCART RECONNU :</strong> Un cookie existe mais l'accès reste refusé.");
+          addTerminalLog('warn', "👉 **Cause 100% logique :** La clé de signature <code>JWT_SECRET</code> configurée dans le fichier <code>.env</code> de Render est différente de la clé utilisée par l'API Discord au moment de l'authentification. Le serveur rejette donc la validité du token.");
         } else {
-          adviceEl.innerHTML = "<span style='color: #f87171;'>Le serveur a refusé l'accès car le cookie 'jwt_token' n'a pas été envoyé.</span><br>💡 **Cause probable :** Safari ou votre navigateur bloque le cookie lors de la redirection car l'attribut `; Secure` n'était pas actif ou le protocole de liaison a échoué.";
+          addTerminalLog('warn', "<strong>ÉCART RECONNU :</strong> Vous possédez peut-être le jeton dans le LocalStorage, mais aucun cookie n'a été transmis au serveur.");
+          addTerminalLog('warn', "👉 **Cause 100% logique :** Safari ou votre navigateur sur iPhone a bloqué ou nettoyé le cookie lors du retour de redirection Discord car l'attribut <code>; Secure</code> ou de domaine était manquant sur HTTPS.");
+          addTerminalLog('info', "👉 **Résolution :** Veuillez vider vos cookies, cliquer sur 'Déconnexion', puis vous reconnecter.");
         }
       } else if (params.includes('token=')) {
-        adviceEl.innerHTML = "<span style='color: #60a5fa;'>Connexion réussie en attente d'enregistrement.</span><br>Le jeton d'authentification a été détecté dans l'URL. OMNIX est en train d'écrire la session.";
+        addTerminalLog('info', "Jeton détecté dans l'URL. Enregistrement en cours...");
       } else if (cookieToken) {
-        adviceEl.innerHTML = "<span style='color: #34d399;'>Votre session est active et le cookie est enregistré !</span><br>Vous devriez pouvoir accéder au Dashboard sans être déconnecté.";
+        addTerminalLog('success', "Session valide et cookie synchronisé. Accès au Dashboard disponible.");
       } else {
-        adviceEl.innerHTML = "Aucune session active détectée. Veuillez cliquer sur 'Se connecter' pour lier votre compte Discord.";
+        addTerminalLog('info', "Prêt pour une nouvelle authentification. Veuillez lier votre compte Discord.");
       }
     }
 
     function setupDynamicButtons() {
-      // CORRECTIF MAJEUR : Capture et enregistre le jeton d'URL dès la redirection sur la page d'accueil
+      // Capture et enregistre le jeton d'URL dès la redirection sur la page d'accueil
       const urlParams = new URLSearchParams(window.location.search);
       const tokenFromUrl = urlParams.get('token');
       
@@ -499,7 +547,6 @@
       }
     }
 
-    // Exécution après chargement de la structure et lancement du diagnostic
     setupDynamicButtons();
     runAuthDiagnostic();
     window.addEventListener('DOMContentLoaded', loadRealStats);
