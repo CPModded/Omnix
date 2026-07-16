@@ -1,6 +1,6 @@
 /**
  * ====================================================================
- * MIDDLEWARE D'AUTHENTIFICATION JWT (SUPPORT COOKIES, HEADERS & QUERY URL)
+ * MIDDLEWARE D'AUTHENTIFICATION JWT (SUPPORT SECURE COOKIES SUR IOS)
  * ====================================================================
  */
 
@@ -18,7 +18,7 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
-// Décodeur de cookie robuste immunisé contre le bug des signatures JWT se terminant par "="
+// Décodeur de cookie robuste prévenant le bug du signe "="
 function getCookie(req: Request, name: string): string | null {
   const cookieHeader = req.headers.cookie;
   if (!cookieHeader) return null;
@@ -40,7 +40,7 @@ function getCookie(req: Request, name: string): string | null {
 export function isAuthenticated(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
   const cookieToken = getCookie(req, 'jwt_token');
-  const queryToken = req.query.token as string | undefined; // Capture le jeton d'URL de redirection Discord
+  const queryToken = req.query.token as string | undefined;
   const origin = req.headers.origin || req.headers.referer || 'Inconnu';
 
   console.log(`[API Auth] 🔑 Tentative d'accès à une route sécurisée par l'origine : ${origin}`);
@@ -51,13 +51,15 @@ export function isAuthenticated(req: AuthenticatedRequest, res: Response, next: 
   if (authHeader && authHeader.startsWith('Bearer ')) {
     token = authHeader.split(' ')[1];
   } 
-  // 2. Extraction depuis les paramètres d'URL (redirection initiale de la connexion)
+  // 2. Extraction depuis les paramètres d'URL (redirection de connexion)
   else if (queryToken) {
     token = queryToken;
-    // On écrit directement le cookie de session depuis le serveur pour sécuriser la navigation web
-    res.setHeader('Set-Cookie', `jwt_token=${token}; Path=/; Max-Age=604800; SameSite=Lax`);
+    
+    // Détection HTTPS pour l'attribut Secure requis par iOS / Safari
+    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+    res.setHeader('Set-Cookie', `jwt_token=${token}; Path=/; Max-Age=604800; SameSite=Lax${isSecure ? '; Secure' : ''}`);
   }
-  // 3. Extraction depuis les Cookies (cas classique de navigation de page en page)
+  // 3. Extraction depuis les Cookies (cas classique de navigation)
   else if (cookieToken) {
     token = cookieToken;
   }
@@ -65,7 +67,7 @@ export function isAuthenticated(req: AuthenticatedRequest, res: Response, next: 
   const isApiRequest = req.path.startsWith('/api');
 
   if (!token) {
-    console.warn(`[API Auth] ⚠️ Échec : Jeton de session absent (Header, Cookie et URL vides).`);
+    console.warn(`[API Auth] ⚠️ Échec : Jeton de session absent.`);
     
     if (isApiRequest) {
       return res.status(401).json({ error: 'Accès non autorisé. Token manquant.' });
