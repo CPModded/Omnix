@@ -25,7 +25,7 @@
     }
   }
 
-  // CORRECTIF IOS/SAFARI : Ajoute dynamiquement l'attribut Secure sur HTTPS
+  // Enregistrement unifié du jeton avec attribut Secure dynamique pour iOS / Safari
   function setToken(value) {
     try {
       localStorage.setItem('jwt_token', value);
@@ -101,6 +101,24 @@
     if (currentId) {
       const activeEl = document.getElementById(currentId);
       if (activeEl) activeEl.classList.add('active');
+    }
+
+    // ========================================================
+    // MOTEUR DE SYNCHRONISATION AUTOMATIQUE OMNIX (AUTO-RESTORE)
+    // ========================================================
+    const localToken = localStorage.getItem('jwt_token');
+    const cookieToken = getCookie('jwt_token');
+
+    if (localToken && !cookieToken) {
+      // Si le jeton local existe mais que Safari ou l'appareil a vidé le cookie, on le réécrit instantanément
+      setToken(localToken);
+      console.log("[OMNIX Sync] Session resynchronisée : Cookie de session restauré depuis le LocalStorage.");
+      
+      // Si l'URL actuelle comporte une erreur de redirection bloquante, on rafraîchit proprement la page
+      if (window.location.search.includes('error=unauthorized')) {
+        window.location.href = window.location.pathname;
+        return;
+      }
     }
 
     const jwtToken = getToken();
