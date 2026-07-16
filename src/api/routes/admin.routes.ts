@@ -7,7 +7,7 @@ const router = Router();
 // Route sécurisée pour pousser une mise à jour dans le salon #changelog
 router.post('/api/admin/deploy-changelog', async (req, res) => {
   const { secret, version, description, author } = req.body;
-  const changelogChannelId = "VOTRE_CHANNEL_ID_CHANGELOG"; // ID du salon #changelog sur votre serveur officiel
+  const changelogChannelId = "1527176322319777832"; // ID de votre salon #changelog officiel OMNIX
 
   // Validation de sécurité simple via clé secrète
   if (secret !== process.env.JWT_SECRET) {

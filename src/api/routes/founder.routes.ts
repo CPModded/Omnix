@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { FounderController } from '../controllers/founder.controller';
 import { client as botClient } from '../../bot/client';
 import { User } from '../../models/User';
+import { auth } from '../middlewares/auth'; // Import du middleware de connexion existant
+import { adminCheck } from '../middlewares/adminCheck'; // Import de notre middleware de vérification Admin/Owner
 
 const router = Router();
 
@@ -39,13 +41,13 @@ router.get('/', (req, res) => {
   res.render('index');
 });
 
-// Page de sélection du serveur
-router.get('/dashboard', (req, res) => {
+// Page de sélection du serveur (Authentification requise)
+router.get('/dashboard', auth, (req, res) => {
   res.render('dashboard');
 });
 
-// Page d'administration d'un serveur spécifique
-router.get('/dashboard/:guildId', (req, res) => {
+// Page d'administration d'un serveur spécifique (Authentification requise)
+router.get('/dashboard/:guildId', auth, (req, res) => {
   res.render('manage', { guildId: req.params.guildId });
 });
 
@@ -59,11 +61,11 @@ router.get('/learn-more', (req, res) => {
   res.render('learn-more');
 });
 
-// Page du fondateur OMNIX
-router.get('/founder', FounderController.renderFounderPage);
+// Page du fondateur OMNIX (Strictement réservée : Connexion + Badge Admin ou Owner requis)
+router.get('/founder', auth, adminCheck, FounderController.renderFounderPage);
 
-// Panel d'administration Staff
-router.get('/admin', (req, res) => { 
+// Panel d'administration Staff (Strictement réservée : Connexion + Badge Admin ou Owner requis)
+router.get('/admin', auth, adminCheck, (req, res) => { 
   res.render('admin'); 
 });
 
