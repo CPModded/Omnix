@@ -27,7 +27,7 @@
       background: rgba(15, 23, 42, 0.7);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      padding: 16px 24px;
+      padding: 12px 16px; /* Taille d'en-tête optimisée pour mobile */
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -35,6 +35,12 @@
       top: 0;
       z-index: 50;
     }
+    @media (min-width: 768px) {
+      header {
+        padding: 16px 24px; /* Plus d'espace sur PC */
+      }
+    }
+
     .logo-area { display: flex; align-items: center; gap: 12px; text-decoration: none; }
     .logo-img { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
     .logo-text {
@@ -96,13 +102,19 @@
       max-width: 1000px;
       width: 100%;
       margin: 0 auto;
-      padding: 60px 24px;
+      padding: 40px 16px; /* Marges réduites sur mobile */
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
       z-index: 10;
     }
+    @media (min-width: 768px) {
+      main {
+        padding: 80px 24px; /* Plus d'espace d'encadrement sur PC/Tablette */
+      }
+    }
+
     .tag {
       font-size: 11px;
       font-weight: 800;
@@ -116,13 +128,48 @@
       margin-bottom: 24px;
       display: inline-block;
     }
-    h1 { font-size: 38px; font-weight: 900; line-height: 1.15; letter-spacing: -1px; color: white; margin-bottom: 24px; max-width: 800px; }
-    h1 span { background: linear-gradient(to right, #60a5fa, #22d3ee, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    p.subtitle { font-size: 16px; color: #94a3b8; max-width: 700px; line-height: 1.6; margin-bottom: 40px; }
 
-    /* Boutons CTA */
-    .cta-area { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 400px; margin-bottom: 60px; }
-    @media (min-width: 600px) { .cta-area { flex-direction: row; max-width: 500px; } }
+    h1 {
+      font-size: 30px; /* Taille optimale sur mobile */
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: -1px;
+      color: white;
+      margin-bottom: 20px;
+      max-width: 800px;
+    }
+    @media (min-width: 768px) {
+      h1 {
+        font-size: 44px; /* Police agrandie sur ordinateur */
+        line-height: 1.15;
+        margin-bottom: 24px;
+      }
+    }
+    h1 span { background: linear-gradient(to right, #60a5fa, #22d3ee, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    p.subtitle {
+      font-size: 14px; /* Police lisible sur mobile */
+      color: #94a3b8;
+      max-width: 700px;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    @media (min-width: 768px) {
+      p.subtitle {
+        font-size: 16px;
+        margin-bottom: 40px;
+      }
+    }
+
+    /* Boutons CTA Adaptatifs */
+    .cta-area { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 400px; margin-bottom: 48px; }
+    @media (min-width: 600px) { 
+      .cta-area { 
+        flex-direction: row; 
+        max-width: 500px; 
+        margin-bottom: 60px;
+      } 
+    }
     
     .btn-primary {
       flex: 1;
@@ -159,25 +206,32 @@
       color: white;
     }
 
-    /* BANNIÈRE DE PRÉSENTATION SAAS D'OMNIX (CSS Graphique) */
+    /* BANNIÈRE DE PRÉSENTATION SAAS D'OMNIX (CSS Graphique & Hauteur dynamique) */
     .saas-banner {
       width: 100%;
       max-width: 850px;
-      height: 320px;
+      min-height: 280px; /* Utilisation d'une hauteur minimale pour éviter les débordements de texte sur mobile */
       background: rgba(15, 23, 42, 0.4);
       border: 1px solid rgba(255, 255, 255, 0.04);
       border-radius: 24px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 40px rgba(79, 70, 229, 0.1);
-      margin-bottom: 60px;
+      margin-bottom: 48px;
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 30px;
+      padding: 24px; /* Marges réduites sur mobile */
       text-align: left;
       position: relative;
       overflow: hidden;
+      gap: 20px;
+    }
+    @media (min-width: 768px) {
+      .saas-banner {
+        padding: 30px;
+        margin-bottom: 60px;
+      }
     }
     .banner-glow {
       position: absolute;
@@ -196,9 +250,10 @@
     .banner-title { font-size: 18px; font-weight: 800; color: white; }
     .banner-desc { font-size: 13px; color: #64748b; max-width: 500px; }
 
+    /* Grille de statistiques adaptative à 3 niveaux */
     .stats-grid {
       display: grid;
-      grid-template-cols: repeat(2, 1fr);
+      grid-template-cols: 1fr; /* Une seule colonne sur écrans minuscules */
       gap: 16px;
       width: 100%;
       max-width: 800px;
@@ -208,7 +263,16 @@
       border-radius: 20px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     }
-    @media (min-width: 768px) { .stats-grid { grid-template-cols: repeat(5, 1fr); } }
+    @media (min-width: 480px) {
+      .stats-grid {
+        grid-template-cols: repeat(2, 1fr); /* Deux colonnes sur mobile normal */
+      }
+    }
+    @media (min-width: 768px) { 
+      .stats-grid { 
+        grid-template-cols: repeat(5, 1fr); /* Cinq colonnes sur ordinateur */
+      } 
+    }
     .stat-item { display: flex; flex-direction: column; align-items: center; }
     .stat-num { font-size: 28px; font-weight: 800; background: linear-gradient(to right, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .stat-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
