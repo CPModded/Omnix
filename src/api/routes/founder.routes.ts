@@ -5,19 +5,6 @@ import { User } from '../../models/User';
 import { isAuthenticated } from '../middlewares/auth'; 
 import { adminCheck } from '../middlewares/adminCheck'; 
 
-// ==========================================
-// ZONE DE DIAGNOSTIC TEMPORAIRE OMNIX
-// ==========================================
-console.log('======================================================');
-console.log('[DEBUG] Diagnostic de chargement des imports :');
-console.log('[DEBUG] isAuthenticated (Auth) :', typeof isAuthenticated);
-console.log('[DEBUG] adminCheck (Admin) :', typeof adminCheck);
-console.log('[DEBUG] FounderController :', typeof FounderController);
-if (FounderController) {
-  console.log('[DEBUG] renderFounderPage (Fonction) :', typeof FounderController.renderFounderPage);
-}
-console.log('======================================================');
-
 const router = Router();
 
 // Endpoint de statistiques réelles d'OMNIX
@@ -49,8 +36,12 @@ router.get('/api/stats', async (req, res) => {
   }
 });
 
-// Page d'accueil OMNIX (Landing page)
+// Page d'accueil OMNIX (Landing page) - Détection et traçage des redirections d'erreurs
 router.get('/', (req, res) => {
+  const error = req.query.error;
+  if (error) {
+    console.warn(`[OMNIX ROUTER] 🚨 Redirection d'erreur interceptée sur l'accueil : ?error=${error}`);
+  }
   res.render('index');
 });
 
