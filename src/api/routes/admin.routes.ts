@@ -1,8 +1,40 @@
 import { Router } from 'express';
 import { client as botClient } from '../../bot/client';
 import { EmbedBuilder, TextChannel } from 'discord.js';
+import { User } from '../../models/User';
+import { AuditLog } from '../../models/AuditLog';
+import { isAuthenticated } from '../middlewares/auth';
+import { adminCheck } from '../middlewares/adminCheck';
 
 const router = Router();
+
+// Route pour lister tous les utilisateurs de la base de données (Staff Only)
+router.get('/api/admin/users', isAuthenticated, adminCheck, async (req, res) => {
+  try {
+    const users = await User.find()
+      .select('discordId username avatar isAdmin rewards licenses')
+      .limit(50);
+      
+    return res.json(users);
+  } catch (error: any) {
+    console.error('[API Admin Users Error] :', error);
+    return res.status(500).json({ error: 'Impossible de récupérer la liste des utilisateurs.' });
+  }
+});
+
+// Route pour lister l'historique d'Audit Center (Staff Only)
+router.get('/api/admin/audit-logs', isAuthenticated, adminCheck, async (req, res) => {
+  try {
+    const logs = await AuditLog.find()
+      .sort({ createdAt: -1 })
+      .limit(30);
+      
+    return res.json(logs);
+  } catch (error: any) {
+    console.error('[API Admin Audit Logs Error] :', error);
+    return res.status(500).json({ error: 'Impossible de récupérer le journal d\'audit.' });
+  }
+});
 
 // Route sécurisée pour pousser une mise à jour dans le salon #changelog
 router.post('/api/admin/deploy-changelog', async (req, res) => {
