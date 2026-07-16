@@ -9,7 +9,7 @@
     <a href="/dashboard" id="nav-dashboard">Dashboard</a>
     <a href="/pricing" id="nav-pricing">Abonnements</a>
     <a href="/learn-more" id="nav-learn-more">En savoir plus</a>
-    <a href="/founder" id="nav-founder">Découvrir OMNIX</a>
+    <a href="/founder" id="nav-founder">Ajouter le robot</a> <!-- Onglet mis à jour ici -->
   </div>
 </div>
 
@@ -25,7 +25,7 @@
     }
   }
 
-  // Enregistrement unifié du jeton avec attribut Secure dynamique pour iOS / Safari
+  // CORRECTIF IOS/SAFARI : Ajoute dynamiquement l'attribut Secure sur HTTPS
   function setToken(value) {
     try {
       localStorage.setItem('jwt_token', value);
@@ -110,11 +110,9 @@
     const cookieToken = getCookie('jwt_token');
 
     if (localToken && !cookieToken) {
-      // Si le jeton local existe mais que Safari ou l'appareil a vidé le cookie, on le réécrit instantanément
       setToken(localToken);
       console.log("[OMNIX Sync] Session resynchronisée : Cookie de session restauré depuis le LocalStorage.");
       
-      // Si l'URL actuelle comporte une erreur de redirection bloquante, on rafraîchit proprement la page
       if (window.location.search.includes('error=unauthorized')) {
         window.location.href = window.location.pathname;
         return;
