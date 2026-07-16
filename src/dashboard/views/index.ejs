@@ -338,134 +338,14 @@
       <div class="stat-item"><span class="stat-num" id="s-uptime">...</span><span class="stat-label">Uptime</span></div>
       <div class="stat-item"><span class="stat-num" id="s-latency">...</span><span class="stat-label">Latence</span></div>
     </div>
-
-    <!-- CONSOLE INFORMATIQUE DE DÉVELOPPEMENT DYNAMIQUE (DEBUG TERMINAL) -->
-    <div id="omnix-terminal" style="width: 100%; max-width: 850px; background: #020617; border: 1px solid #1e293b; border-radius: 12px; margin-top: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); overflow: hidden; text-align: left; font-family: 'Courier New', Courier, monospace; z-index: 50;">
-      <div style="background: #0f172a; border-bottom: 1px solid #1e293b; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444; display: inline-block;"></span>
-          <span style="width: 10px; height: 10px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span>
-          <span style="width: 10px; height: 10px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
-          <span style="color: #64748b; font-size: 11px; font-weight: bold; margin-left: 8px; letter-spacing: 1px;">OMNIX DECI-ENGINE TERMINAL v2.4</span>
-        </div>
-        <span style="color: #38bdf8; font-size: 10px; font-weight: bold;">LIVE LOGS DEB</span>
-      </div>
-      <div id="terminal-screen" style="padding: 16px; height: 260px; overflow-y: auto; font-size: 12px; color: #a3e635; line-height: 1.5; background: #030712;">
-        <!-- Injecté dynamiquement par JS -->
-      </div>
-    </div>
   </main>
 
   <footer>
     <p>&copy; 2026 OMNIX. Tous droits réservés.</p>
   </footer>
 
+  <!-- BLOC JAVASCRIPT TECHNIQUE STRICTEMENT ENCADRÉ -->
   <script>
-    // Moteur d'écriture de logs dans la console EJS d'accueil
-    function addTerminalLog(type, message) {
-      const screen = document.getElementById('terminal-screen');
-      if (!screen) return;
-      
-      const time = new Date().toLocaleTimeString();
-      let color = '#a3e635'; // Vert (INFO)
-      let label = 'INFO';
-      
-      if (type === 'warn') {
-        color = '#f59e0b'; // Orange (WARN)
-        label = 'WARN';
-      } else if (type === 'error') {
-        color = '#ef4444'; // Rouge (ERROR)
-        label = 'ERROR';
-      } else if (type === 'debug') {
-        color = '#38bdf8'; // Bleu (DEBUG)
-        label = 'DEBUG';
-      } else if (type === 'success') {
-        color = '#10b981'; // Vert vif (SUCCESS)
-        label = 'SUCCESS';
-      }
-      
-      const line = document.createElement('div');
-      line.style.color = color;
-      line.style.marginBottom = '6px';
-      line.innerHTML = `[${time}] [${label}] ${message}`;
-      
-      screen.appendChild(line);
-      screen.scrollTop = screen.scrollHeight;
-    }
-
-    function runAuthDiagnostic() {
-      addTerminalLog('info', "Démarrage de l'analyseur de session de l'application OMNIX...");
-      
-      const path = window.location.pathname;
-      const params = window.location.search;
-      addTerminalLog('debug', `Chemin courant : <strong>${path}</strong>`);
-      
-      if (params) {
-        addTerminalLog('debug', `Paramètres d'URL détectés : <strong>${params}</strong>`);
-      } else {
-        addTerminalLog('info', "Aucun paramètre d'URL détecté.");
-      }
-
-      const localToken = localStorage.getItem('jwt_token');
-      if (localToken) {
-        addTerminalLog('success', `Jeton de session trouvé dans le LocalStorage : <code>${localToken.substring(0, 24)}...</code>`);
-      } else {
-        addTerminalLog('warn', "Aucun jeton de session dans le LocalStorage de votre navigateur.");
-      }
-
-      // Détection du Cookie de session jwt_token
-      const getCookieHelper = (name) => {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
-        return null;
-      };
-      const cookieToken = getCookieHelper('jwt_token');
-      
-      if (cookieToken) {
-        addTerminalLog('success', `Cookie <code>jwt_token</code> détecté : <code>${cookieToken.substring(0, 24)}...</code>`);
-      } else {
-        addTerminalLog('error', "Cookie de session <code>jwt_token</code> absent de votre navigateur.");
-      }
-
-      // Décodage de la signature
-      let payload = null;
-      if (localToken || cookieToken) {
-        const activeToken = localToken || cookieToken;
-        try {
-          const base64Url = activeToken.split('.')[1];
-          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-          payload = JSON.parse(window.atob(base64));
-          addTerminalLog('success', `Session décodée localement avec succès pour l'utilisateur : <strong>@${payload.username}</strong> (ID: ${payload.discordId}, Admin: ${payload.isAdmin})`);
-        } catch (e) {
-          addTerminalLog('error', "Impossible de décoder la signature du jeton (le secret a peut-être changé).");
-        }
-      }
-
-      // Diagnostic d'erreur de redirection
-      const urlParams = new URLSearchParams(params);
-      const errorParam = urlParams.get('error');
-
-      if (errorParam === 'unauthorized') {
-        addTerminalLog('error', "Le serveur Web a refusé l'accès et a renvoyé l'erreur <code>unauthorized</code>.");
-        
-        if (cookieToken) {
-          addTerminalLog('warn', "<strong>ÉCART RECONNU :</strong> Un cookie existe mais l'accès reste refusé.");
-          addTerminalLog('warn', "👉 **Cause 100% logique :** La clé de signature <code>JWT_SECRET</code> configurée dans le fichier <code>.env</code> de Render est différente de la clé utilisée par l'API Discord au moment de l'authentification. Le serveur rejette donc la validité du token.");
-        } else {
-          addTerminalLog('warn', "<strong>ÉCART RECONNU :</strong> Vous possédez peut-être le jeton dans le LocalStorage, mais aucun cookie n'a été transmis au serveur.");
-          addTerminalLog('warn', "👉 **Cause 100% logique :** Safari ou votre navigateur sur iPhone a bloqué ou nettoyé le cookie lors du retour de redirection Discord car l'attribut <code>; Secure</code> ou de domaine était manquant sur HTTPS.");
-          addTerminalLog('info', "👉 **Résolution :** Veuillez vider vos cookies, cliquer sur 'Déconnexion', puis vous reconnecter.");
-        }
-      } else if (params.includes('token=')) {
-        addTerminalLog('info', "Jeton détecté dans l'URL. Enregistrement en cours...");
-      } else if (cookieToken) {
-        addTerminalLog('success', "Session valide et cookie synchronisé. Accès au Dashboard disponible.");
-      } else {
-        addTerminalLog('info', "Prêt pour une nouvelle authentification. Veuillez lier votre compte Discord.");
-      }
-    }
-
     function setupDynamicButtons() {
       // Capture et enregistre le jeton d'URL dès la redirection sur la page d'accueil
       const urlParams = new URLSearchParams(window.location.search);
@@ -547,8 +427,8 @@
       }
     }
 
+    // Exécution après chargement de la structure et lancement du diagnostic
     setupDynamicButtons();
-    runAuthDiagnostic();
     window.addEventListener('DOMContentLoaded', loadRealStats);
   </script>
 </body>
