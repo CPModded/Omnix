@@ -21,6 +21,14 @@ import { CONFIG } from '../../config';
 
 const PREMIUM_COMMANDS = ['ai', 'backup', 'stats', 'schedule', 'honeypot']; 
 
+// Table de correspondance entre la commande slash et la clé du module en base de données
+const COMMAND_MODULE_MAP: Record<string, string> = {
+  ai: 'ai',
+  backup: 'backups',
+  ticket: 'tickets',
+  economy: 'economy'
+};
+
 export default {
   name: Events.InteractionCreate,
   async execute(interaction: ChatInputCommandInteraction | ButtonInteraction | StringSelectMenuInteraction, client: ExtendedClient) {
@@ -31,7 +39,6 @@ export default {
     if (interaction.isButton() && interaction.customId === 'rules_accept_button') {
       await interaction.deferReply({ ephemeral: true });
 
-      // Ce rôle "Verified" sera attribué dynamiquement s'il existe sur le serveur
       const member = interaction.member as any;
       const verifiedRole = interaction.guild?.roles.cache.find(r => r.name === 'Verified');
 
@@ -85,7 +92,7 @@ export default {
         const counter = guildConfig.modules.tickets.counter;
         const channelName = `ticket-${catConfig.id}-${counter.toString().padStart(4, '0')}`;
 
-        // Remplacement de la variable {user} par la mention du joueur dans le message d'accueil personnalisé
+        // Remplacement de la variable {user} par la mention
         const customWelcomeText = catConfig.welcomeMessage.replace(/{user}/g, `<@${userId}>`);
 
         // --- ROUTE 1 : OUVERTURE EN FIL PRIVÉ (THREAD) ---
@@ -151,6 +158,19 @@ export default {
         await guildConfig.save();
       }
 
+      // 1. Validation de l'état ON/OFF du module depuis le Dashboard
+      const moduleKey = COMMAND_MODULE_MAP[interaction.commandName];
+      if (moduleKey) {
+        const moduleConfig = (guildConfig.modules as any)[moduleKey];
+        if (moduleConfig && moduleConfig.enabled === false) {
+          return interaction.reply({
+            content: `❌ **Le module de cette commande (\`/${interaction.commandName}\`) est actuellement désactivé sur ce serveur.**\n\n🔗 Vous pouvez l'activer depuis le Dashboard OMNIX.`,
+            ephemeral: true
+          });
+        }
+      }
+
+      // 2. Validation Premium (licence serveur ou licence utilisateur active)
       if (PREMIUM_COMMANDS.includes(interaction.commandName)) {
         const isGuildPremium = guildConfig.premium.isPremium;
         let isMemberPremium = false;
@@ -161,8 +181,10 @@ export default {
           if (userDb.isAdmin) {
             isMemberPremium = true;
           } else {
+            // CORRECTIF DE LICENCE : Valide l'accès si la licence est soit globale (null) soit déjà assignée à CE serveur actuel
             const hasUserLicense = userDb.licenses.some(
-              lic => lic.status === 'active' && lic.activatedGuildId === null
+              lic => lic.status === 'active' && 
+                     (lic.activatedGuildId === null || lic.activatedGuildId === interaction.guildId)
             );
             if (hasUserLicense) {
               isMemberPremium = true;
