@@ -2,8 +2,21 @@ import { Router } from 'express';
 import { FounderController } from '../controllers/founder.controller';
 import { client as botClient } from '../../bot/client';
 import { User } from '../../models/User';
-import { auth } from '../middlewares/auth'; // Import du middleware de connexion existant
-import { adminCheck } from '../middlewares/adminCheck'; // Import de notre middleware de vérification Admin/Owner
+import { isAuthenticated } from '../middlewares/auth'; 
+import { adminCheck } from '../middlewares/adminCheck'; 
+
+// ==========================================
+// ZONE DE DIAGNOSTIC TEMPORAIRE OMNIX
+// ==========================================
+console.log('======================================================');
+console.log('[DEBUG] Diagnostic de chargement des imports :');
+console.log('[DEBUG] isAuthenticated (Auth) :', typeof isAuthenticated);
+console.log('[DEBUG] adminCheck (Admin) :', typeof adminCheck);
+console.log('[DEBUG] FounderController :', typeof FounderController);
+if (FounderController) {
+  console.log('[DEBUG] renderFounderPage (Fonction) :', typeof FounderController.renderFounderPage);
+}
+console.log('======================================================');
 
 const router = Router();
 
@@ -42,12 +55,12 @@ router.get('/', (req, res) => {
 });
 
 // Page de sélection du serveur (Authentification requise)
-router.get('/dashboard', auth, (req, res) => {
+router.get('/dashboard', isAuthenticated, (req, res) => {
   res.render('dashboard');
 });
 
 // Page d'administration d'un serveur spécifique (Authentification requise)
-router.get('/dashboard/:guildId', auth, (req, res) => {
+router.get('/dashboard/:guildId', isAuthenticated, (req, res) => {
   res.render('manage', { guildId: req.params.guildId });
 });
 
@@ -62,10 +75,10 @@ router.get('/learn-more', (req, res) => {
 });
 
 // Page du fondateur OMNIX (Strictement réservée : Connexion + Badge Admin ou Owner requis)
-router.get('/founder', auth, adminCheck, FounderController.renderFounderPage);
+router.get('/founder', isAuthenticated, adminCheck, FounderController.renderFounderPage);
 
 // Panel d'administration Staff (Strictement réservée : Connexion + Badge Admin ou Owner requis)
-router.get('/admin', auth, adminCheck, (req, res) => { 
+router.get('/admin', isAuthenticated, adminCheck, (req, res) => { 
   res.render('admin'); 
 });
 
