@@ -310,7 +310,7 @@
     <span class="tag">Plateforme Intégrée SaaS</span>
     <h1>Gerez votre communauté avec <span>OMNIX</span></h1>
     <p class="subtitle">
-      OMNIX n’est pas un simple bot Discord. C’est une plateforme intelligente conçue pour automatiser, protéger et développer votre communauté. Gérez l’intégralité de votre serveur depuis une interface moderne, profitez d’outils avancés de modération, d’une économie complète, d’une IA intégrée et d’un tableau de bord puissant. Rejoignez les milliers de communautés qui font déjà confiance à OMNIX.
+      OMNIX n’est pas un simple bot Discord. C’est une plateforme intelligente conçue pour automatiser, protéger et développer votre communauté. Gérez l’intégralité de votre serveur depuis une interface moderne, profitez d’outils avancés de modération, d’une économie complète, d’une IA intégrée et d’un tableau de bord puissant. Rejoignez les milieux de communautés qui font déjà confiance à OMNIX.
     </p>
 
     <!-- Zone d'appel à l'action dynamique -->
@@ -340,13 +340,94 @@
     </div>
   </main>
 
+  <!-- PANNEAU DE DIAGNOSTIC VISUEL EN VITE FAIT (DEBUG CONSOLE) -->
+  <div id="omnix-debug-panel" style="position: fixed; bottom: 20px; right: 20px; background: rgba(15, 23, 42, 0.96); border: 1px solid #3b82f6; border-radius: 12px; padding: 16px; max-width: 380px; width: calc(100% - 40px); z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,0.6); font-family: monospace; font-size: 11px; color: #94a3b8; text-align: left; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 8px; margin-bottom: 8px;">
+      <span style="color: #38bdf8; font-weight: bold; font-size: 12px;">🛠️ OMNIX AUTH CONSOLE DEBUG</span>
+      <button onclick="document.getElementById('omnix-debug-panel').style.display='none'" style="background: none; border: none; color: #64748b; cursor: pointer; font-size: 16px;">&times;</button>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <div><strong>Page Actuelle :</strong> <span id="debug-url" style="color: #f1f5f9;"></span></div>
+      <div><strong>Paramètres URL :</strong> <span id="debug-params" style="color: #38bdf8; word-break: break-all;"></span></div>
+      <div><strong>LocalStorage token :</strong> <span id="debug-localstorage" style="color: #f1f5f9;"></span></div>
+      <div><strong>Cookie `jwt_token` :</strong> <span id="debug-cookie" style="color: #f1f5f9;"></span></div>
+      <div><strong>Payload Jeton :</strong> <pre id="debug-payload" style="background: rgba(0,0,0,0.3); padding: 6px; border-radius: 4px; color: #c084fc; margin-top: 4px; max-height: 80px; overflow-y: auto; font-size: 10px; line-height: 1.3;"></pre></div>
+      <div style="border-top: 1px solid #1e293b; padding-top: 8px; margin-top: 4px;">
+        <strong style="color: #f59e0b;">🔍 Analyse et Résolution :</strong>
+        <div id="debug-advice" style="color: #34d399; margin-top: 4px; line-height: 1.4;">Analyse en cours...</div>
+      </div>
+    </div>
+  </div>
+
   <footer>
     <p>&copy; 2026 OMNIX. Tous droits réservés.</p>
   </footer>
 
-  <!-- BLOC JAVASCRIPT TECHNIQUE EN HÉRITAGE DU PARTIAL -->
+  <!-- BLOC JAVASCRIPT TECHNIQUE STRICTEMENT ENCADRÉ -->
   <script>
+    // Module de diagnostic automatique visible à l'écran
+    function runAuthDiagnostic() {
+      const path = window.location.pathname;
+      const params = window.location.search;
+      const localToken = localStorage.getItem('jwt_token');
+      
+      const getCookieHelper = (name) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+      };
+      const cookieToken = getCookieHelper('jwt_token');
+
+      document.getElementById('debug-url').innerText = path;
+      document.getElementById('debug-params').innerText = params || 'Aucun';
+      document.getElementById('debug-localstorage').innerText = localToken ? (localToken.substring(0, 24) + '...') : '❌ Absente';
+      document.getElementById('debug-cookie').innerText = cookieToken ? (cookieToken.substring(0, 24) + '...') : '❌ Absent (Safari a peut-être bloqué le stockage)';
+
+      let payload = null;
+      if (localToken || cookieToken) {
+        const activeToken = localToken || cookieToken;
+        try {
+          const base64Url = activeToken.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          payload = JSON.parse(window.atob(base64));
+          document.getElementById('debug-payload').innerText = JSON.stringify(payload, null, 2);
+        } catch (e) {
+          document.getElementById('debug-payload').innerText = '❌ Erreur : Signature JWT corrompue ou split '=' incomplet';
+        }
+      } else {
+        document.getElementById('debug-payload').innerText = 'Aucune session décodée';
+      }
+
+      const adviceEl = document.getElementById('debug-advice');
+      const urlParams = new URLSearchParams(params);
+      const errorParam = urlParams.get('error');
+
+      if (errorParam === 'unauthorized') {
+        if (cookieToken) {
+          adviceEl.innerHTML = "<span style='color: #f87171;'>Le serveur a reçu votre cookie mais a refusé l'accès.</span><br>💡 **Cause probable :** La clé de sécurité `JWT_SECRET` dans le fichier `.env` de Render ne correspond plus au jeton généré par l'API Discord OAuth2 au moment de la connexion.";
+        } else {
+          adviceEl.innerHTML = "<span style='color: #f87171;'>Le serveur a refusé l'accès car le cookie 'jwt_token' n'a pas été envoyé.</span><br>💡 **Cause probable :** Safari ou votre navigateur bloque le cookie lors de la redirection car l'attribut `; Secure` n'était pas actif ou le protocole de liaison a échoué.";
+        }
+      } else if (params.includes('token=')) {
+        adviceEl.innerHTML = "<span style='color: #60a5fa;'>Connexion réussie en attente d'enregistrement.</span><br>Le jeton d'authentification a été détecté dans l'URL. OMNIX est en train d'écrire la session.";
+      } else if (cookieToken) {
+        adviceEl.innerHTML = "<span style='color: #34d399;'>Votre session est active et le cookie est enregistré !</span><br>Vous devriez pouvoir accéder au Dashboard sans être déconnecté.";
+      } else {
+        adviceEl.innerHTML = "Aucune session active détectée. Veuillez cliquer sur 'Se connecter' pour lier votre compte Discord.";
+      }
+    }
+
     function setupDynamicButtons() {
+      // CORRECTIF MAJEUR : Capture et enregistre le jeton d'URL dès la redirection sur la page d'accueil
+      const urlParams = new URLSearchParams(window.location.search);
+      const tokenFromUrl = urlParams.get('token');
+      
+      if (tokenFromUrl) {
+        setToken(tokenFromUrl);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
       const jwtToken = getToken();
       const headerArea = document.getElementById('auth-buttons-header');
       const ctaArea = document.getElementById('cta-action-area');
@@ -418,8 +499,9 @@
       }
     }
 
-    // Exécution après chargement de la structure
+    // Exécution après chargement de la structure et lancement du diagnostic
     setupDynamicButtons();
+    runAuthDiagnostic();
     window.addEventListener('DOMContentLoaded', loadRealStats);
   </script>
 </body>
