@@ -62,6 +62,7 @@
     /* Menu Tiroir (Drawer) Latéral Droit */
     .btn-burger { background: none; border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center; }
     .burger-icon { width: 24px; height: 24px; fill: currentColor; }
+    
     .drawer {
       position: fixed;
       top: 0;
@@ -72,6 +73,7 @@
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
       border-left: 1px solid rgba(255, 255, 255, 0.04);
+      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
       z-index: 1000;
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       padding: 32px 24px;
@@ -95,6 +97,7 @@
     }
     .drawer-links a:hover { background: rgba(255,255,255,0.02); color: white; }
     .drawer-links a.active { color: #38bdf8; background: rgba(56, 189, 248, 0.05); }
+    .admin-nav-link { color: #c084fc !important; text-shadow: 0 0 8px rgba(192, 132, 252, 0.4); }
 
     /* Disposition Flexbox Principale */
     .container {
@@ -300,18 +303,8 @@
     </button>
   </header>
 
-  <!-- MENU TIROIR DE NAVIGATION DROIT -->
-  <div id="side-drawer" class="drawer">
-    <div class="drawer-header">
-      <span class="logo-text">Menu</span>
-      <button onclick="toggleDrawer(false)" class="btn-close-drawer">&times;</button>
-    </div>
-    <div class="drawer-links" id="drawer-nav">
-      <a href="/">Accueil</a>
-      <a href="/dashboard">Dashboard</a>
-      <a href="/founder">Founder</a>
-    </div>
-  </div>
+  <!-- LIAISON DE LA BARRE LATÉRALE CENTRALISÉE -->
+  <%- include('partials/sidebar') %>
 
   <!-- Conteneur d'administration -->
   <div class="container">
@@ -384,6 +377,18 @@
             <textarea id="goodbye-message" rows="3"></textarea>
           </div>
         </div>
+
+        <!-- Welcome/Goodbye Channel Selection -->
+        <div class="form-grid" style="margin-top: 16px;">
+          <div class="form-group">
+            <label>ID du salon d'accueil (Welcome Channel)</label>
+            <input type="text" id="welcome-channel" placeholder="Ex: 1211490202246189167">
+          </div>
+          <div class="form-group">
+            <label>ID du salon de départ (Goodbye Channel)</label>
+            <input type="text" id="goodbye-channel" placeholder="Ex: 1211490202246189167">
+          </div>
+        </div>
       </section>
 
       <!-- Onglet 3 : Modération, AutoMod & Honeypot -->
@@ -434,7 +439,7 @@
         </div>
       </section>
 
-      <!-- Onglet 4 : Support & Tickets (DYNAMIQUE AVEC SUPPRESSION ET AJOUT DE CATÉGORIES) -->
+      <!-- Onglet 4 : Support & Tickets -->
       <section id="tab-tickets" class="tab-content hidden">
         <h3 style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 24px;">Gestion des Tickets</h3>
         
@@ -453,7 +458,6 @@
 
         <h4 style="font-size: 13px; font-weight: 800; color: white; margin-bottom: 16px; border-top: 1px solid #1e293b; padding-top: 24px; display: flex; justify-content: space-between; align-items: center;">
           <span>🎫 CONFIGURATION DES SÉLECTEURS DE TICKETS (SAAS)</span>
-          <!-- Bouton d'action visuel pour ajouter une catégorie -->
           <button type="button" onclick="addCategoryRow()" style="padding: 6px 12px; background-color: #059669; border: none; border-radius: 8px; color: white; font-size: 10px; font-weight: 700; text-transform: uppercase; cursor: pointer;">+ Ajouter une catégorie</button>
         </h4>
 
@@ -565,10 +569,10 @@
       window.location.href = '/';
     }
 
-    // Tableau d'état local des catégories (permet l'ajout et suppression dynamique)
+    // Tableau d'état local des catégories
     let activeCategories = [];
 
-    // Rendu dynamique de la liste des catégories à l'écran en pur CSS
+    // Rendu dynamique de la liste des catégories
     function renderCategories() {
       const container = document.getElementById('categories-container');
       container.innerHTML = '';
@@ -620,7 +624,6 @@
       });
     }
 
-    // Ajouter un élément de catégorie au tableau local
     function addCategoryRow() {
       activeCategories.push({
         id: 'cat_' + Math.random().toString(36).substring(2, 6),
@@ -633,23 +636,11 @@
       renderCategories();
     }
 
-    // Supprimer un élément de catégorie du tableau local
     function deleteCategory(index) {
       activeCategories.splice(index, 1);
       renderCategories();
     }
 
-    // Gestion de l'affichage du menu tiroir
-    function toggleDrawer(open) {
-      const drawer = document.getElementById('side-drawer');
-      if (open) {
-        drawer.classList.add('open');
-      } else {
-        drawer.classList.remove('open');
-      }
-    }
-
-    // Décodeur de jeton
     function parseJwt(token) {
       if (!token || token === 'null' || token === 'undefined' || !token.includes('.')) return null;
       try {
@@ -669,22 +660,6 @@
       }
     }
 
-    // Ajoute l'onglet Staff
-    function renderDrawerMenu() {
-      const payload = parseJwt(jwtToken);
-      if (payload && payload.isAdmin) {
-        const nav = document.getElementById('drawer-nav');
-        if (nav && !document.getElementById('nav-admin-link')) {
-          const adminLink = document.createElement('a');
-          adminLink.href = '/admin';
-          adminLink.id = 'nav-admin-link';
-          adminLink.className = 'admin-nav-link';
-          adminLink.innerText = 'Staff Panel';
-          nav.appendChild(adminLink);
-        }
-      }
-    }
-
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.getElementById(tabId).classList.remove('hidden');
@@ -697,7 +672,6 @@
       if (activeBtn) activeBtn.className = "tab-btn active";
     }
 
-    // Synchronisation des doublons d'interrupteurs
     function setupCheckboxSync() {
       const pairs = [
         { main: 'ai-enabled', toggle: 'ai-enabled-toggle' },
@@ -722,7 +696,6 @@
       });
     }
 
-    // Lecture sécurisée avec Bypass Premium personnel de l'utilisateur
     async function loadConfig() {
       try {
         const response = await fetch(`/api/guilds/${guildId}/config`, {
@@ -736,7 +709,6 @@
 
         const config = await response.json();
 
-        // 1. BYPASS PREMIUM : Détecte si l'utilisateur possède personnellement le Premium
         const payload = parseJwt(jwtToken);
         const isUserPremium = payload && (payload.isPremium || payload.isAdmin);
         const isGuildPremium = config.premium?.isPremium;
@@ -756,18 +728,23 @@
           badge.innerText = "FREE";
         }
 
-        // Remplissage protégé des formulaires
         document.getElementById('welcome-enabled').checked = config.modules?.welcome?.enabled || false;
         document.getElementById('welcome-message').value = config.modules?.welcome?.message || "Bienvenue {user} !";
+        document.getElementById('welcome-channel').value = config.modules?.welcome?.channelId || "";
 
         document.getElementById('goodbye-enabled').checked = config.modules?.goodbye?.enabled || false;
         document.getElementById('goodbye-message').value = config.modules?.goodbye?.message || "Au revoir {user}...";
+        document.getElementById('goodbye-channel').value = config.modules?.goodbye?.channelId || "";
 
         document.getElementById('moderation-enabled').checked = config.modules?.moderation?.enabled || false;
         document.getElementById('moderation-log').value = config.modules?.moderation?.logChannelId || "";
         
         document.getElementById('automod-enabled').checked = config.modules?.autoMod?.enabled || false;
         document.getElementById('automod-words').value = (config.modules?.autoMod?.blacklistedWords || []).join(', ');
+
+        // Chargement et déploiement du Honeypot (CORRIGÉ)
+        document.getElementById('honeypot-enabled').checked = config.modules?.honeypot?.enabled || false;
+        document.getElementById('honeypot-channel').value = config.modules?.honeypot?.channelId || "";
 
         document.getElementById('tickets-enabled').checked = config.modules?.tickets?.enabled || false;
         document.getElementById('tickets-category').value = config.modules?.tickets?.categoryId || "";
@@ -784,7 +761,6 @@
 
         document.getElementById('backups-enabled').checked = config.modules?.backups?.enabled || false;
 
-        // Liaison initiale des 6 interrupteurs de l'onglet Vue d'ensemble
         document.getElementById('ai-enabled-toggle').checked = config.modules?.ai?.enabled || false;
         document.getElementById('backups-enabled-toggle').checked = config.modules?.backups?.enabled || false;
         document.getElementById('economy-enabled-toggle').checked = config.modules?.economy?.enabled || false;
@@ -792,7 +768,6 @@
         document.getElementById('tickets-enabled-toggle').checked = config.modules?.tickets?.enabled || false;
         document.getElementById('ping-enabled-toggle').checked = config.modules?.ping?.enabled || true;
 
-        // CHARGEMENT ET DÉPLOIEMENT DU TABLEAU DES CATÉGORIES DYNAMIQUES
         activeCategories = config.modules?.tickets?.categoriesList || [];
         renderCategories();
 
@@ -803,7 +778,6 @@
     }
 
     async function saveConfig() {
-      // Extraction dynamique des valeurs saisies dans le tableau local des catégories
       const updatedCategoriesList = activeCategories.map((cat, index) => {
         return {
           id: cat.id,
@@ -820,13 +794,13 @@
           welcome: {
             enabled: document.getElementById('welcome-enabled').checked,
             message: document.getElementById('welcome-message').value,
-            channelId: null,
+            channelId: document.getElementById('welcome-channel').value || null,
             useEmbed: false
           },
           goodbye: {
             enabled: document.getElementById('goodbye-enabled').checked,
             message: document.getElementById('goodbye-message').value,
-            channelId: null,
+            channelId: document.getElementById('goodbye-channel').value || null,
             useEmbed: false
           },
           moderation: {
@@ -841,7 +815,7 @@
             enabled: document.getElementById('tickets-enabled').checked || document.getElementById('tickets-enabled-toggle').checked,
             categoryId: document.getElementById('tickets-category').value || null,
             counter: 0,
-            categoriesList: updatedCategoriesList // Envoi du tableau dynamique de catégories
+            categoriesList: updatedCategoriesList
           },
           economy: {
             enabled: document.getElementById('economy-enabled').checked || document.getElementById('economy-enabled-toggle').checked,
@@ -865,8 +839,8 @@
             enabled: document.getElementById('ping-enabled-toggle').checked
           },
           honeypot: {
-            enabled: false, // Liaison pour la modération
-            channelId: null
+            enabled: document.getElementById('honeypot-enabled').checked, // CORRIGÉ
+            channelId: document.getElementById('honeypot-channel').value || null // CORRIGÉ
           }
         }
       };
@@ -915,7 +889,6 @@
       }
     }
 
-    renderDrawerMenu();
     setupCheckboxSync();
     loadConfig();
   </script>
