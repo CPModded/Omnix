@@ -220,25 +220,14 @@
     </button>
   </header>
 
-  <!-- MENU TIROIR -->
-  <div id="side-drawer" class="drawer">
-    <div class="drawer-header">
-      <span class="logo-text">Menu</span>
-      <button onclick="toggleDrawer(false)" class="btn-close-drawer">&times;</button>
-    </div>
-    <div class="drawer-links" id="drawer-nav">
-      <a href="/">Accueil</a>
-      <a href="/dashboard">Dashboard</a>
-      <a href="/pricing" class="active">Abonnements</a>
-      <a href="/founder">Founder</a>
-    </div>
-  </div>
+  <!-- LIAISON DE LA BARRE LATÉRALE CENTRALISÉE -->
+  <%- include('partials/sidebar') %>
 
   <main>
     <h2>Tarifs & Abonnements OMNIX</h2>
     <p class="subtitle">Choisissez la formule d'automatisation et de services adaptée à votre communauté.</p>
 
-    <!-- SECTION 1 : LES FORMULES PREMIUM DURÉES FLEXIBLES (AVEC VOS LIENS RÉELS STRIPE) -->
+    <!-- SECTION 1 : LES FORMULES PREMIUM DURÉES FLEXIBLES -->
     <h3 class="section-title">🟦 OMNIX Premium (Durées Flexibles)</h3>
     <div class="pricing-grid">
       
@@ -272,7 +261,7 @@
         <a href="https://buy.stripe.com/bJebJ18Z0bQTeK673973G07" target="_blank" class="btn-buy">S'abonner (6 mois)</a>
       </div>
 
-      <!-- Offre 4 : 1 An (Mise en avant + Nouveau lien Stripe !) -->
+      <!-- Offre 4 : 1 An (Mise en avant) -->
       <div class="price-card featured">
         <div>
           <h3 class="card-title" style="color: #a78bfa;">Abonnement Annuel</h3>
@@ -301,10 +290,10 @@
         </ul>
       </div>
 
-      <!-- Offre Premium -->
+      <!-- Offre Premium (TARIF ALIGNÉ ET COHÉRENT À 7.99 €) -->
       <div class="saas-card premium">
         <h4 class="saas-title" style="color: #c084fc;">⭐ Premium</h4>
-        <p class="saas-price">9.99 € <span>/ mois</span></p>
+        <p class="saas-price">7.99 € <span>/ mois</span></p>
         <ul class="features-list">
           <li><span class="check-icon" style="color: #c084fc;">✔</span> Assistant IA (GPT) actif</li>
           <li><span class="check-icon" style="color: #c084fc;">✔</span> Économie locale & Boutique</li>
@@ -336,52 +325,5 @@
   <footer>
     <p>&copy; 2026 OMNIX. Tous droits réservés.</p>
   </footer>
-
-  <script>
-    function toggleDrawer(open) {
-      const drawer = document.getElementById('side-drawer');
-      if (open) {
-        drawer.classList.add('open');
-      } else {
-        drawer.classList.remove('open');
-      }
-    }
-
-    // Décodeur de session pour le Staff Link
-    function parseJwt(token) {
-      if (!token || token === 'null' || token === 'undefined' || !token.includes('.')) return null;
-      try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const pad = base64.length % 4;
-        const paddedBase64 = pad ? base64 + '='.repeat(4 - pad) : base64;
-        const rawBinary = window.atob(paddedBase64);
-        const bytes = new Uint8Array(rawBinary.length);
-        for (let i = 0; i < rawBinary.length; i++) {
-          bytes[i] = rawBinary.charCodeAt(i);
-        }
-        const decoder = new TextDecoder('utf-8');
-        return JSON.parse(decoder.decode(bytes));
-      } catch (e) {
-        return null;
-      }
-    }
-
-    const jwtToken = localStorage.getItem('jwt_token');
-    if (jwtToken) {
-      const payload = parseJwt(jwtToken);
-      if (payload && payload.isAdmin) {
-        const nav = document.getElementById('drawer-nav');
-        if (nav && !document.getElementById('nav-admin-link')) {
-          const adminLink = document.createElement('a');
-          adminLink.href = '/admin';
-          adminLink.id = 'nav-admin-link';
-          adminLink.className = 'admin-nav-link';
-          adminLink.innerText = 'Staff Panel';
-          nav.appendChild(adminLink);
-        }
-      }
-    }
-  </script>
 </body>
 </html>
