@@ -1,28 +1,31 @@
-import { Schema, model, Document } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IAuditLog extends Document {
-  guildId: string | null;     // null pour les actions d'administration globale
-  userId: string;
-  username: string;
-  action: string;             // ex: 'connexion_dashboard', 'ajout_bot', 'achat_premium'
-  category: 'user' | 'guild' | 'bot' | 'payment' | 'license' | 'marketplace' | 'security' | 'dashboard' | 'ai' | 'admin';
-  details: string;            // Détails textuels ou JSON de modification
-  ipAddress: string | null;
-  status: 'success' | 'failure';
-  level: 'info' | 'warning' | 'error' | 'critical';
   createdAt: Date;
+  actorId: string;
+  actorTag?: string;
+  ipAddress?: string;
+  module: string;
+  action: string;
+  severity: 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL';
+  serverId?: string;
+  status: 'SUCCESS' | 'FAILURE';
+  errorMessage?: string;
+  details?: any; // Contient l'objet { before: {...}, after: {...} }
 }
 
-const AuditLogSchema = new Schema<IAuditLog>({
-  guildId: { type: String, default: null, index: true },
-  userId: { type: String, required: true, index: true },
-  username: { type: String, required: true },
-  action: { type: String, required: true, index: true },
-  category: { type: String, required: true, index: true },
-  details: { type: String, default: '' },
-  ipAddress: { type: String, default: null },
-  status: { type: String, enum: ['success', 'failure'], default: 'success' },
-  level: { type: String, enum: ['info', 'warning', 'error', 'critical'], default: 'info' }
-}, { timestamps: true });
+const AuditLogSchema: Schema = new Schema({
+  createdAt: { type: Date, default: Date.now, index: true },
+  actorId: { type: String, required: true, index: true },
+  actorTag: { type: String },
+  ipAddress: { type: String },
+  module: { type: String, required: true, index: true },
+  action: { type: String, required: true },
+  severity: { type: String, enum: ['INFO', 'WARNING', 'ERROR', 'CRITICAL'], default: 'INFO' },
+  serverId: { type: String, index: true },
+  status: { type: String, enum: ['SUCCESS', 'FAILURE'], required: true },
+  errorMessage: { type: String },
+  details: { type: Schema.Types.Mixed } // Stocke n'importe quel objet JSON de manière flexible
+});
 
-export const AuditLog = model<IAuditLog>('AuditLog', AuditLogSchema);
+export default mongoose.model<IAuditLog>('AuditLog', AuditLogSchema);
