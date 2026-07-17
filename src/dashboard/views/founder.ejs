@@ -99,7 +99,7 @@
     .drawer {
       position: fixed;
       top: 0;
-      right: -300px; /* Masqué à l'origine */
+      right: -300px;
       width: 280px;
       height: 100vh;
       background: rgba(15, 23, 42, 0.85);
@@ -198,7 +198,7 @@
       -webkit-backdrop-filter: blur(16px);
     }
 
-    /* Image de profil d'OMNIX avec triple-liaison de secours */
+    /* Image de profil d'OMNIX corrigée */
     .avatar {
       width: 90px;
       height: 90px;
@@ -307,8 +307,8 @@
   <!-- En-tête -->
   <header>
     <a href="/" class="logo-area">
-      <!-- TRIPLE-LIAISON DE SÉCURITÉ POUR LE LOGO -->
-      <img src="https://chatgpt.com/s/m_6a526fbfd3888191a898a0f06acf156b" id="logo-main-img" onerror="this.onerror=null; this.src='/logo.png'; this.onerror=function(){ this.style.display='none'; document.getElementById('logo-fallback-box').style.display='flex'; };" class="logo-img" alt="OMNIX Logo">
+      <!-- LIAISON DE SÉCURITÉ POUR LE LOGO LOCALE ET STABLE -->
+      <img src="/logo.png" id="logo-main-img" onerror="this.style.display='none'; document.getElementById('logo-fallback-box').style.display='flex';" class="logo-img" alt="OMNIX Logo">
       <div id="logo-fallback-box" style="display: none; width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #06b6d4, #7c3aed); align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 18px; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);">O</div>
       <span class="logo-text">OMNIX</span>
     </a>
@@ -318,20 +318,8 @@
     </button>
   </header>
 
-  <!-- MENU TIROIR DE NAVIGATION DROIT -->
-  <div id="side-drawer" class="drawer">
-    <div class="drawer-header">
-      <span class="logo-text">Menu</span>
-      <button onclick="toggleDrawer(false)" class="btn-close-drawer">&times;</button>
-    </div>
-    <div class="drawer-links" id="drawer-nav">
-      <a href="/">Accueil</a>
-      <a href="/dashboard">Dashboard</a>
-      <a href="/pricing">Abonnements</a>
-      <a href="/learn-more">En savoir plus</a>
-      <a href="/founder" class="active">Découvrir OMNIX</a>
-    </div>
-  </div>
+  <!-- LIAISON DE LA BARRE LATÉRALE CENTRALISÉE -->
+  <%- include('partials/sidebar') %>
 
   <!-- Carte Fondateur -->
   <main>
@@ -339,9 +327,9 @@
       <div class="card-glow"></div>
       <div class="card">
         
-        <!-- Image de Profil avec triple-liaison de secours -->
+        <!-- Image de Profil stable -->
         <div class="avatar">
-          <img src="https://chatgpt.com/s/m_6a526fbfd3888191a898a0f06acf156b" id="logo-avatar-img" onerror="this.onerror=null; this.src='/logo.png'; this.onerror=function(){ this.style.display='none'; document.getElementById('avatar-fallback-box').style.display='flex'; };" class="avatar-img" alt="OMNIX Logo">
+          <img src="/logo.png" id="logo-avatar-img" onerror="this.style.display='none'; document.getElementById('avatar-fallback-box').style.display='flex';" class="avatar-img" alt="OMNIX Logo">
           <div id="avatar-fallback-box" style="display: none; width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg, #06b6d4, #7c3aed); align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 40px; box-shadow: 0 8px 16px rgba(124, 58, 237, 0.2);">O</div>
         </div>
 
@@ -361,7 +349,7 @@
           Serveur officiel Discord
         </a>
 
-        <!-- NOUVEAU BOUTON D'ACHAT INTERACTIF -->
+        <!-- Bouton d'achat interactif -->
         <a href="/pricing" class="btn-buy-premium">
           Obtenir OMNIX Premium
         </a>
@@ -373,51 +361,5 @@
   <footer>
     <p>&copy; 2026 OMNIX. Tous droits réservés.</p>
   </footer>
-
-  <script>
-    function toggleDrawer(open) {
-      const drawer = document.getElementById('side-drawer');
-      if (open) {
-        drawer.classList.add('open');
-      } else {
-        drawer.classList.remove('open');
-      }
-    }
-
-    function parseJwt(token) {
-      if (!token || token === 'null' || token === 'undefined' || !token.includes('.')) return null;
-      try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const pad = base64.length % 4;
-        const paddedBase64 = pad ? base64 + '='.repeat(4 - pad) : base64;
-        const rawBinary = window.atob(paddedBase64);
-        const bytes = new Uint8Array(rawBinary.length);
-        for (let i = 0; i < rawBinary.length; i++) {
-          bytes[i] = rawBinary.charCodeAt(i);
-        }
-        const decoder = new TextDecoder('utf-8');
-        return JSON.parse(decoder.decode(bytes));
-      } catch (e) {
-        return null;
-      }
-    }
-
-    const jwtToken = localStorage.getItem('jwt_token');
-    if (jwtToken) {
-      const payload = parseJwt(jwtToken);
-      if (payload && payload.isAdmin) {
-        const nav = document.getElementById('drawer-nav');
-        if (nav && !document.getElementById('nav-admin-link')) {
-          const adminLink = document.createElement('a');
-          adminLink.href = '/admin';
-          adminLink.id = 'nav-admin-link';
-          adminLink.className = 'admin-nav-link';
-          adminLink.innerText = 'Staff Panel';
-          nav.appendChild(adminLink);
-        }
-      }
-    }
-  </script>
 </body>
 </html>
