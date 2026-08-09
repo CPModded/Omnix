@@ -302,7 +302,7 @@
     </div>
   </header>
 
-  <!-- BARRE LATÉRALE REUTILISABLE -->
+  <!-- LIAISON DE LA BARRE LATÉRALE CENTRALISÉE -->
   <%- include('partials/sidebar') %>
 
   <!-- Hero & Présentation -->
@@ -331,12 +331,28 @@
     </div>
 
     <!-- Section statistiques réelles -->
-    <div class="stats-grid">
+    <div class="stats-grid" style="margin-bottom: 32px;">
       <div class="stat-item"><span class="stat-num" id="s-servers">...</span><span class="stat-label">Serveurs</span></div>
       <div class="stat-item"><span class="stat-num" id="s-users">...</span><span class="stat-label">Membres</span></div>
       <div class="stat-item"><span class="stat-num" id="s-commands">...</span><span class="stat-label">Commandes</span></div>
       <div class="stat-item"><span class="stat-num" id="s-uptime">...</span><span class="stat-label">Uptime</span></div>
       <div class="stat-item"><span class="stat-num" id="s-latency">...</span><span class="stat-label">Latence</span></div>
+    </div>
+
+    <!-- CONSOLE DE DIAGNOSTIC TECHNIQUE EN TEMPS RÉEL (POUR REPERER LES CRASHES SUR TÉLÉPHONE) -->
+    <div id="index-terminal" style="width: 100%; max-width: 800px; margin: 16px auto 0 auto; background: #020617; border: 1px solid #1e293b; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); overflow: hidden; text-align: left;">
+      <div style="background: #0f172a; border-bottom: 1px solid #1e293b; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444; display: inline-block;"></span>
+          <span style="width: 10px; height: 10px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span>
+          <span style="width: 10px; height: 10px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+          <span style="color: #64748b; font-size: 11px; font-weight: bold; margin-left: 8px; letter-spacing: 1px;">⚙️ CONSOLE DE DIAGNOSTIC OMNIX (INDEX)</span>
+        </div>
+        <span style="color: #38bdf8; font-size: 10px; font-weight: bold;">LIVE LOGS</span>
+      </div>
+      <div id="index-terminal-screen" style="padding: 16px; height: 180px; overflow-y: auto; font-size: 12px; color: #a3e635; line-height: 1.5; font-family: monospace; background: #030712;">
+        [SYSTEM] Console de diagnostic prête. Capture de l'activité mobile activée.
+      </div>
     </div>
   </main>
 
@@ -344,23 +360,108 @@
     <p>&copy; 2026 OMNIX. Tous droits réservés.</p>
   </footer>
 
-  <!-- BLOC JAVASCRIPT TECHNIQUE STRICTEMENT ENCADRÉ -->
+  <!-- BLOC JAVASCRIPT DE DIAGNOSTIC TECHNIQUE COMPLET -->
   <script>
+    // --- UTILITIES POUR LE JOURNAL DE BORD MOBILE ---
+    function addLaunchLog(type, message) {
+      const screen = document.getElementById('index-terminal-screen');
+      if (!screen) return;
+      const time = new Date().toLocaleTimeString();
+      let color = '#a3e635';
+      let label = 'INFO';
+      if (type === 'warn') { color = '#f59e0b'; label = 'WARN'; }
+      else if (type === 'error') { color = '#ef4444'; label = 'ERROR'; }
+      else if (type === 'debug') { color = '#38bdf8'; label = 'DEBUG'; }
+      else if (type === 'success') { color = '#10b981'; label = 'SUCCESS'; }
+      
+      const line = document.createElement('div');
+      line.style.color = color;
+      line.style.marginBottom = '4px';
+      line.innerHTML = `[${time}] [${label}] ${message}`;
+      screen.appendChild(line);
+      screen.scrollTop = screen.scrollHeight;
+    }
+
+    // Captureur d'erreurs non interceptées (Uncaught Exceptions)
+    window.onerror = function(message, source, lineno, colno, error) {
+      const filename = source ? source.split('/').pop() : 'Inconnu';
+      addLaunchLog('error', `CRITICAL CRASH : ${message} (${filename}:${lineno}:${colno})`);
+      return false;
+    };
+
+    // --- ENREGISTREMENT DES FONCTIONS DE SESSONS (MIEUX PROTEGÉES ET IMPRIMEES DANS LA CONSOLE) ---
+    function getToken() {
+      try {
+        const token = localStorage.getItem('jwt_token');
+        if (token) addLaunchLog('success', "Jetons d'accès local récupéré avec succès.");
+        return token;
+      } catch (err) {
+        addLaunchLog('error', "Échec de lecture dans localStorage (Mode navigation privée ?) : " + err.message);
+        return null;
+      }
+    }
+
+    function setToken(token) {
+      try {
+        localStorage.setItem('jwt_token', token);
+        addLaunchLog('success', "Jeton local mis à jour avec succès dans la mémoire.");
+      } catch (err) {
+        addLaunchLog('error', "Échec d'écriture dans localStorage : " + err.message);
+      }
+    }
+
+    function logout() {
+      try {
+        localStorage.removeItem('jwt_token');
+        addLaunchLog('warn', "Session locale détruite. Redirection vers la page d'accueil.");
+        window.location.href = '/';
+      } catch (err) {
+        window.location.href = '/';
+      }
+    }
+
+    function parseJwt(token) {
+      if (!token || token === 'null' || token === 'undefined' || !token.includes('.')) {
+        addLaunchLog('warn', "Jeton JWT absent, invalide ou structurellement altéré.");
+        return null;
+      }
+      try {
+        addLaunchLog('info', "Analyse et décodage structurel du Jeton JWT...");
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const pad = base64.length % 4;
+        const paddedBase64 = pad ? base64 + '='.repeat(4 - pad) : base64;
+        const rawBinary = window.atob(paddedBase64);
+        const bytes = new Uint8Array(rawBinary.length);
+        for (let i = 0; i < rawBinary.length; i++) {
+          bytes[i] = rawBinary.charCodeAt(i);
+        }
+        const decoder = new TextDecoder('utf-8');
+        const payload = JSON.parse(decoder.decode(bytes));
+        addLaunchLog('success', `JWT analysé. Utilisateur connecté : @${payload.username}`);
+        return payload;
+      } catch (e) {
+        addLaunchLog('error', "Erreur fatale lors du parsing du Jeton JWT : " + e.message);
+        return null;
+      }
+    }
+
     function setupDynamicButtons() {
-      // Capture et enregistre le jeton d'URL dès la redirection sur la page d'accueil
+      addLaunchLog('info', "Lancement de la configuration de l'affichage de l'accueil...");
       const urlParams = new URLSearchParams(window.location.search);
       const tokenFromUrl = urlParams.get('token');
       
       if (tokenFromUrl) {
+        addLaunchLog('debug', "Nouveau Jeton d'authentification détecté dans l'URL.");
         setToken(tokenFromUrl);
         window.history.replaceState({}, document.title, window.location.pathname);
+        addLaunchLog('info', "Jeton d'URL nettoyé pour la sécurité.");
       }
 
       const jwtToken = getToken();
       const headerArea = document.getElementById('auth-buttons-header');
       const ctaArea = document.getElementById('cta-action-area');
       
-      // Configuration sécurisée des variables d'authentification
       const cId = "<%= typeof clientId !== 'undefined' ? clientId : '' %>";
       const rUri = "<%= typeof redirectUri !== 'undefined' ? redirectUri : '' %>";
       const loginUrl = `https://discord.com/api/oauth2/authorize?client_id=${cId}&redirect_uri=${rUri}&response_type=code&scope=identify+guilds`;
@@ -368,6 +469,7 @@
       if (jwtToken) {
         const payload = parseJwt(jwtToken);
         if (payload) {
+          addLaunchLog('success', "Identification réussie. Chargement des boutons d'accès utilisateur.");
           headerArea.innerHTML = `
             <a href="/dashboard" class="btn-nav-login" style="background-color: #059669;">Dashboard</a>
             <button onclick="logout()" class="btn-nav-logout">Déconnexion</button>
@@ -377,9 +479,13 @@
             <a href="/pricing" class="btn-secondary" style="background: linear-gradient(135deg, #4f46e5, #06b6d4); color: white; border: none; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25);">S'abonner à OMNIX</a>
           `;
           return;
+        } else {
+          addLaunchLog('warn', "Jeton local trouvé mais invalide. Nettoyage de la mémoire.");
+          logout();
         }
       }
 
+      addLaunchLog('info', "Aucun jeton détecté. Mode invité / visiteur actif.");
       headerArea.innerHTML = `
         <a href="${loginUrl}" class="btn-nav-login">Se connecter</a>
       `;
@@ -404,13 +510,15 @@
     }
 
     async function loadRealStats() {
+      addLaunchLog('info', "Tentative de récupération des statistiques globales du bot...");
       try {
         const response = await fetch('/api/stats');
-        if (!response.ok) throw new Error();
+        if (!response.ok) throw new Error("Réponse de l'API corrompue (500 ou 404)");
 
         const stats = await response.json();
         const uptimePercentage = 99;
 
+        addLaunchLog('success', "Statistiques récupérées avec succès de la base MongoDB.");
         animateValue(document.getElementById('s-servers'), 0, stats.bot.guildsCount || 0, 1000, '');
         animateValue(document.getElementById('s-users'), 0, stats.database.totalUsers || 0, 1000, '');
         animateValue(document.getElementById('s-commands'), 0, 1420, 1000, '');
@@ -418,7 +526,7 @@
         animateValue(document.getElementById('s-latency'), 0, stats.bot.ping || 12, 1000, ' ms');
 
       } catch (error) {
-        console.error("Échec du chargement des statistiques réelles.");
+        addLaunchLog('warn', "Impossible de joindre l'API d'état. Utilisation des métriques par défaut : " + error.message);
         document.getElementById('s-servers').innerText = "0";
         document.getElementById('s-users').innerText = "0";
         document.getElementById('s-commands').innerText = "0";
