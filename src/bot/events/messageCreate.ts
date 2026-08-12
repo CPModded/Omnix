@@ -1,11 +1,38 @@
-// src/events/messageCreate.ts
 import { Events, Message, EmbedBuilder } from 'discord.js';
 import { OpenAI } from 'openai';
-import GuildConfig from '../models/GuildConfig';
-import AiSession from '../models/AiSession';
-import { getWordCount, pruneMessagesToLimit, MessagePayload } from '../services/aiService';
+import GuildConfig from '../../models/GuildConfig'; //  CORRIGÉ (../../ et sans .ts)
+import AiSession from '../../models/AiSession';     //  CORRIGÉ (../../ et sans .ts)
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+interface MessagePayload {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
+// Calcule le nombre de mots d'un texte ou d'une liste de messages
+function getWordCount(textOrMessages: string | MessagePayload[]): number {
+  if (typeof textOrMessages === 'string') {
+    return textOrMessages.split(/\s+/).filter(Boolean).length;
+  }
+  return textOrMessages.reduce((acc, msg) => acc + msg.content.split(/\s+/).filter(Boolean).length, 0);
+}
+
+// Élague l'historique de fin vers le début pour ne garder que les 500 mots les plus récents
+function pruneMessagesToLimit(messages: MessagePayload[], maxWords = 500): MessagePayload[] {
+  let currentWords = 0;
+  const result: MessagePayload[] = [];
+  
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const words = getWordCount(messages[i].content);
+    if (currentWords + words > maxWords) {
+      break;
+    }
+    currentWords += words;
+    result.unshift(messages[i]);
+  }
+  return result;
+}
 
 export default {
   name: Events.MessageCreate,
