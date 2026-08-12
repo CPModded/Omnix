@@ -15,7 +15,6 @@
 
 <script>
   (function() {
-    // Décodeur local sécurisé pour vérifier si l'utilisateur est administrateur
     function parseJwt(token) {
       if (!token || token === 'null' || token === 'undefined' || !token.includes('.')) return null;
       try {
@@ -51,7 +50,7 @@
       }
     }
 
-    // Gestion automatique de l'onglet "Active" selon l'URL de la page
+    // Gestion automatique de la classe Active sur les liens
     const currentPath = window.location.pathname;
     document.querySelectorAll('#side-drawer .drawer-links a').forEach(link => {
       if (link.getAttribute('href') === currentPath) {
