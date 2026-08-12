@@ -309,7 +309,7 @@
   <!-- Conteneur d'administration -->
   <div class="container">
     
-    <!-- Liste des onglets -->
+    <!-- Liste des onget -->
     <aside>
       <button onclick="switchTab('tab-overview')" id="btn-tab-general" class="tab-btn active">Vue d'ensemble</button>
       <button onclick="switchTab('tab-welcome')" id="btn-tab-welcome" class="tab-btn">Accueil & Départ</button>
@@ -562,15 +562,30 @@
   </footer>
 
   <script>
-    // --- FONCTIONS DE GESTION DE SESSION ET DE TIROIR (EMBARQUÉES) ---
+    // --- GESTION DE SESSION ET DE TIROIR (EMBARQUÉES AVEC CORRECTION AUTOMATIQUE COOKIES) ---
     function getToken() {
-      return localStorage.getItem('jwt_token');
+      try {
+        const token = localStorage.getItem('jwt_token');
+        if (token) {
+          // Synchronisation automatique et rétroactive du cookie dès la lecture
+          document.cookie = `jwt_token=${token}; path=/; max-age=604800; SameSite=Lax; Secure`;
+        }
+        return token;
+      } catch (err) {
+        return null;
+      }
     }
     function setToken(token) {
-      localStorage.setItem('jwt_token', token);
+      try {
+        localStorage.setItem('jwt_token', token);
+        document.cookie = `jwt_token=${token}; path=/; max-age=604800; SameSite=Lax; Secure`;
+      } catch (err) {
+        console.error("Échec de synchronisation de la session.");
+      }
     }
     function logout() {
       localStorage.removeItem('jwt_token');
+      document.cookie = "jwt_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax; Secure";
       window.location.href = '/';
     }
     function parseJwt(token) {

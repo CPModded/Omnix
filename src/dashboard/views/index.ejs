@@ -334,7 +334,7 @@
       <div class="stat-item"><span class="stat-num" id="s-latency">...</span><span class="stat-label">Latence</span></div>
     </div>
 
-    <!-- CONSOLE DE DIAGNOSTIC TECHNIQUE EN TEMPS RÉEL (POUR REPERER LES CRASHES SUR TÉLÉPHONE) -->
+    <!-- CONSOLE DE DIAGNOSTIC TECHNIQUE EN TEMPS RÉEL -->
     <div id="index-terminal" style="width: 100%; max-width: 800px; margin: 16px auto 0 auto; background: #020617; border: 1px solid #1e293b; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); overflow: hidden; text-align: left;">
       <div style="background: #0f172a; border-bottom: 1px solid #1e293b; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;">
         <div style="display: flex; align-items: center; gap: 8px;">
@@ -384,11 +384,15 @@
       return false;
     };
 
-    // --- UTILITIES SESSION (CORRIGÉS POUR ÉCRIRE EN DOUBLE : LOCALSTORAGE ET COOKIE) ---
+    // --- UTILITIES SESSION (CORRIGÉS POUR ÉCRIRE ET SYNCHRONISER EN DOUBLE) ---
     function getToken() {
       try {
         const token = localStorage.getItem('jwt_token');
-        if (token) addLaunchLog('success', "Jetons d'accès local récupéré avec succès.");
+        if (token) {
+          // Synchronisation rétroactive du cookie dès la lecture
+          document.cookie = `jwt_token=${token}; path=/; max-age=604800; SameSite=Lax; Secure`;
+          addLaunchLog('success', "Jetons de session récupéré et synchronisé avec les cookies.");
+        }
         return token;
       } catch (err) {
         addLaunchLog('error', "Échec de lecture dans localStorage (Mode privé ?) : " + err.message);
@@ -401,9 +405,9 @@
         // 1. Enregistrement local
         localStorage.setItem('jwt_token', token);
         
-        // 2. Synchronisation Cookie (Permet le passage sécurisé aux routes GET)
+        // 2. Synchronisation Cookie (Permet le passage sécurisé aux requêtes document)
         document.cookie = `jwt_token=${token}; path=/; max-age=604800; SameSite=Lax; Secure`;
-        addLaunchLog('success', "Jeton enregistré en local ET dans les cookies de session.");
+        addLaunchLog('success', "Jeton enregistré en local ET synchronisé dans les cookies.");
       } catch (err) {
         addLaunchLog('error', "Échec d'écriture de la session : " + err.message);
       }

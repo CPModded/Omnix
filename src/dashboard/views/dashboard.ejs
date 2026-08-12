@@ -396,13 +396,28 @@
   <script>
     // --- FONCTIONS DE GESTION DE SESSION ET DE TIROIR (EMBARQUÉES) ---
     function getToken() {
-      return localStorage.getItem('jwt_token');
+      try {
+        const token = localStorage.getItem('jwt_token');
+        if (token) {
+          // Synchronisation automatique rétroactive du cookie dès la lecture
+          document.cookie = `jwt_token=${token}; path=/; max-age=604800; SameSite=Lax; Secure`;
+        }
+        return token;
+      } catch (err) {
+        return null;
+      }
     }
     function setToken(token) {
-      localStorage.setItem('jwt_token', token);
+      try {
+        localStorage.setItem('jwt_token', token);
+        document.cookie = `jwt_token=${token}; path=/; max-age=604800; SameSite=Lax; Secure`;
+      } catch (err) {
+        console.error("Échec d'écriture de session.");
+      }
     }
     function logout() {
       localStorage.removeItem('jwt_token');
+      document.cookie = "jwt_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax; Secure";
       window.location.href = '/';
     }
     function parseJwt(token) {
