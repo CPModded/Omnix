@@ -48,6 +48,72 @@
     .btn-burger { background: none; border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center; }
     .burger-icon { width: 24px; height: 24px; fill: currentColor; }
 
+    /* Styles pour le Menu Tiroir (Drawer) */
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: -300px;
+      width: 280px;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-left: 1px solid rgba(255, 255, 255, 0.04);
+      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+    .drawer.open {
+      transform: translateX(-300px);
+    }
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn-close-drawer {
+      background: none;
+      border: none;
+      color: #64748b;
+      font-size: 28px;
+      cursor: pointer;
+    }
+    .btn-close-drawer:hover {
+      color: white;
+    }
+    .drawer-links {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .drawer-links a {
+      text-decoration: none;
+      color: #94a3b8;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .drawer-links a:hover {
+      background: rgba(255,255,255,0.02);
+      color: white;
+    }
+    .drawer-links a.active {
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.05);
+    }
+    .admin-nav-link {
+      color: #c084fc !important;
+      text-shadow: 0 0 8px rgba(192, 132, 252, 0.4);
+    }
+
     main {
       flex: 1;
       max-width: 1000px;
@@ -276,7 +342,7 @@
       </div>
     </section>
 
-    <!-- ONGLET 2 : SECTION AUDIT CENTER (JOURNAL DE TRAFFIC) -->
+    <!-- ONGLET 2 : SECTION AUDIT CENTER -->
     <section id="section-audit" class="panel-section">
       <div class="users-container" style="max-height: 400px; overflow-y: auto;">
         <div id="audit-loading" style="text-align: center; color: #64748b; padding: 20px 0; font-size: 13px;">
@@ -288,7 +354,7 @@
       </div>
     </section>
 
-    <!-- ONGLET 3 : SECTION SYSTEME (CONSOLE TERMINAL) -->
+    <!-- ONGLET 3 : SECTION SYSTEME -->
     <section id="section-system" class="panel-section">
       <div id="omnix-terminal" style="width: 100%; background: #020617; border: 1px solid #1e293b; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); overflow: hidden;">
         <div style="background: #0f172a; border-bottom: 1px solid #1e293b; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;">
@@ -307,12 +373,12 @@
     </section>
   </main>
 
-  <!-- MODAL DE FICHE PROFIL INTERACTIVE SUR CLIC -->
+  <!-- MODAL DE FICHE PROFIL INTERACTIVE -->
   <div id="user-modal" class="modal-overlay" onclick="closeUserModal(event)">
     <div class="modal-card" onclick="event.stopPropagation()">
       <button class="btn-close-modal" onclick="closeUserModal()">&times;</button>
       <div id="modal-user-content">
-        <!-- Rempli dynamiquement sur clic -->
+        <!-- Rempli dynamiquement -->
       </div>
     </div>
   </div>
@@ -323,6 +389,57 @@
 
   <!-- BLOC JAVASCRIPT DE CONFIGURATION ET D'INTERACTION -->
   <script>
+    // --- GESTION DE SESSION ET COHÉRENCE DU TIROIR (CORRIGÉE AVEC DOUBLON LOCALSTORAGE / COOKIE) ---
+    function getToken() {
+      return localStorage.getItem('jwt_token');
+    }
+    function setToken(token) {
+      try {
+        localStorage.setItem('jwt_token', token);
+        document.cookie = `jwt_token=${token}; path=/; max-age=604800; SameSite=Lax; Secure`;
+        addTerminalLog('success', "Session locale synchronisée.");
+      } catch (err) {
+        addTerminalLog('error', "Échec de synchronisation de la session.");
+      }
+    }
+    function logout() {
+      try {
+        localStorage.removeItem('jwt_token');
+        document.cookie = "jwt_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax; Secure";
+        window.location.href = '/';
+      } catch (err) {
+        window.location.href = '/';
+      }
+    }
+    function parseJwt(token) {
+      if (!token || token === 'null' || token === 'undefined' || !token.includes('.')) return null;
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const pad = base64.length % 4;
+        const paddedBase64 = pad ? base64 + '='.repeat(4 - pad) : base64;
+        const rawBinary = window.atob(paddedBase64);
+        const bytes = new Uint8Array(rawBinary.length);
+        for (let i = 0; i < rawBinary.length; i++) {
+          bytes[i] = rawBinary.charCodeAt(i);
+        }
+        const decoder = new TextDecoder('utf-8');
+        return JSON.parse(decoder.decode(bytes));
+      } catch (e) {
+        return null;
+      }
+    }
+    function toggleDrawer(open) {
+      const drawer = document.getElementById('side-drawer');
+      if (drawer) {
+        if (open) {
+          drawer.classList.add('open');
+        } else {
+          drawer.classList.remove('open');
+        }
+      }
+    }
+
     let allUsers = [];
 
     function addTerminalLog(type, message) {
@@ -347,10 +464,9 @@
       screen.scrollTop = screen.scrollHeight;
     }
 
-    // Gestion des onglets
     function switchTab(tabName) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.panel-section').forEach(sec => btn = sec.classList.remove('active'));
+      document.querySelectorAll('.panel-section').forEach(sec => sec.classList.remove('active'));
       
       document.getElementById(`tab-btn-${tabName}`).classList.add('active');
       document.getElementById(`section-${tabName}`).classList.add('active');
@@ -404,7 +520,7 @@
         const fallbackUsers = [
           {
             discordId: payload ? payload.discordId : "1211490202246189167",
-            username: payload ? payload.username : "Massimo",
+            username: payload ? payload.username : "le.m135",
             avatar: payload ? payload.avatar : null,
             isAdmin: true,
             rewards: { points: 150 },
@@ -457,7 +573,7 @@
           <div class="log-row warning">[19:47:04] [WARNING] @Massimo : CONFIG_UPDATE - Paramètres du module '/ai' modifiés.</div>
           <div class="log-row error">[19:48:33] [ERROR] @le.m135 : DB_CONN_ERROR - Perte de connexion Atlas résolue.</div>
         `;
-        addTerminalLog('warn', "Échec de récupération de l'Audit Center en direct. Affichage du journal d'audit de secours.");
+        addTerminalLog('warn', "Échec de récupération de l'Audit Center en direct. Affichage de secours.");
       }
     }
 
@@ -489,7 +605,7 @@
             <span class="user-name">${user.username} <span style="color: #475569; font-size: 11px;">(${user.discordId})</span></span>
           </div>
           <div>
-            ${user.isAdmin ? '<span class="user-badge">Staff Admin</span>' : '<span class="user-badge" style="background: rgba(148, 163, 184, 0.1); color: #94a3b8; border-color: rgba(148, 163, 184, 0.2);">Membre</span>'}
+            ${user.isAdmin ? '<span class="user-badge">Staff Admin</span>' : '<span class="user-badge" style="background: rgba(148, 163, 184, 0.1); color: #94a3b8; border-color: rgba(148, 163, 184, 0.25);">Membre</span>'}
           </div>
         `;
         listContainer.appendChild(row);
@@ -505,7 +621,6 @@
       renderUsers(filtered);
     }
 
-    // Modal Interaction (Fiche Profil sur Clic)
     function openUserModal(userId) {
       const user = allUsers.find(u => u.discordId === userId);
       if (!user) return;
@@ -513,7 +628,6 @@
       const modal = document.getElementById('user-modal');
       const modalContent = document.getElementById('modal-user-content');
       
-      // Confection de la liste des licences
       let licencesHtml = '';
       if (user.licenses && user.licenses.length > 0) {
         user.licenses.forEach(lic => {
@@ -531,7 +645,6 @@
         licencesHtml = '<div style="color: #64748b; font-size: 11px;">Aucune licence active pour ce compte.</div>';
       }
 
-      // Confection des badges
       let badgesHtml = '';
       if (user.isAdmin) badgesHtml += `<span class="user-badge">Staff Admin</span>`;
       if (user.rewards && user.rewards.points > 0) {
@@ -584,7 +697,6 @@
       }
     }
 
-    // Fonctions d'actions d'administration
     async function toggleUserAdmin(userId) {
       addTerminalLog('warn', `Tentative de modification des droits d'administration de : ${userId}...`);
       alert(`Action de promotion/dégradation pour l'ID ${userId} enregistrée.`);
