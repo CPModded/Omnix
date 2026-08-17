@@ -116,7 +116,7 @@
     </button>
   </header>
 
-  <!-- LIAISON DE LA BARRE LATÉRALE CENTRALISÉE -->
+  <!-- MENU TIROIR -->
   <%- include('partials/sidebar') %>
 
   <main>
@@ -147,5 +147,24 @@
   <footer>
     <p>&copy; 2026 OMNIX. Tous droits réservés.</p>
   </footer>
+
+  <script>
+    // --- LES DOUBLONS JS CONFLICTUELS ONT ÉTÉ ENTIÈREMENT NETTOYÉS (GÉRÉS PAR SIDEBAR) ---
+    const jwtToken = localStorage.getItem('jwt_token');
+    if (jwtToken) {
+      const payload = parseJwt(jwtToken);
+      if (payload && payload.isAdmin) {
+        const nav = document.getElementById('drawer-nav');
+        if (nav && !document.getElementById('nav-admin-link')) {
+          const adminLink = document.createElement('a');
+          adminLink.href = '/admin';
+          adminLink.id = 'nav-admin-link';
+          adminLink.className = 'admin-nav-link';
+          adminLink.innerText = 'Staff Panel';
+          nav.appendChild(adminLink);
+        }
+      }
+    }
+  </script>
 </body>
 </html>

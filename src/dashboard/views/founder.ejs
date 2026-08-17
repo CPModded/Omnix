@@ -198,7 +198,7 @@
       -webkit-backdrop-filter: blur(16px);
     }
 
-    /* Image de profil d'OMNIX corrigée */
+    /* Image de profil d'OMNIX stable */
     .avatar {
       width: 90px;
       height: 90px;
@@ -307,7 +307,6 @@
   <!-- En-tête -->
   <header>
     <a href="/" class="logo-area">
-      <!-- LIAISON DE SÉCURITÉ POUR LE LOGO LOCALE ET STABLE -->
       <img src="/logo.png" id="logo-main-img" onerror="this.style.display='none'; document.getElementById('logo-fallback-box').style.display='flex';" class="logo-img" alt="OMNIX Logo">
       <div id="logo-fallback-box" style="display: none; width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #06b6d4, #7c3aed); align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 18px; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);">O</div>
       <span class="logo-text">OMNIX</span>
@@ -361,5 +360,24 @@
   <footer>
     <p>&copy; 2026 OMNIX. Tous droits réservés.</p>
   </footer>
+
+  <script>
+    // --- LES DOUBLONS JS CONFLICTUELS ONT ÉTÉ ENTIÈREMENT NETTOYÉS (GÉRÉS PAR SIDEBAR) ---
+    const jwtToken = localStorage.getItem('jwt_token');
+    if (jwtToken) {
+      const payload = parseJwt(jwtToken);
+      if (payload && payload.isAdmin) {
+        const nav = document.getElementById('drawer-nav');
+        if (nav && !document.getElementById('nav-admin-link')) {
+          const adminLink = document.createElement('a');
+          adminLink.href = '/admin';
+          adminLink.id = 'nav-admin-link';
+          adminLink.className = 'admin-nav-link';
+          adminLink.innerText = 'Staff Panel';
+          nav.appendChild(adminLink);
+        }
+      }
+    }
+  </script>
 </body>
 </html>

@@ -220,7 +220,7 @@
     </button>
   </header>
 
-  <!-- LIAISON DE LA BARRE LATÉRALE CENTRALISÉE -->
+  <!-- MENU TIROIR -->
   <%- include('partials/sidebar') %>
 
   <main>
@@ -273,7 +273,7 @@
 
     </div>
 
-    <!-- SECTION 2 : COMPARATIF DES OFFRES SAAS (FREE, PREMIUM, ENTERPRISE) -->
+    <!-- SECTION 2 : COMPARATIF DES OFFRES SAAS -->
     <h3 class="section-title">📊 Niveaux de Services SaaS</h3>
     <div class="saas-grid">
       
@@ -290,7 +290,7 @@
         </ul>
       </div>
 
-      <!-- Offre Premium (TARIF ALIGNÉ ET COHÉRENT À 7.99 €) -->
+      <!-- Offre Premium -->
       <div class="saas-card premium">
         <h4 class="saas-title" style="color: #c084fc;">⭐ Premium</h4>
         <p class="saas-price">7.99 € <span>/ mois</span></p>
@@ -325,5 +325,24 @@
   <footer>
     <p>&copy; 2026 OMNIX. Tous droits réservés.</p>
   </footer>
+
+  <script>
+    // --- LES DOUBLONS JS CONFLICTUELS ONT ÉTÉ ENTIÈREMENT NETTOYÉS (GÉRÉS PAR SIDEBAR) ---
+    const jwtToken = localStorage.getItem('jwt_token');
+    if (jwtToken) {
+      const payload = parseJwt(jwtToken);
+      if (payload && payload.isAdmin) {
+        const nav = document.getElementById('drawer-nav');
+        if (nav && !document.getElementById('nav-admin-link')) {
+          const adminLink = document.createElement('a');
+          adminLink.href = '/admin';
+          adminLink.id = 'nav-admin-link';
+          adminLink.className = 'admin-nav-link';
+          adminLink.innerText = 'Staff Panel';
+          nav.appendChild(adminLink);
+        }
+      }
+    }
+  </script>
 </body>
 </html>
