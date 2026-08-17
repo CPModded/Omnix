@@ -1,14 +1,13 @@
 import { Router } from 'express';
-// Importation ESM du contrôleur avec son extension .ts
-import { discordCallback } from '../controllers/auth.controller.ts'; 
+// 🟢 CORRECTIF : Importation de l'objet contrôleur complet par défaut (sans accolades)
+import authController from '../controllers/auth.controller.ts'; 
 
 const router = Router();
 
 /**
  * Routeur d'authentification OMNIX
- * Puisqu'il est monté avec le préfixe "/api/auth" dans index.ts,
- * le chemin d'accès final pour le navigateur est bien "/api/auth/callback"
+ * Utilise l'objet importé par défaut pour cibler proprement la fonction de rappel
  */
-router.get('/callback', discordCallback);
+router.get('/callback', authController.discordCallback);
 
 export default router;
