@@ -49,7 +49,7 @@ function setupWebServer() {
 
   // Configuration robuste du dossier des Vues (EJS) et des fichiers statiques
   app.set('view engine', 'ejs');
-  app.set('views', path.join(process.cwd(), 'src/dashboard/view'));
+  app.set('views', path.join(process.cwd(), 'src/dashboard/views'));
   app.use(express.static(path.join(process.cwd(), 'public')));
 
   // Exemple de routes de base pour le fonctionnement
