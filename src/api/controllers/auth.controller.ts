@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
 import jwt from 'jsonwebtoken';
-import { CONFIG } from '../../config';
-import { User } from '../../models/User';
+import { CONFIG } from '../../config.ts';
+import { User } from '../../models/User.ts';
 
 export class AuthController {
   // Génère l'URL d'autorisation Discord

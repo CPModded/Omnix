@@ -1,7 +1,7 @@
 import { Response } from 'express';
-import { AuthenticatedRequest } from '../middlewares/auth';
-import { GuildConfig } from '../../models/GuildConfig';
-import { Backup } from '../../models/Backup';
+import { AuthenticatedRequest } from '../middlewares/auth.ts';
+import { GuildConfig } from '../../models/GuildConfig.ts';
+import { Backup } from '../../models/Backup.ts';
 
 export class BackupController {
   // 1. Crée une sauvegarde manuelle de la configuration du serveur

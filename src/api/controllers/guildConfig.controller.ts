@@ -1,6 +1,6 @@
 import { Response } from 'express';
-import { AuthenticatedRequest } from '../middlewares/auth';
-import { GuildConfig } from '../../models/GuildConfig';
+import { AuthenticatedRequest } from '../middlewares/auth.ts';
+import { GuildConfig } from '../../models/GuildConfig.ts';
 
 // Fonction d'aide pour aplatir les objets imbriqués en chemin par points (dotted paths)
 function flattenObject(ob: any, prefix = ''): any {

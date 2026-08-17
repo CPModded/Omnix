@@ -1,6 +1,6 @@
 import { Router, raw } from 'express';
-import { PaymentController } from '../controllers/payment.controller';
-import { isAuthenticated } from '../middlewares/auth';
+import { PaymentController } from '../controllers/payment.controller.ts';
+import { isAuthenticated } from '../middlewares/auth.ts';
 
 const router = Router();
 

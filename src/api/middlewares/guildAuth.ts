@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
 import axios from 'axios';
-import { AuthenticatedRequest } from './auth';
+import { AuthenticatedRequest } from './auth.ts';
 
 // Cache des droits d'administration partagé et exporté (userId => { guildIds, expiresAt })
 export const adminAccessCache = new Map<string, { guilds: string[]; expiresAt: number }>();

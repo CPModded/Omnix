@@ -5,9 +5,9 @@
  */
 
 import { Response, NextFunction } from 'express';
-import { AuthenticatedRequest } from './auth';
-import { User } from '../../models/User';
-import { CONFIG } from '../../config';
+import { AuthenticatedRequest } from './auth.ts';
+import { User } from '../../models/User.ts';
+import { CONFIG } from '../../config.ts';
 
 export async function adminCheck(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const discordId = req.user?.discordId;

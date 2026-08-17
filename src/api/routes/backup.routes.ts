@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { BackupController } from '../controllers/backup.controller';
-import { isAuthenticated } from '../middlewares/auth';
-import { canManageGuild } from '../middlewares/guildAuth';
-import { requirePremium } from '../middlewares/premiumCheck';
+import { BackupController } from '../controllers/backup.controller.ts';
+import { isAuthenticated } from '../middlewares/auth.ts';
+import { canManageGuild } from '../middlewares/guildAuth.ts';
+import { requirePremium } from '../middlewares/premiumCheck.ts';
 
 const router = Router();
 

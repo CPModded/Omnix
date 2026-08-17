@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import { client as botClient } from '../../bot/client';
+import { client as botClient } from '../../bot/client.ts';
 import { EmbedBuilder, TextChannel } from 'discord.js';
-import { User } from '../../models/User';
-import { AuditLog } from '../../models/AuditLog';
-import { isAuthenticated } from '../middlewares/auth';
-import { adminCheck } from '../middlewares/adminCheck';
+import { User } from '../../models/User.ts';
+import { AuditLog } from '../../models/AuditLog.ts';
+import { isAuthenticated } from '../middlewares/auth.ts';
+import { adminCheck } from '../middlewares/adminCheck.ts';
 
 const router = Router();
 

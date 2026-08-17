@@ -5,9 +5,9 @@
  */
 
 import { Response } from 'express';
-import { AuthenticatedRequest } from '../middlewares/auth';
-import { License } from '../../models/License';
-import { GuildConfig } from '../../models/GuildConfig';
+import { AuthenticatedRequest } from '../middlewares/auth.ts';
+import { License } from '../../models/License.ts';
+import { GuildConfig } from '../../models/GuildConfig.ts';
 
 export class LicenseController {
   static async activateLicense(req: AuthenticatedRequest, res: Response) {

@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { LicenseController } from '../controllers/license.controller';
-import { isAuthenticated } from '../middlewares/auth';
+import { LicenseController } from '../controllers/license.controller.ts';
+import { isAuthenticated } from '../middlewares/auth.ts';
 
 const router = Router();
 

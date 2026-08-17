@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { FounderController } from '../controllers/founder.controller';
-import { CONFIG } from '../../config';
+import { FounderController } from '../controllers/founder.controller.ts';
+import { CONFIG } from '../../config.ts';
 
 const router = Router();
 

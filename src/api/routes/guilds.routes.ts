@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { GuildsController } from '../controllers/guilds.controller';
-import { isAuthenticated } from '../middlewares/auth';
-import { canManageGuild } from '../middlewares/guildAuth';
+import { GuildsController } from '../controllers/guilds.controller.ts';
+import { isAuthenticated } from '../middlewares/auth.ts';
+import { canManageGuild } from '../middlewares/guildAuth.ts';
 
 const router = Router();
 

@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
-import { AuthenticatedRequest } from './auth';
-import { GuildConfig } from '../../models/GuildConfig';
+import { AuthenticatedRequest } from './auth.ts';
+import { GuildConfig } from '../../models/GuildConfig.ts';
 
 export async function requirePremium(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const { guildId } = req.params;

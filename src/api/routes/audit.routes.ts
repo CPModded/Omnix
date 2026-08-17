@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import AuditLog from '../models/AuditLog';
+import AuditLog from '../models/AuditLog.ts';
 
 // ⚠️ IMPORTANT : Importez vos propres middlewares pour sécuriser cette route !
 // import { isAuthenticated, isStaff } from '../middlewares/auth';

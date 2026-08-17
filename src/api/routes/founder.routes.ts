@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { FounderController } from '../controllers/founder.controller';
-import { client as botClient } from '../../bot/client';
-import { User } from '../../models/User';
-import { isAuthenticated } from '../middlewares/auth'; 
-import { adminCheck } from '../middlewares/adminCheck'; 
+import { FounderController } from '../controllers/founder.controller.ts';
+import { client as botClient } from '../../bot/client.ts';
+import { User } from '../../models/User.ts';
+import { isAuthenticated } from '../middlewares/auth.ts'; 
+import { adminCheck } from '../middlewares/adminCheck.ts'; 
 
 const router = Router();
 

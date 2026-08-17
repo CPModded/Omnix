@@ -6,7 +6,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { CONFIG } from '../../config';
+import { CONFIG } from '../../config.ts';
 
 export interface AuthenticatedRequest extends Request {
   user?: {

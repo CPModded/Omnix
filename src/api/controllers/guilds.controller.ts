@@ -7,9 +7,9 @@
 import { Response } from 'express';
 import axios from 'axios';
 import { ChannelType } from 'discord.js';
-import { AuthenticatedRequest } from '../middlewares/auth';
-import { adminAccessCache } from '../middlewares/guildAuth';
-import { client as botClient } from '../../bot/client';
+import { AuthenticatedRequest } from '../middlewares/auth.ts';
+import { adminAccessCache } from '../middlewares/guildAuth.ts';
+import { client as botClient } from '../../bot/client.ts';
 
 const userGuildsCache = new Map<string, { guilds: any[]; expiresAt: number }>();
 

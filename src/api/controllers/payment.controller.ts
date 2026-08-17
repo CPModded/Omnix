@@ -6,9 +6,9 @@
 
 import { Request, Response } from 'express';
 import Stripe from 'stripe';
-import { CONFIG } from '../../config';
-import { License } from '../../models/License';
-import { AuthenticatedRequest } from '../middlewares/auth';
+import { CONFIG } from '../../config.ts';
+import { License } from '../../models/License.ts';
+import { AuthenticatedRequest } from '../middlewares/auth.ts';
 import crypto from 'crypto';
 
 const stripe = new Stripe(CONFIG.PAYMENTS.STRIPE_KEY, {
