@@ -48,21 +48,23 @@ export async function discordCallback(req: Request, res: Response) {
 
     const discordUser = userResponse.data;
 
-    // 3. Recherche ou enregistrement de l'utilisateur dans MongoDB Atlas
+    // 3. Recherche ou enregistrement de l'utilisateur dans MongoDB Atlas (avec sauvegarde de l'access token Discord)
     let user = await User.findOne({ discordId: discordUser.id });
 
     if (!user) {
-      // Nouvel utilisateur : Enregistré par défaut en tant que membre simple
+      // Nouvel utilisateur
       user = await User.create({
         discordId: discordUser.id,
         username: discordUser.username,
         avatar: discordUser.avatar,
-        isAdmin: false, // Modifiable ultérieurement depuis le Staff Panel
+        isAdmin: false,
+        accessToken: access_token // 🟢 Sauvegarde cruciale pour les requêtes /api/guilds
       });
     } else {
-      // Utilisateur existant : Mise à jour du pseudo ou de l'avatar s'ils ont changé sur Discord
+      // Utilisateur existant
       user.username = discordUser.username;
       user.avatar = discordUser.avatar;
+      user.accessToken = access_token; // 🟢 Mise à jour cruciale pour les requêtes /api/guilds
       await user.save();
     }
 
