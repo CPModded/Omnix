@@ -4,9 +4,9 @@
  * ====================================================================
  */
 
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import Stripe from 'stripe';
-import { CONFIG } from '../../config.ts';
+import { CONFIG } from '../../config/index.ts';
 import { License } from '../../models/License.ts';
 import { AuthenticatedRequest } from '../middlewares/auth.ts';
 import crypto from 'crypto';
