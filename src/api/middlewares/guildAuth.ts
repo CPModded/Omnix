@@ -1,4 +1,4 @@
-import { Response, NextFunction } from 'express';
+import type { Response, NextFunction } from 'express';
 import axios from 'axios';
 import { AuthenticatedRequest } from './auth.ts';
 

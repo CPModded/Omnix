@@ -1,4 +1,4 @@
-import { Response, NextFunction } from 'express';
+import type { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from './auth.ts';
 import { GuildConfig } from '../../models/GuildConfig.ts';
 
