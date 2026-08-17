@@ -2,7 +2,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import { Express } from 'express';
-import { CONFIG } from '../../config/index.ts';
+import { CONFIG } from '../../config.ts';
 
 export function setupSecurity(app: Express) {
   // CORRECTIF CLOUD : Ordonne à Express de faire confiance au proxy inverse de Render

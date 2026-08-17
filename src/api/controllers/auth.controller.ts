@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
 import jwt from 'jsonwebtoken';
-import { CONFIG } from '../../config/index.ts';
+import { CONFIG } from '../../config.ts';
 import { User } from '../../models/User.ts';
 
 export class AuthController {
