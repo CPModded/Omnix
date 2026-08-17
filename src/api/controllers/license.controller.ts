@@ -4,7 +4,7 @@
  * ====================================================================
  */
 
-import { Response } from 'express';
+import type { Response } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth.ts';
 import { License } from '../../models/License.ts';
 import { GuildConfig } from '../../models/GuildConfig.ts';

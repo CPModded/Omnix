@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 
 export class FounderController {
   // Renvoie les données brutes de présentation de la plateforme

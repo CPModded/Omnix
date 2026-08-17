@@ -4,7 +4,7 @@
  * ====================================================================
  */
 
-import { Response } from 'express';
+import type { Response } from 'express';
 import axios from 'axios';
 import { ChannelType } from 'discord.js';
 import { AuthenticatedRequest } from '../middlewares/auth.ts';
