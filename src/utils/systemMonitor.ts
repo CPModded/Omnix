@@ -1,7 +1,7 @@
 import os from 'os';
-import { client as botClient } from '../bot/client';
-import { User } from '../models/User';
-import { GuildConfig } from '../models/GuildConfig';
+import { client as botClient } from '../bot/client.ts';
+import { User } from '../models/User.ts';
+import { GuildConfig } from '../models/GuildConfig.ts';
 
 export interface SystemStats {
   system: {
