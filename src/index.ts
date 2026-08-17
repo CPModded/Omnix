@@ -7,7 +7,7 @@ import cookieParser from 'cookie-parser';
 import { pathToFileURL } from 'url'; // Utile pour convertir les chemins de fichiers en URLs valides pour ESM
 import { Client, GatewayIntentBits, Collection, REST, Routes } from 'discord.js';
 
-// 🟢 ENREGISTREMENT ET MONTAGE DES ROUTEURS SÉCURISÉS ESM (.ts)
+// ENREGISTREMENT ET MONTAGE DES ROUTEURS SÉCURISÉS ESM (.ts)
 import authRouter from './api/routes/auth.routes.ts'; 
 import adminRouter from './api/routes/admin.routes.ts'; 
 
@@ -18,7 +18,6 @@ const PORT = process.env.PORT || 3000;
 // 1. CONNEXION À LA BASE DE DONNÉES
 // ==========================================
 async function connectDatabase() {
-  // Détection intelligente : cherche sous les 3 noms les plus courants du développement
   const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || process.env.DATABASE_URL;
   
   if (!mongoUri) {
@@ -27,7 +26,6 @@ async function connectDatabase() {
     process.exit(1);
   }
 
-  // Adapte le log selon qu'il s'agit d'Atlas ou d'une base locale
   if (mongoUri.includes('mongodb+srv')) {
     console.log("[Database] Connexion à MongoDB Atlas...");
   } else {
@@ -56,12 +54,16 @@ function setupWebServer() {
   // Configuration robuste du dossier des Vues (EJS) et des fichiers statiques
   // (Utilise process.cwd() pour éviter les erreurs de chemin sur Render et Eternodes)
   app.set('view engine', 'ejs');
-  app.set('views', path.join(process.cwd(), 'src/dashboard/views'));
+  app.set('views', path.join(process.cwd(), 'views'));
   app.use(express.static(path.join(process.cwd(), 'public')));
 
-  // 🟢 MONTAGE DE VOS ROUTEURS DE SÉCURITÉ ET DE RECONNEXION OAUTH
-  app.use(authRouter);
-  app.use(adminRouter);
+  // 🟢 MONTAGE DE VOS ROUTEURS ALIGNÉS AVEC VOTRE STRATÉGIE D'API
+  // auth.routes.ts gère "/callback", monté sur "/api/auth" -> devient "/api/auth/callback"
+  app.use('/api/auth', authRouter);
+  
+  // admin.routes.ts déclare déjà ses routes avec "/api/admin/..." et "/api/stats",
+  // on le monte donc à la racine sans doublon de préfixe pour que les requêtes fonctionnent.
+  app.use(adminRouter); 
 
   // Exemple de routes de base pour le fonctionnement
   app.get('/', (req, res) => {
@@ -135,6 +137,7 @@ async function setupDiscordBot() {
       const fileUrl = pathToFileURL(filePath).href;
       const commandModule = await import(fileUrl);
       
+      // Supporte à la fois "export const data" et "export default { data }"
       const command = commandModule.default || commandModule;
 
       if (command && 'data' in command && 'execute' in command) {
@@ -155,6 +158,7 @@ async function setupDiscordBot() {
       const fileUrl = pathToFileURL(filePath).href;
       const eventModule = await import(fileUrl);
       
+      // Supporte à la fois les exports par défaut et nommés pour les événements
       const event = eventModule.default || eventModule;
 
       if (event && event.name) {
