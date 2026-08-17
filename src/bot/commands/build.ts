@@ -3,11 +3,11 @@ import {
   EmbedBuilder, 
   ChannelType, 
   PermissionFlagsBits, 
-  Role,
-  ColorResolvable
+  Role
 } from 'discord.js';
-import { Command } from '../types';
-import { CONFIG } from '../../config';
+import type { ColorResolvable } from 'discord.js'; // 🟢 CORRIGÉ : Importation de type isolée pour ESM
+import type { Command } from '../types.ts';
+import { CONFIG } from '../../config/index.ts'; // 🟢 CORRIGÉ : Importation de la valeur runtime depuis le dossier config
 
 export default {
   data: new SlashCommandBuilder()
@@ -191,18 +191,6 @@ export default {
             { name: '🔌・api', type: ChannelType.GuildText },
             { name: '🧱・plugins', type: ChannelType.GuildText },
             { name: '🧠・ideas', type: ChannelType.GuildText }
-          ]
-        },
-        {
-          name: '💼 PARTENAIRES',
-          overwrites: [
-            { id: rEveryone.id, deny: [PermissionFlagsBits.SendMessages], allow: [PermissionFlagsBits.ViewChannel] },
-            { id: rAdmin.id, allow: [PermissionFlagsBits.SendMessages, PermissionFlagsBits.ViewChannel] },
-            { id: rFounder.id, allow: [PermissionFlagsBits.SendMessages, PermissionFlagsBits.ViewChannel] }
-          ],
-          channels: [
-            { name: '🤝・partners', type: ChannelType.GuildText },
-            { name: '📢・advertising', type: ChannelType.GuildText }
           ]
         },
         {
