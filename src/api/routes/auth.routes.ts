@@ -1,12 +1,14 @@
 import { Router } from 'express';
-import { AuthController } from '../controllers/auth.controller.ts';
+// Importation ESM du contrôleur avec son extension .ts
+import { discordCallback } from '../controllers/auth.controller.ts'; 
 
 const router = Router();
 
-// Génère l'URL d'authentification
-router.get('/login', AuthController.getLoginUrl);
-
-// Réceptionne le retour d'autorisation de Discord
-router.get('/callback', AuthController.handleCallback);
+/**
+ * Routeur d'authentification OMNIX
+ * Puisqu'il est monté avec le préfixe "/api/auth" dans index.ts,
+ * le chemin d'accès final pour le navigateur est bien "/api/auth/callback"
+ */
+router.get('/callback', discordCallback);
 
 export default router;

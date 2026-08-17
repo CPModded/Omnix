@@ -8,7 +8,43 @@ import { adminCheck } from '../middlewares/adminCheck.ts';
 
 const router = Router();
 
-// Route pour lister tous les utilisateurs de la base de données (Staff Only)
+// ==========================================
+// 1. STATISTIQUES GLOBAL DU DASHBOARD (Fetch de l'accueil)
+// ==========================================
+router.get('/api/stats', async (req, res) => {
+  try {
+    // 🟢 CORRECTIF DE SÉCURITÉ CONFLIT (Render / Eternodes) :
+    // Si le bot n'est pas démarré sur cette instance (ex: sur Render car START_BOT est à "false"),
+    // l'objet "botClient" n'est pas prêt et "botClient.readyAt" est nul.
+    // On applique des valeurs de secours de 0 pour éviter un plantage TypeError critique.
+    const guildsCount = botClient && botClient.readyAt ? botClient.guilds.cache.size : 0;
+    const ping = botClient && botClient.readyAt ? botClient.ws.ping : 0;
+
+    // Récupération sécurisée du nombre de membres inscrits en base de données MongoDB Atlas
+    const totalUsers = await User.countDocuments().catch(() => 0);
+
+    return res.json({
+      success: true,
+      bot: {
+        guildsCount,
+        ping
+      },
+      database: {
+        totalUsers
+      }
+    });
+  } catch (error: any) {
+    console.error('[API Stats Error] :', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Une erreur interne est survenue lors de la récupération des statistiques d\'activité.' 
+    });
+  }
+});
+
+// ==========================================
+// 2. ADMINISTRATION DES UTILISATEURS (Staff Only)
+// ==========================================
 router.get('/api/admin/users', isAuthenticated, adminCheck, async (req, res) => {
   try {
     const users = await User.find()
@@ -22,7 +58,9 @@ router.get('/api/admin/users', isAuthenticated, adminCheck, async (req, res) => 
   }
 });
 
-// Route pour lister l'historique d'Audit Center (Staff Only)
+// ==========================================
+// 3. JOURNALISATION AUDIT CENTER (Staff Only)
+// ==========================================
 router.get('/api/admin/audit-logs', isAuthenticated, adminCheck, async (req, res) => {
   try {
     const logs = await AuditLog.find()
@@ -36,7 +74,9 @@ router.get('/api/admin/audit-logs', isAuthenticated, adminCheck, async (req, res
   }
 });
 
-// Route sécurisée pour pousser une mise à jour dans le salon #changelog
+// ==========================================
+// 4. WEBHOOK DE PUBLICATION DE CHANGELOG
+// ==========================================
 router.post('/api/admin/deploy-changelog', async (req, res) => {
   const { secret, version, description, author } = req.body;
   const changelogChannelId = "1527176322319777832"; // ID de votre salon #changelog officiel OMNIX
