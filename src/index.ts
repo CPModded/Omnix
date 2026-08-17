@@ -7,6 +7,10 @@ import cookieParser from 'cookie-parser';
 import { pathToFileURL } from 'url'; // Utile pour convertir les chemins de fichiers en URLs valides pour ESM
 import { Client, GatewayIntentBits, Collection, REST, Routes } from 'discord.js';
 
+// 🟢 ENREGISTREMENT ET MONTAGE DES ROUTEURS SÉCURISÉS ESM (.ts)
+import authRouter from './routes/auth.routes.ts'; 
+import adminRouter from './routes/admin.routes.ts'; 
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -14,6 +18,7 @@ const PORT = process.env.PORT || 3000;
 // 1. CONNEXION À LA BASE DE DONNÉES
 // ==========================================
 async function connectDatabase() {
+  // Détection intelligente : cherche sous les 3 noms les plus courants du développement
   const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || process.env.DATABASE_URL;
   
   if (!mongoUri) {
@@ -22,6 +27,7 @@ async function connectDatabase() {
     process.exit(1);
   }
 
+  // Adapte le log selon qu'il s'agit d'Atlas ou d'une base locale
   if (mongoUri.includes('mongodb+srv')) {
     console.log("[Database] Connexion à MongoDB Atlas...");
   } else {
@@ -48,9 +54,14 @@ function setupWebServer() {
   app.use(cookieParser());
 
   // Configuration robuste du dossier des Vues (EJS) et des fichiers statiques
+  // (Utilise process.cwd() pour éviter les erreurs de chemin sur Render et Eternodes)
   app.set('view engine', 'ejs');
-  app.set('views', path.join(process.cwd(), 'src/dashboard/views'));
+  app.set('views', path.join(process.cwd(), 'views'));
   app.use(express.static(path.join(process.cwd(), 'public')));
+
+  // 🟢 MONTAGE DE VOS ROUTEURS DE SÉCURITÉ ET DE RECONNEXION OAUTH
+  app.use(authRouter);
+  app.use(adminRouter);
 
   // Exemple de routes de base pour le fonctionnement
   app.get('/', (req, res) => {
@@ -92,7 +103,7 @@ async function setupDiscordBot() {
     return;
   }
 
-  // 🟢 CORRIGÉ : Déclaration globale du token au tout début de la fonction (Portée partagée)
+  // Détection intelligente : cherche sous les 3 noms les plus courants du développement
   const token = process.env.DISCORD_TOKEN || process.env.DISCORD_BOT_TOKEN || process.env.TOKEN;
 
   if (!token) {
@@ -120,6 +131,7 @@ async function setupDiscordBot() {
     const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts') || file.endsWith('.js'));
     for (const file of commandFiles) {
       const filePath = path.join(commandsPath, file);
+      // Convertit le chemin local en URL valide pour l'import ESM
       const fileUrl = pathToFileURL(filePath).href;
       const commandModule = await import(fileUrl);
       
@@ -163,7 +175,7 @@ async function setupDiscordBot() {
     
     // Enregistrement et synchronisation automatique des commandes auprès de Discord
     const commandsJson = Array.from(client.commands.values()).map((cmd: any) => cmd.data.toJSON());
-    const rest = new REST({ version: '10' }).setToken(token); // Utilise la variable globale de la fonction
+    const rest = new REST({ version: '10' }).setToken(token);
     try {
       console.log("[Bot] Envoi des commandes (/) à l'API de Discord...");
       await rest.put(
@@ -190,7 +202,7 @@ async function setupDiscordBot() {
   });
 
   try {
-    await client.login(token); // Utilise la variable globale de la fonction
+    await client.login(token);
   } catch (err) {
     console.error("[Bot] Échec d'authentification auprès de Discord :", err);
   }
