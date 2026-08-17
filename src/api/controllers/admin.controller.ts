@@ -10,6 +10,7 @@ import { GuildConfig } from '../../models/GuildConfig.ts';
 import { SystemMonitor } from '../../utils/systemMonitor.ts';
 import { client as botClient } from '../../bot/client.ts';
 import { User } from '../../models/User.ts';
+import { ... } from '../../config/index.ts';
 
 export class AdminController {
   // 1. Récupération des données d'analyse de performance (Monitoring)
