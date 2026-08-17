@@ -1,9 +1,7 @@
 import { Events, Message, EmbedBuilder } from 'discord.js';
 import { OpenAI } from 'openai';
-import { GuildConfig } from '../../models/GuildConfig.ts'; // 🟢 CORRIGÉ (.ts ajouté)
-import AiSession from '../../models/AiSession.ts';     // 🟢 CORRIGÉ (.ts ajouté)
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+import { GuildConfig } from '../../models/GuildConfig.ts'; // Named import avec accolades
+import AiSession from '../../models/AiSession.ts';
 
 interface MessagePayload {
   role: 'user' | 'assistant' | 'system';
@@ -48,6 +46,9 @@ export default {
       // Si l'auteur du message d'origine n'est pas votre bot OMNIX, on ignore
       if (referencedMessage.author.id !== message.client.user.id) return;
 
+      // S'il n'y a pas de clé API configurée localement, on ignore silencieusement
+      if (!process.env.OPENAI_API_KEY) return;
+
       await message.channel.sendTyping();
 
       // Charger la configuration et vérifier si l'IA est active
@@ -56,6 +57,9 @@ export default {
 
       const systemPrompt = config.modules.ai.systemPrompt || "Tu es un assistant utile sur ce serveur Discord.";
       const userQuestion = message.content;
+
+      // 🟢 INITIALISATION DYNAMIQUE (Évite le plantage au chargement global sur Render)
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
       // Récupérer la session isolée
       let session = await AiSession.findOne({ userId: message.author.id, guildId: message.guildId });
