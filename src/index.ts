@@ -8,8 +8,8 @@ import { pathToFileURL } from 'url'; // Utile pour convertir les chemins de fich
 import { Client, GatewayIntentBits, Collection, REST, Routes } from 'discord.js';
 
 // 🟢 ENREGISTREMENT ET MONTAGE DES ROUTEURS SÉCURISÉS ESM (.ts)
-import authRouter from '.api/routes/auth.routes.ts'; 
-import adminRouter from '.api/routes/admin.routes.ts'; 
+import authRouter from './api/routes/auth.routes.ts'; 
+import adminRouter from './api/routes/admin.routes.ts'; 
 
 const app = express();
 const PORT = process.env.PORT || 3000;
