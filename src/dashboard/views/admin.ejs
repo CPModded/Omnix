@@ -389,27 +389,17 @@
 
   <!-- BLOC JAVASCRIPT DE CONFIGURATION ET D'INTERACTION -->
   <script>
-    // --- GESTION DE SESSION ET DE TIROIR (EMBARQUÉES AVEC CORRECTION AUTOMATIQUE COOKIES) ---
+    // --- GESTION DE SESSION ET DE TIROIR ---
     function getToken() {
-      try {
-        const token = localStorage.getItem('jwt_token');
-        if (token) {
-          // Synchronisation automatique et rétroactive du cookie dès la lecture
-          document.cookie = `jwt_token=${token}; path=/; max-age=604800; SameSite=Lax; Secure`;
-          addTerminalLog('success', "Session de connexion locale synchronisée.");
-        }
-        return token;
-      } catch (err) {
-        addTerminalLog('error', "Échec de synchronisation de la session.");
-        return null;
-      }
+      return localStorage.getItem('jwt_token');
     }
     function setToken(token) {
       try {
         localStorage.setItem('jwt_token', token);
         document.cookie = `jwt_token=${token}; path=/; max-age=604800; SameSite=Lax; Secure`;
+        addTerminalLog('success', "Session de connexion locale synchronisée.");
       } catch (err) {
-        console.error("Échec de synchronisation de la session.");
+        addTerminalLog('error', "Échec de synchronisation de la session.");
       }
     }
     function logout() {
@@ -488,7 +478,9 @@
     async function loadMonitoring() {
       addTerminalLog('info', "Interrogation de l'API de statistiques...");
       try {
-        const response = await fetch('/api/stats');
+        const response = await fetch('/api/stats', {
+          credentials: 'same-origin' // 🟢 Assure l'envoi des cookies sécurisés
+        });
         if (!response.ok) throw new Error();
         
         const stats = await response.json();
@@ -512,7 +504,8 @@
 
       try {
         const response = await fetch('/api/admin/users', {
-          headers: { 'Authorization': `Bearer ${jwtToken}` }
+          headers: { 'Authorization': `Bearer ${jwtToken}` },
+          credentials: 'same-origin' // 🟢 Envoi des identifiants (Cookies/Auth)
         });
 
         if (!response.ok) throw new Error();
@@ -553,7 +546,8 @@
 
       try {
         const response = await fetch('/api/admin/audit-logs', {
-          headers: { 'Authorization': `Bearer ${jwtToken}` }
+          headers: { 'Authorization': `Bearer ${jwtToken}` },
+          credentials: 'same-origin' // 🟢 Envoi sécurisé des informations d'autorisation
         });
 
         if (!response.ok) throw new Error();
@@ -707,15 +701,47 @@
       }
     }
 
-    // Fonctions d'actions d'administration
+    // Fonctions d'actions d'administration réelles via requêtes API
     async function toggleUserAdmin(userId) {
       addTerminalLog('warn', `Tentative de modification des droits d'administration de : ${userId}...`);
-      alert(`Action de promotion/dégradation pour l'ID ${userId} enregistrée.`);
+      const jwtToken = getToken();
+      try {
+        const response = await fetch(`/api/admin/users/${userId}/toggle-admin`, {
+          method: 'POST',
+          headers: { 
+            'Authorization': `Bearer ${jwtToken}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'same-origin'
+        });
+        if (!response.ok) throw new Error();
+        addTerminalLog('success', `Les droits d'administration de l'utilisateur ${userId} ont été modifiés.`);
+        loadUsers(); // Recharger la liste
+        closeUserModal();
+      } catch (e) {
+        addTerminalLog('error', `Échec de la modification des droits d'administration pour l'utilisateur ${userId}.`);
+      }
     }
 
     async function grantPremium(userId) {
       addTerminalLog('warn', `Génération et attribution d'une licence Premium pour : ${userId}...`);
-      alert(`Licence Premium attribuée à l'ID ${userId}.`);
+      const jwtToken = getToken();
+      try {
+        const response = await fetch(`/api/admin/users/${userId}/grant-premium`, {
+          method: 'POST',
+          headers: { 
+            'Authorization': `Bearer ${jwtToken}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'same-origin'
+        });
+        if (!response.ok) throw new Error();
+        addTerminalLog('success', `Licence Premium attribuée à l'ID ${userId}.`);
+        loadUsers(); // Recharger la liste
+        closeUserModal();
+      } catch (e) {
+        addTerminalLog('error', `Échec de l'attribution Premium pour l'utilisateur ${userId}.`);
+      }
     }
 
     function initAdminPanel() {
