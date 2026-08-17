@@ -5,8 +5,8 @@
  */
 
 import { SlashCommandBuilder, PermissionFlagsBits, ChannelType, PermissionFlagsBits as DiscordPermissions } from 'discord.js';
-import { Command, CommandContext } from '../types';
-import { GuildConfig } from '../../models/GuildConfig';
+import type { Command, CommandContext } from '../types.ts';
+import type { GuildConfig } from '../../models/GuildConfig.ts';
 
 const honeypotCommand: Command = {
   data: new SlashCommandBuilder()

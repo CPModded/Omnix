@@ -1,5 +1,5 @@
 import { Events, GuildMember } from 'discord.js';
-import { GuildConfig } from '../../models/GuildConfig';
+import { GuildConfig } from '../../models/GuildConfig.ts';
 
 export default {
   name: Events.GuildMemberAdd,

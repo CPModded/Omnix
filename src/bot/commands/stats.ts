@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
-import { Command, CommandContext } from '../types';
-import { SystemMonitor } from '../../utils/systemMonitor';
+import type { Command, CommandContext } from '../types.ts';
+import { SystemMonitor } from '../../utils/systemMonitor.ts';
 
 const statsCommand: Command = {
   data: new SlashCommandBuilder()

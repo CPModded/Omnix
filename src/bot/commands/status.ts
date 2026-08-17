@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
-import { Command } from '../types';
+import type { Command } from '../types.ts';
 import mongoose from 'mongoose';
 import os from 'os';
 

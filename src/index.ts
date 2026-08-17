@@ -92,6 +92,15 @@ async function setupDiscordBot() {
     return;
   }
 
+  // 🟢 CORRIGÉ : Déclaration globale du token au tout début de la fonction (Portée partagée)
+  const token = process.env.DISCORD_TOKEN || process.env.DISCORD_BOT_TOKEN || process.env.TOKEN;
+
+  if (!token) {
+    console.error("[Bot] ❌ ERREUR : Aucun token Discord trouvé.");
+    console.error("[Bot] Veuillez vérifier que votre fichier .env contient la variable DISCORD_BOT_TOKEN ou DISCORD_TOKEN.");
+    return;
+  }
+
   console.log("[Bot] Chargement des commandes et des événements...");
 
   const client = new Client({
@@ -111,11 +120,15 @@ async function setupDiscordBot() {
     const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts') || file.endsWith('.js'));
     for (const file of commandFiles) {
       const filePath = path.join(commandsPath, file);
-      // Convertit le chemin local en URL valide pour l'import ESM
       const fileUrl = pathToFileURL(filePath).href;
-      const command = await import(fileUrl);
+      const commandModule = await import(fileUrl);
+      
+      const command = commandModule.default || commandModule;
+
       if (command && 'data' in command && 'execute' in command) {
         client.commands.set(command.data.name, command);
+      } else {
+        console.warn(`[Bot] ⚠️ La commande dans le fichier ${file} n'a pas pu être chargée (propriétés requises manquantes).`);
       }
     }
     console.log(`[Bot] ${client.commands.size} commandes slash chargées en mémoire.`);
@@ -129,7 +142,9 @@ async function setupDiscordBot() {
       const filePath = path.join(eventsPath, file);
       const fileUrl = pathToFileURL(filePath).href;
       const eventModule = await import(fileUrl);
-      const event = eventModule.default; // Récupère l'export par défaut (.default)
+      
+      const event = eventModule.default || eventModule;
+
       if (event && event.name) {
         if (event.once) {
           client.once(event.name, (...args: any[]) => event.execute(...args));
@@ -148,7 +163,7 @@ async function setupDiscordBot() {
     
     // Enregistrement et synchronisation automatique des commandes auprès de Discord
     const commandsJson = Array.from(client.commands.values()).map((cmd: any) => cmd.data.toJSON());
-    const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN!);
+    const rest = new REST({ version: '10' }).setToken(token); // Utilise la variable globale de la fonction
     try {
       console.log("[Bot] Envoi des commandes (/) à l'API de Discord...");
       await rest.put(
@@ -175,7 +190,7 @@ async function setupDiscordBot() {
   });
 
   try {
-    await client.login(process.env.DISCORD_TOKEN);
+    await client.login(token); // Utilise la variable globale de la fonction
   } catch (err) {
     console.error("[Bot] Échec d'authentification auprès de Discord :", err);
   }

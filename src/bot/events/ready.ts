@@ -1,6 +1,6 @@
 import { Events, REST, Routes } from 'discord.js';
-import { ExtendedClient } from '../client';
-import { CONFIG } from '../../config';
+import { ExtendedClient } from '../client.ts';
+import { CONFIG } from '../../config/index.ts';
 
 export default {
   name: Events.ClientReady,

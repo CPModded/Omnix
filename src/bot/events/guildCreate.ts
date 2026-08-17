@@ -7,8 +7,8 @@
  */
 
 import { Events, Guild } from 'discord.js';
-import { GuildConfig } from '../../models/GuildConfig';
-import { User } from '../../models/User';
+import { GuildConfig } from '../../models/GuildConfig.ts';
+import { User } from '../../models/User.ts';
 
 export default {
   name: Events.GuildCreate,

@@ -5,11 +5,11 @@
  */
 
 import { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } from 'discord.js';
-import { Command, CommandContext } from '../types';
-import { CONFIG } from '../../config';
-import { User } from '../../models/User';
-import { GuildConfig } from '../../models/GuildConfig';
-import { SystemMonitor } from '../../utils/systemMonitor';
+import type { Command, CommandContext } from '../types.ts';
+import { CONFIG } from '../../config/index.ts';
+import { User } from '../../models/User.ts';
+import { GuildConfig } from '../../models/GuildConfig.ts';
+import { SystemMonitor } from '../../utils/systemMonitor.ts';
 
 const adminCommand: Command = {
   data: new SlashCommandBuilder()

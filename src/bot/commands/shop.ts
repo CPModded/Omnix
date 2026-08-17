@@ -6,9 +6,9 @@
  */
 
 import { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, GuildMember } from 'discord.js';
-import { Command, CommandContext } from '../types';
-import { ShopItem } from '../../models/ShopItem';
-import { Economy } from '../../models/Economy';
+import type { Command, CommandContext } from '../types.ts';
+import { ShopItem } from '../../models/ShopItem.ts';
+import { Economy } from '../../models/Economy.ts';
 import crypto from 'crypto';
 
 const shopCommand: Command = {

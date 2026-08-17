@@ -16,7 +16,7 @@ import {
   TextChannel,
   GuildMember
 } from 'discord.js';
-import { Command, CommandContext } from '../types';
+import type { Command, CommandContext } from '../types.ts';
 
 const ticketCommand: Command = {
   data: new SlashCommandBuilder()

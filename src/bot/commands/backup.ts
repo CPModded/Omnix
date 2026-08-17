@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { Command, CommandContext } from '../types';
-import { Backup } from '../../models/Backup';
+import type { Command, CommandContext } from '../types.ts';
+import type { Backup } from '../../models/Backup.ts';
 
 const backupCommand: Command = {
   data: new SlashCommandBuilder()

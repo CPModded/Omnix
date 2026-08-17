@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { Command, CommandContext } from '../types';
+import type { Command, CommandContext } from '../types.ts';
 
 const moderationCommand: Command = {
   data: new SlashCommandBuilder()

@@ -14,10 +14,10 @@ import {
   EmbedBuilder,
   TextChannel
 } from 'discord.js';
-import { ExtendedClient } from '../client';
-import { GuildConfig } from '../../models/GuildConfig';
-import { User } from '../../models/User';
-import { CONFIG } from '../../config';
+import { ExtendedClient } from '../client.ts';
+import { GuildConfig } from '../../models/GuildConfig.ts';
+import { User } from '../../models/User.ts';
+import { CONFIG } from '../../config/index.ts';
 
 const PREMIUM_COMMANDS = ['ai', 'backup', 'stats', 'schedule', 'honeypot']; 
 

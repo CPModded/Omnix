@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ChannelType } from 'discord.js';
-import { Command } from '../types';
+import type { Command } from '../types.ts';
 
 export default {
   data: new SlashCommandBuilder()

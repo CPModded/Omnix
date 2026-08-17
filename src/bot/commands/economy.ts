@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { Command, CommandContext } from '../types';
-import { Economy } from '../../models/Economy';
+import type { Command, CommandContext } from '../types.ts';
+import type { Economy } from '../../models/Economy.ts';
 
 const economyCommand: Command = {
   data: new SlashCommandBuilder()

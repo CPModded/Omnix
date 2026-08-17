@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
-import { Command } from '../types';
+import type { Command } from '../types.ts';
 
 const PREMIUM_COMMANDS = ['ai', 'backup', 'stats', 'schedule', 'honeypot'];
 
