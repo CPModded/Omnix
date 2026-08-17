@@ -54,10 +54,10 @@ function setupWebServer() {
   // Configuration robuste du dossier des Vues (EJS) et des fichiers statiques
   // (Utilise process.cwd() pour éviter les erreurs de chemin sur Render et Eternodes)
   app.set('view engine', 'ejs');
-  app.set('views', path.join(process.cwd(), 'views'));
+  app.set('views', path.join(process.cwd(), 'src/dashboard/views')); // 🟢 CORRECTIF CHEMIN DES VUES REEL (src/dashboard/views)
   app.use(express.static(path.join(process.cwd(), 'public')));
 
-  // 🟢 MONTAGE DE VOS ROUTEURS ALIGNÉS AVEC VOTRE STRATÉGIE D'API
+  // MONTAGE DE VOS ROUTEURS ALIGNÉS AVEC VOTRE STRATÉGIE D'API
   // auth.routes.ts gère "/callback", monté sur "/api/auth" -> devient "/api/auth/callback"
   app.use('/api/auth', authRouter);
   
