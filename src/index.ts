@@ -51,8 +51,8 @@ function setupWebServer() {
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
 
-  // 🟢 CORRECTIF INTELLIGENT DE SÉCURITÉ CHEMIN DES VUES (views)
-  // Cherche d'abord le dossier views à la racine, et s'il est absent, se rabat de façon fluide sur src/dashboard/views
+  // Configuration robuste du dossier des Vues (EJS) et des fichiers statiques
+  // (Utilise process.cwd() pour éviter les erreurs de chemin sur Render et Eternodes)
   const viewsPath = fs.existsSync(path.join(process.cwd(), 'views'))
     ? path.join(process.cwd(), 'views')
     : path.join(process.cwd(), 'src/dashboard/views');
@@ -69,7 +69,7 @@ function setupWebServer() {
   // on le monte donc à la racine sans doublon de préfixe pour que les requêtes fonctionnent.
   app.use(adminRouter); 
 
-  // Exemple de routes de base pour le fonctionnement
+  // Routes de base pour le fonctionnement du site
   app.get('/', (req, res) => {
     res.render('index', {
       clientId: process.env.DISCORD_CLIENT_ID || "",
@@ -89,6 +89,16 @@ function setupWebServer() {
 
   app.get('/dashboard', (req, res) => {
     res.render('dashboard', { clientId: process.env.DISCORD_CLIENT_ID || "" });
+  });
+
+  // 🟢 AJOUTÉ : Route d'affichage de la page des Tarifs et Abonnements
+  app.get('/pricing', (req, res) => {
+    res.render('pricing');
+  });
+
+  // 🟢 AJOUTÉ : Route d'affichage de la page d'information
+  app.get('/learn-more', (req, res) => {
+    res.render('learn-more');
   });
 
   app.listen(PORT, () => {
