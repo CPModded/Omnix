@@ -1,5 +1,5 @@
 import { Client, Collection, GatewayIntentBits } from 'discord.js';
-import { Command } from './types';
+import type { Command } from './types.ts';
 
 export class ExtendedClient extends Client {
   public commands: Collection<string, Command> = new Collection();

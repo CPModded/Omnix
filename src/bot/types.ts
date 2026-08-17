@@ -1,5 +1,5 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
-import { IGuildConfig } from '../models/GuildConfig';
+import type { IGuildConfig } from '../models/GuildConfig.ts';
 
 export interface CommandContext {
   interaction: ChatInputCommandInteraction;
