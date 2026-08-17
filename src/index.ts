@@ -51,10 +51,14 @@ function setupWebServer() {
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
 
-  // Configuration robuste du dossier des Vues (EJS) et des fichiers statiques
-  // (Utilise process.cwd() pour éviter les erreurs de chemin sur Render et Eternodes)
+  // 🟢 CORRECTIF INTELLIGENT DE SÉCURITÉ CHEMIN DES VUES (views)
+  // Cherche d'abord le dossier views à la racine, et s'il est absent, se rabat de façon fluide sur src/dashboard/views
+  const viewsPath = fs.existsSync(path.join(process.cwd(), 'views'))
+    ? path.join(process.cwd(), 'views')
+    : path.join(process.cwd(), 'src/dashboard/views');
+
   app.set('view engine', 'ejs');
-  app.set('views', path.join(process.cwd(), 'src/dashboard/views')); // 🟢 CORRECTIF CHEMIN DES VUES REEL (src/dashboard/views)
+  app.set('views', viewsPath);
   app.use(express.static(path.join(process.cwd(), 'public')));
 
   // MONTAGE DE VOS ROUTEURS ALIGNÉS AVEC VOTRE STRATÉGIE D'API
