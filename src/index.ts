@@ -53,15 +53,23 @@ function setupWebServer() {
 
   // Configuration robuste du dossier des Vues (EJS) et des fichiers statiques
   // (Utilise process.cwd() pour éviter les erreurs de chemin sur Render et Eternodes)
+  const viewsPath = fs.existsSync(path.join(process.cwd(), 'views'))
+    ? path.join(process.cwd(), 'views')
+    : path.join(process.cwd(), 'src/dashboard/views');
+
   app.set('view engine', 'ejs');
-  app.set('views', path.join(process.cwd(), 'src/dashboard/views')); // Correctif EJS
+  app.set('views', viewsPath);
   app.use(express.static(path.join(process.cwd(), 'public')));
 
   // MONTAGE DE VOS ROUTEURS ALIGNÉS AVEC VOTRE STRATÉGIE D'API
+  // auth.routes.ts gère "/callback", monté sur "/api/auth" -> devient "/api/auth/callback"
   app.use('/api/auth', authRouter);
+  
+  // admin.routes.ts déclare déjà ses routes avec "/api/admin/..." et "/api/stats",
+  // on le monte donc à la racine sans doublon de préfixe pour que les requêtes fonctionnent.
   app.use(adminRouter); 
 
-  // Exemple de routes de base pour le fonctionnement
+  // Routes de base pour le fonctionnement du site
   app.get('/', (req, res) => {
     res.render('index', {
       clientId: process.env.DISCORD_CLIENT_ID || "",
@@ -83,7 +91,22 @@ function setupWebServer() {
     res.render('dashboard', { clientId: process.env.DISCORD_CLIENT_ID || "" });
   });
 
-  // Démarrage de l'écoute du port
+  // 🟢 AJOUTÉ : Route dynamique pour afficher la console de gestion d'un serveur spécifique (manage.ejs)
+  app.get('/dashboard/:guildId', (req, res) => {
+    res.render('manage', { 
+      guildId: req.params.guildId,
+      clientId: process.env.DISCORD_CLIENT_ID || "" 
+    });
+  });
+
+  app.get('/pricing', (req, res) => {
+    res.render('pricing');
+  });
+
+  app.get('/learn-more', (req, res) => {
+    res.render('learn-more');
+  });
+
   app.listen(PORT, () => {
     const domain = process.env.DOMAIN || `http://localhost:${PORT}`;
     console.log(`[OMNIX] Adresse de connexion : ${domain}`);
@@ -155,6 +178,7 @@ async function setupDiscordBot() {
       const fileUrl = pathToFileURL(filePath).href;
       const eventModule = await import(fileUrl);
       
+      // Supporte à la fois les exports par défaut et nommés pour les événements
       const event = eventModule.default || eventModule;
 
       if (event && event.name) {
@@ -194,7 +218,6 @@ async function setupDiscordBot() {
     const command = client.commands.get(interaction.commandName);
     if (!command) return;
     try {
-      // 🟢 CORRIGÉ : On passe l'objet de contexte attendu par vos commandes d'origine
       await command.execute({ client, interaction });
     } catch (error) {
       console.error(error);
