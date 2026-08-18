@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import axios from 'axios'; // 🟢 CORRIGÉ : Importation de la bibliothèque axios requise pour l'API Discord
 import { client as botClient } from '../../bot/client.ts';
 import { EmbedBuilder, TextChannel } from 'discord.js';
 import { User } from '../../models/User.ts';
@@ -75,7 +76,14 @@ router.get('/api/guilds', isAuthenticated, async (req: any, res) => {
 });
 
 // ==========================================
-// 3. ADMINISTRATION DES UTILISATEURS (Staff Only)
+// 3. AFFICHAGE DE LA CONSOLE D'ADMINISTRATION (EJS)
+// ==========================================
+router.get('/admin', isAuthenticated, adminCheck, (req, res) => {
+  res.render('admin'); // Rendu du fichier views/admin.ejs
+});
+
+// ==========================================
+// 4. ADMINISTRATION DES UTILISATEURS (Staff Only)
 // ==========================================
 router.get('/api/admin/users', isAuthenticated, adminCheck, async (req, res) => {
   try {
@@ -91,7 +99,7 @@ router.get('/api/admin/users', isAuthenticated, adminCheck, async (req, res) => 
 });
 
 // ==========================================
-// 4. JOURNALISATION AUDIT CENTER (Staff Only)
+// 5. JOURNALISATION AUDIT CENTER (Staff Only)
 // ==========================================
 router.get('/api/admin/audit-logs', isAuthenticated, adminCheck, async (req, res) => {
   try {
@@ -107,7 +115,7 @@ router.get('/api/admin/audit-logs', isAuthenticated, adminCheck, async (req, res
 });
 
 // ==========================================
-// 5. ATTRIBUTION DE LICENCE PREMIUM AVEC DURÉE FLEXIBLE (Staff Only)
+// 6. ATTRIBUTION DE LICENCE PREMIUM AVEC DURÉE FLEXIBLE (Staff Only)
 // ==========================================
 router.post('/api/admin/users/:userId/grant-premium', isAuthenticated, adminCheck, async (req: any, res) => {
   try {
@@ -154,7 +162,7 @@ router.post('/api/admin/users/:userId/grant-premium', isAuthenticated, adminChec
 });
 
 // ==========================================
-// 6. PROMOTION / DÉGRADATION DE DROITS STAFF ADMIN (Staff Only)
+// 7. PROMOTION / DÉGRADATION DE DROITS STAFF ADMIN (Staff Only)
 // ==========================================
 router.post('/api/admin/users/:userId/toggle-admin', isAuthenticated, adminCheck, async (req: any, res) => {
   try {
@@ -174,12 +182,12 @@ router.post('/api/admin/users/:userId/toggle-admin', isAuthenticated, adminCheck
     return res.json({ success: true, isAdmin: user.isAdmin });
   } catch (error: any) {
     console.error('[API Toggle Admin Error] :', error);
-    return res.status(500).json({ error: 'Impossible de modifier les droits d\'administration.' });
+    return res.status(500).json({ error: 'Impossible de modifier les privilèges d\'administration.' });
   }
 });
 
 // ==========================================
-// 7. WEBHOOK DE PUBLICATION DE CHANGELOG
+// 8. WEBHOOK DE PUBLICATION DE CHANGELOG
 // ==========================================
 router.post('/api/admin/deploy-changelog', async (req, res) => {
   const { secret, version, description, author } = req.body;
