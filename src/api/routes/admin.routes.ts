@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import axios from 'axios'; // Import pour requêter l'API Discord
 import { client as botClient } from '../../bot/client.ts';
 import { EmbedBuilder, TextChannel } from 'discord.js';
 import { User } from '../../models/User.ts';
@@ -10,7 +9,15 @@ import { adminCheck } from '../middlewares/adminCheck.ts';
 const router = Router();
 
 // ==========================================
-// 1. STATISTIQUES GLOBAL DU DASHBOARD (Fetch de l'accueil)
+// 1. AFFICHAGE DE LA CONSOLE D'ADMINISTRATION (EJS)
+// ==========================================
+// Route d'accès visuel au Staff Panel, sécurisée par cookie JWT et rôle admin
+router.get('/admin', isAuthenticated, adminCheck, (req, res) => {
+  res.render('admin'); // Rendu du fichier views/admin.ejs
+});
+
+// ==========================================
+// 2. STATISTIQUES GLOBAL DU DASHBOARD (Fetch de l'accueil)
 // ==========================================
 router.get('/api/stats', async (req, res) => {
   try {
@@ -33,50 +40,8 @@ router.get('/api/stats', async (req, res) => {
     console.error('[API Stats Error] :', error);
     return res.status(500).json({ 
       success: false, 
-      error: 'Une erreur interne est survenue lors de la récupération des statistiques.' 
+      error: 'Une erreur interne est survenue lors de la récupération des statistiques d\'activité.' 
     });
-  }
-});
-
-// ==========================================
-// 2. RÉCUPÉRATION DES SERVEURS DISCORD (Dashboard)
-// ==========================================
-router.get('/api/guilds', isAuthenticated, async (req: any, res) => {
-  try {
-    // req.user contient le payload de votre jeton JWT décodé
-    const discordId = req.user?.discordId; 
-    if (!discordId) {
-      return res.status(401).json({ error: 'Non authentifié.' });
-    }
-
-    // Récupérer l'utilisateur dans MongoDB Atlas pour obtenir son Jeton d'accès Discord
-    const user = await User.findOne({ discordId });
-    if (!user || !user.accessToken) {
-      return res.status(401).json({ error: 'Session Discord expirée. Veuillez vous reconnecter.' });
-    }
-
-    // Requête vers l'API de Discord pour obtenir les serveurs de l'utilisateur
-    const response = await axios.get('https://discord.com/api/users/@me/guilds', {
-      headers: { Authorization: `Bearer ${user.accessToken}` }
-    });
-
-    const guilds = response.data;
-
-    // Filtrer les serveurs où l'utilisateur dispose des droits d'administration :
-    // Propriétaire (owner), ADMINISTRATOR (0x8) ou MANAGE_GUILD (0x20)
-    const adminGuilds = guilds.filter((g: any) => 
-      g.owner || 
-      (parseInt(g.permissions) & 0x8) === 0x8 || 
-      (parseInt(g.permissions) & 0x20) === 0x20
-    );
-
-    return res.json(adminGuilds);
-  } catch (error: any) {
-    console.error('[API Guilds Error] :', error.response?.data || error.message);
-    if (error.response?.status === 401) {
-      return res.status(401).json({ error: 'Jeton de session Discord expiré.' });
-    }
-    return res.status(500).json({ error: 'Impossible de récupérer vos serveurs.' });
   }
 });
 
