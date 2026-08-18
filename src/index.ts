@@ -53,23 +53,15 @@ function setupWebServer() {
 
   // Configuration robuste du dossier des Vues (EJS) et des fichiers statiques
   // (Utilise process.cwd() pour éviter les erreurs de chemin sur Render et Eternodes)
-  const viewsPath = fs.existsSync(path.join(process.cwd(), 'views'))
-    ? path.join(process.cwd(), 'views')
-    : path.join(process.cwd(), 'src/dashboard/views');
-
   app.set('view engine', 'ejs');
-  app.set('views', viewsPath);
+  app.set('views', path.join(process.cwd(), 'src/dashboard/views')); // Correctif EJS
   app.use(express.static(path.join(process.cwd(), 'public')));
 
   // MONTAGE DE VOS ROUTEURS ALIGNÉS AVEC VOTRE STRATÉGIE D'API
-  // auth.routes.ts gère "/callback", monté sur "/api/auth" -> devient "/api/auth/callback"
   app.use('/api/auth', authRouter);
-  
-  // admin.routes.ts déclare déjà ses routes avec "/api/admin/..." et "/api/stats",
-  // on le monte donc à la racine sans doublon de préfixe pour que les requêtes fonctionnent.
   app.use(adminRouter); 
 
-  // Routes de base pour le fonctionnement du site
+  // Exemple de routes de base pour le fonctionnement
   app.get('/', (req, res) => {
     res.render('index', {
       clientId: process.env.DISCORD_CLIENT_ID || "",
@@ -91,16 +83,7 @@ function setupWebServer() {
     res.render('dashboard', { clientId: process.env.DISCORD_CLIENT_ID || "" });
   });
 
-  // 🟢 AJOUTÉ : Route d'affichage de la page des Tarifs et Abonnements
-  app.get('/pricing', (req, res) => {
-    res.render('pricing');
-  });
-
-  // 🟢 AJOUTÉ : Route d'affichage de la page d'information
-  app.get('/learn-more', (req, res) => {
-    res.render('learn-more');
-  });
-
+  // Démarrage de l'écoute du port
   app.listen(PORT, () => {
     const domain = process.env.DOMAIN || `http://localhost:${PORT}`;
     console.log(`[OMNIX] Adresse de connexion : ${domain}`);
@@ -172,7 +155,6 @@ async function setupDiscordBot() {
       const fileUrl = pathToFileURL(filePath).href;
       const eventModule = await import(fileUrl);
       
-      // Supporte à la fois les exports par défaut et nommés pour les événements
       const event = eventModule.default || eventModule;
 
       if (event && event.name) {
@@ -212,7 +194,8 @@ async function setupDiscordBot() {
     const command = client.commands.get(interaction.commandName);
     if (!command) return;
     try {
-      await command.execute(interaction);
+      // 🟢 CORRIGÉ : On passe l'objet de contexte attendu par vos commandes d'origine
+      await command.execute({ client, interaction });
     } catch (error) {
       console.error(error);
       await interaction.reply({ content: 'Une erreur est survenue lors de l\'exécution de cette commande.', ephemeral: true });
