@@ -1,7 +1,9 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { OpenAI } from 'openai';
-import { GuildConfig } from '../../models/GuildConfig.ts'; // Named import avec accolades
-import AiSession from '../../models/AiSession.ts';
+import GuildConfig from '../../models/GuildConfig.ts'; // Correction ESM
+import AiSession from '../../models/AiSession.ts';     // Correction ESM
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 interface MessagePayload {
   role: 'user' | 'assistant' | 'system';
@@ -41,7 +43,8 @@ export const data = new SlashCommandBuilder()
       .setRequired(true)
   );
 
-export async function execute(interaction: ChatInputCommandInteraction) {
+// 🟢 CORRIGÉ : Utilise la déstructuration du contexte { interaction } pour correspondre à votre framework
+export async function execute({ interaction }: { interaction: ChatInputCommandInteraction }) {
   const { guildId, user } = interaction;
   if (!guildId) return interaction.reply({ content: "Cette commande s'exécute uniquement sur serveur.", ephemeral: true });
 
@@ -55,14 +58,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     const question = interaction.options.getString('question', true);
     const systemPrompt = config.modules.ai.systemPrompt || "Tu es un assistant utile sur ce serveur Discord.";
-
-    // Vérification de sécurité de la clé API au moment de l'exécution
-    if (!process.env.OPENAI_API_KEY) {
-      return interaction.editReply("❌ L'API Key de l'IA (OPENAI_API_KEY) n'est pas configurée dans les variables d'environnement du serveur.");
-    }
-
-    // 🟢 INITIALISATION DYNAMIQUE (Évite le plantage au chargement global sur Render)
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     // Récupérer la session isolée (Utilisateur + Serveur)
     let session = await AiSession.findOne({ userId: user.id, guildId });
