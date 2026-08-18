@@ -460,7 +460,7 @@
       screen.scrollTop = screen.scrollHeight;
     }
 
-    // Gestion des onglets
+    // Gestion des ongets
     function switchTab(tabName) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.panel-section').forEach(sec => sec.classList.remove('active'));
@@ -479,7 +479,7 @@
       addTerminalLog('info', "Interrogation de l'API de statistiques...");
       try {
         const response = await fetch('/api/stats', {
-          credentials: 'same-origin' // 🟢 Assure l'envoi des cookies sécurisés
+          credentials: 'same-origin'
         });
         if (!response.ok) throw new Error();
         
@@ -505,7 +505,7 @@
       try {
         const response = await fetch('/api/admin/users', {
           headers: { 'Authorization': `Bearer ${jwtToken}` },
-          credentials: 'same-origin' // 🟢 Envoi des identifiants (Cookies/Auth)
+          credentials: 'same-origin'
         });
 
         if (!response.ok) throw new Error();
@@ -547,7 +547,7 @@
       try {
         const response = await fetch('/api/admin/audit-logs', {
           headers: { 'Authorization': `Bearer ${jwtToken}` },
-          credentials: 'same-origin' // 🟢 Envoi sécurisé des informations d'autorisation
+          credentials: 'same-origin'
         });
 
         if (!response.ok) throw new Error();
@@ -678,19 +678,78 @@
 
         <div style="border-top: 1px solid #1e293b; padding-top: 16px;">
           <h4 style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; margin-bottom: 12px;">Actions Administrateur</h4>
-          <div style="display: grid; grid-template-cols: 1fr 1fr; gap: 10px;">
+          <div style="display: grid; grid-template-cols: 1fr; gap: 10px;">
             <button onclick="toggleUserAdmin('${user.discordId}')" class="btn-manage" style="background: rgba(192, 132, 252, 0.1); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.2); font-size: 11px; padding: 10px; border-radius: 8px; cursor: pointer;">
               ${user.isAdmin ? 'Retirer Admin' : 'Promouvoir Admin'}
             </button>
-            <button onclick="grantPremium('${user.discordId}')" class="btn-manage" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.2); font-size: 11px; padding: 10px; border-radius: 8px; cursor: pointer;">
-              Attribuer Premium
-            </button>
+            <div id="premium-action-container">
+              <button onclick="showPremiumSelector('${user.discordId}')" class="btn-manage" style="width: 100%; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.2); font-size: 11px; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 700; text-align: center;">
+                Attribuer Premium
+              </button>
+            </div>
           </div>
         </div>
       `;
 
       modal.style.display = 'flex';
       setTimeout(() => { modal.style.opacity = '1'; }, 10);
+    }
+
+    // Déploie dynamiquement l'interface graphique de sélection de durée Premium
+    function showPremiumSelector(userId) {
+      const container = document.getElementById('premium-action-container');
+      if (!container) return;
+
+      container.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; text-align: left; margin-top: 8px;">
+          <label style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Sélectionner la durée</label>
+          <select id="premium-duration-select" style="width: 100%; background: #030712; border: 1px solid #1e293b; border-radius: 8px; padding: 10px; color: white; font-size: 12px; outline: none; margin-bottom: 8px;">
+            <option value="1m">1 Mois (7.99 €)</option>
+            <option value="3m">3 Mois (24.99 €)</option>
+            <option value="6m">6 Mois (47.99 €)</option>
+            <option value="1y">1 An (74.99 €)</option>
+            <option value="lifetime">À vie (Lifetime)</option>
+          </select>
+          <div style="display: grid; grid-template-cols: 1fr 1fr; gap: 10px;">
+            <button onclick="cancelPremiumSelector('${userId}')" style="background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); font-size: 11px; padding: 10px; border-radius: 8px; cursor: pointer;">Annuler</button>
+            <button onclick="confirmGrantPremium('${userId}')" style="background: linear-gradient(135deg, #06b6d4, #4f46e5); color: white; border: none; font-size: 11px; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 700;">Confirmer</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function cancelPremiumSelector(userId) {
+      const container = document.getElementById('premium-action-container');
+      if (!container) return;
+      container.innerHTML = `
+        <button onclick="showPremiumSelector('${userId}')" class="btn-manage" style="width: 100%; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.2); font-size: 11px; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 700; text-align: center;">
+          Attribuer Premium
+        </button>
+      `;
+    }
+
+    async function confirmGrantPremium(userId) {
+      const select = document.getElementById('premium-duration-select');
+      const duration = select ? select.value : 'lifetime';
+      addTerminalLog('warn', `Attribution d'une licence Premium (${duration}) pour : ${userId}...`);
+      const jwtToken = getToken();
+      try {
+        const response = await fetch(`/api/admin/users/${userId}/grant-premium`, {
+          method: 'POST',
+          headers: { 
+            'Authorization': `Bearer ${jwtToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ duration }),
+          credentials: 'same-origin'
+        });
+        if (!response.ok) throw new Error();
+        addTerminalLog('success', `Licence Premium (${duration}) attribuée avec succès à l'ID ${userId}.`);
+        loadUsers(); // Recharger la liste
+        closeUserModal();
+      } catch (e) {
+        addTerminalLog('error', `Échec de l'attribution Premium pour l'utilisateur ${userId}.`);
+      }
     }
 
     function closeUserModal(event) {
@@ -720,27 +779,6 @@
         closeUserModal();
       } catch (e) {
         addTerminalLog('error', `Échec de la modification des droits d'administration pour l'utilisateur ${userId}.`);
-      }
-    }
-
-    async function grantPremium(userId) {
-      addTerminalLog('warn', `Génération et attribution d'une licence Premium pour : ${userId}...`);
-      const jwtToken = getToken();
-      try {
-        const response = await fetch(`/api/admin/users/${userId}/grant-premium`, {
-          method: 'POST',
-          headers: { 
-            'Authorization': `Bearer ${jwtToken}`,
-            'Content-Type': 'application/json'
-          },
-          credentials: 'same-origin'
-        });
-        if (!response.ok) throw new Error();
-        addTerminalLog('success', `Licence Premium attribuée à l'ID ${userId}.`);
-        loadUsers(); // Recharger la liste
-        closeUserModal();
-      } catch (e) {
-        addTerminalLog('error', `Échec de l'attribution Premium pour l'utilisateur ${userId}.`);
       }
     }
 
