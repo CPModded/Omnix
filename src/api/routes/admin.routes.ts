@@ -9,15 +9,7 @@ import { adminCheck } from '../middlewares/adminCheck.ts';
 const router = Router();
 
 // ==========================================
-// 1. AFFICHAGE DE LA CONSOLE D'ADMINISTRATION (EJS)
-// ==========================================
-// Route d'accès visuel au Staff Panel, sécurisée par cookie JWT et rôle admin
-router.get('/admin', isAuthenticated, adminCheck, (req, res) => {
-  res.render('admin'); // Rendu du fichier views/admin.ejs
-});
-
-// ==========================================
-// 2. STATISTIQUES GLOBAL DU DASHBOARD (Fetch de l'accueil)
+// 1. STATISTIQUES GLOBAL DU DASHBOARD (Fetch de l'accueil)
 // ==========================================
 router.get('/api/stats', async (req, res) => {
   try {
@@ -42,6 +34,43 @@ router.get('/api/stats', async (req, res) => {
       success: false, 
       error: 'Une erreur interne est survenue lors de la récupération des statistiques d\'activité.' 
     });
+  }
+});
+
+// ==========================================
+// 2. RÉCUPÉRATION DES SERVEURS DISCORD (Dashboard)
+// ==========================================
+router.get('/api/guilds', isAuthenticated, async (req: any, res) => {
+  try {
+    const discordId = req.user?.discordId; 
+    if (!discordId) {
+      return res.status(401).json({ error: 'Non authentifié.' });
+    }
+
+    const user = await User.findOne({ discordId });
+    if (!user || !user.accessToken) {
+      return res.status(401).json({ error: 'Session Discord expirée. Veuillez vous reconnecter.' });
+    }
+
+    const response = await axios.get('https://discord.com/api/users/@me/guilds', {
+      headers: { Authorization: `Bearer ${user.accessToken}` }
+    });
+
+    const guilds = response.data;
+
+    const adminGuilds = guilds.filter((g: any) => 
+      g.owner || 
+      (parseInt(g.permissions) & 0x8) === 0x8 || 
+      (parseInt(g.permissions) & 0x20) === 0x20
+    );
+
+    return res.json(adminGuilds);
+  } catch (error: any) {
+    console.error('[API Guilds Error] :', error.response?.data || error.message);
+    if (error.response?.status === 401) {
+      return res.status(401).json({ error: 'Jeton de session Discord expiré.' });
+    }
+    return res.status(500).json({ error: 'Impossible de récupérer vos serveurs.' });
   }
 });
 
@@ -78,7 +107,79 @@ router.get('/api/admin/audit-logs', isAuthenticated, adminCheck, async (req, res
 });
 
 // ==========================================
-// 5. WEBHOOK DE PUBLICATION DE CHANGELOG
+// 5. ATTRIBUTION DE LICENCE PREMIUM AVEC DURÉE FLEXIBLE (Staff Only)
+// ==========================================
+router.post('/api/admin/users/:userId/grant-premium', isAuthenticated, adminCheck, async (req: any, res) => {
+  try {
+    const { userId } = req.params;
+    const { duration } = req.body; // Récupère "1m", "3m", "6m", "1y" ou "lifetime"
+
+    const user = await User.findOne({ discordId: userId });
+    if (!user) {
+      return res.status(404).json({ error: 'Utilisateur introuvable.' });
+    }
+
+    // Calcul dynamique de la date d'expiration de la licence
+    let expiresAt: Date | null = null;
+    if (duration !== 'lifetime') {
+      expiresAt = new Date();
+      if (duration === '1m') expiresAt.setMonth(expiresAt.getMonth() + 1);
+      else if (duration === '3m') expiresAt.setMonth(expiresAt.getMonth() + 3);
+      else if (duration === '6m') expiresAt.setMonth(expiresAt.getMonth() + 6);
+      else if (duration === '1y') expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+    }
+
+    // Génération d'une clé de licence unique d'OMNIX
+    const licenseKey = `OMNIX-PREM-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+
+    const newLicense = {
+      licenseKey,
+      tier: 'premium',
+      status: 'active',
+      expiresAt
+    };
+
+    // Ajoute la licence dans le tableau des licences de l'utilisateur
+    user.licenses = user.licenses || [];
+    user.licenses.push(newLicense);
+    await user.save();
+
+    console.log(`[Staff Action] Licence Premium (${duration}) attribuée à @${user.username} : ${licenseKey}`);
+
+    return res.json({ success: true, license: newLicense });
+  } catch (error: any) {
+    console.error('[API Grant Premium Error] :', error);
+    return res.status(500).json({ error: 'Impossible d\'attribuer la licence Premium.' });
+  }
+});
+
+// ==========================================
+// 6. PROMOTION / DÉGRADATION DE DROITS STAFF ADMIN (Staff Only)
+// ==========================================
+router.post('/api/admin/users/:userId/toggle-admin', isAuthenticated, adminCheck, async (req: any, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findOne({ discordId: userId });
+    if (!user) {
+      return res.status(404).json({ error: 'Utilisateur introuvable.' });
+    }
+
+    // Inverse le rôle administrateur du compte
+    user.isAdmin = !user.isAdmin;
+    await user.save();
+
+    console.log(`[Staff Action] Statut Admin de @${user.username} changé à : ${user.isAdmin}`);
+
+    return res.json({ success: true, isAdmin: user.isAdmin });
+  } catch (error: any) {
+    console.error('[API Toggle Admin Error] :', error);
+    return res.status(500).json({ error: 'Impossible de modifier les droits d\'administration.' });
+  }
+});
+
+// ==========================================
+// 7. WEBHOOK DE PUBLICATION DE CHANGELOG
 // ==========================================
 router.post('/api/admin/deploy-changelog', async (req, res) => {
   const { secret, version, description, author } = req.body;
