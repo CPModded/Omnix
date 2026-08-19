@@ -309,7 +309,7 @@
   <!-- Conteneur d'administration -->
   <div class="container">
     
-    <!-- Liste des onget -->
+    <!-- Liste des onglets -->
     <aside>
       <button onclick="switchTab('tab-overview')" id="btn-tab-general" class="tab-btn active">Vue d'ensemble</button>
       <button onclick="switchTab('tab-welcome')" id="btn-tab-welcome" class="tab-btn">Accueil & Départ</button>
@@ -540,7 +540,7 @@
         <div style="padding: 24px; background: rgba(3, 7, 18, 0.4); border: 1px solid rgba(255, 255, 255, 0.02); border-radius: 16px;">
           <h4 style="font-size: 14px; font-weight: 700; color: white; margin-bottom: 8px;">Gestion des instantanés</h4>
           <p style="font-size: 11px; color: #64748b; line-height: 1.5; margin-bottom: 16px;">Créez un point de restauration complet de vos configurations actuelles directement sur votre base privée.</p>
-          <button onclick="triggerBackup()" style="padding: 10px 16px; background-color: #4f46e5; border: none; border-radius: 8px; color: white; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;">Créer un instantané manuel</button>
+          <button id="backup-btn" onclick="triggerBackup()" style="padding: 10px 16px; background-color: #4f46e5; border: none; border-radius: 8px; color: white; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer;">Créer un instantané manuel</button>
         </div>
       </section>
 
@@ -562,12 +562,13 @@
   </footer>
 
   <script>
-    // --- GESTION DE SESSION ET DE TIROIR (EMBARQUÉES AVEC CORRECTION AUTOMATIQUE COOKIES) ---
+    const guildId = "<%= guildId %>";
+
+    // --- FONCTIONS DE GESTION DE SESSION ET DE COOKIES ---
     function getToken() {
       try {
         const token = localStorage.getItem('jwt_token');
         if (token) {
-          // Synchronisation automatique et rétroactive du cookie dès la lecture
           document.cookie = `jwt_token=${token}; path=/; max-age=604800; SameSite=Lax; Secure`;
         }
         return token;
@@ -617,7 +618,6 @@
       }
     }
 
-    const guildId = "<%= guildId %>";
     const jwtToken = getToken();
 
     if (!jwtToken) {
@@ -732,10 +732,25 @@
       });
     }
 
+    // Ajoute un magnifique badge violet [🔒 Premium] à côté des fonctionnalités verrouillées
+    function addPremiumLockLabel(elementId) {
+      const el = document.getElementById(elementId);
+      if (el) {
+        const row = el.closest('.switch-row');
+        if (row) {
+          const title = row.querySelector('.switch-title');
+          if (title && !title.innerText.includes('🔒')) {
+            title.innerHTML += ' <span style="color: #a78bfa; font-size: 10px; font-weight: 800; background: rgba(124, 58, 237, 0.1); padding: 2px 6px; border-radius: 4px; margin-left: 6px;">🔒 Premium</span>';
+          }
+        }
+      }
+    }
+
     async function loadConfig() {
       try {
         const response = await fetch(`/api/guilds/${guildId}/config`, {
-          headers: { 'Authorization': `Bearer ${jwtToken}` }
+          headers: { 'Authorization': `Bearer ${jwtToken}` },
+          credentials: 'same-origin' // 🟢 FORCE l'envoi sécurisé des cookies sur Render
         });
 
         if (!response.ok) {
@@ -748,11 +763,12 @@
         const payload = parseJwt(jwtToken);
         const isUserPremium = payload && (payload.isPremium || payload.isAdmin);
         const isGuildPremium = config.premium?.isPremium;
+        const isPremium = isGuildPremium || isUserPremium;
 
         const licenseLabel = document.getElementById('license-label');
         const badge = document.getElementById('license-badge');
         
-        if (isGuildPremium || isUserPremium) {
+        if (isPremium) {
           licenseLabel.innerText = isGuildPremium 
             ? `Premium Activé (${config.premium.tier.toUpperCase()})` 
             : "Premium Actif (Licence Utilisateur Personnelle)";
@@ -764,6 +780,63 @@
           badge.innerText = "FREE";
         }
 
+        // --- VERROUILLAGE SÉCURISÉ DES MODULES PREMIUM S'IL N'Y A PAS D'ABONNEMENT ACTIVE ---
+        if (!isPremium) {
+          addTerminalLog('warn', "Vérification : Ce serveur n'est pas licencié Premium. Verrouillage des modules payants.");
+          
+          // 1. Verrouillage du module IA (Commande /ai et Prompt)
+          document.getElementById('ai-enabled-toggle').disabled = true;
+          document.getElementById('ai-enabled').disabled = true;
+          document.getElementById('ai-prompt').disabled = true;
+          document.getElementById('ai-prompt').placeholder = "🔒 Module Premium - Pour personnaliser le prompt, activez un abonnement OMNIX.";
+          addPremiumLockLabel('ai-enabled-toggle');
+
+          // 2. Verrouillage du module de sauvegardes automatiques
+          document.getElementById('backups-enabled-toggle').disabled = true;
+          document.getElementById('backups-enabled').disabled = true;
+          addPremiumLockLabel('backups-enabled-toggle');
+
+          // 3. Verrouillage du module Honeypot (Piège Anti-Bots)
+          document.getElementById('honeypot-enabled').disabled = true;
+          document.getElementById('honeypot-channel').disabled = true;
+          document.getElementById('honeypot-channel').placeholder = "🔒 Entrez votre ID de salon piégé (Abonnement requis)";
+          addPremiumLockLabel('honeypot-enabled');
+
+          // 4. Verrouillage visuel du bouton d'action instantané de sauvegarde
+          const backupBtn = document.getElementById('backup-btn');
+          if (backupBtn) {
+            backupBtn.disabled = true;
+            backupBtn.innerText = "🔒 Sauvegardes (Premium Uniquement)";
+            backupBtn.style.background = "#1e293b";
+            backupBtn.style.color = "#64748b";
+            backupBtn.style.border = "1px solid #334155";
+            backupBtn.style.cursor = "not-allowed";
+            backupBtn.style.boxShadow = "none";
+          }
+        } else {
+          // Réactivation globale si Premium
+          document.getElementById('ai-enabled-toggle').disabled = false;
+          document.getElementById('ai-enabled').disabled = false;
+          document.getElementById('ai-prompt').disabled = false;
+          
+          document.getElementById('backups-enabled-toggle').disabled = false;
+          document.getElementById('backups-enabled').disabled = false;
+          
+          document.getElementById('honeypot-enabled').disabled = false;
+          document.getElementById('honeypot-channel').disabled = false;
+
+          const backupBtn = document.getElementById('backup-btn');
+          if (backupBtn) {
+            backupBtn.disabled = false;
+            backupBtn.innerText = "Créer un instantané manuel";
+            backupBtn.style.background = "#4f46e5";
+            backupBtn.style.color = "white";
+            backupBtn.style.border = "none";
+            backupBtn.style.cursor = "pointer";
+          }
+        }
+
+        // Remplissage protégé des formulaires
         document.getElementById('welcome-enabled').checked = config.modules?.welcome?.enabled || false;
         document.getElementById('welcome-message').value = config.modules?.welcome?.message || "Bienvenue {user} !";
         document.getElementById('welcome-channel').value = config.modules?.welcome?.channelId || "";
@@ -778,7 +851,6 @@
         document.getElementById('automod-enabled').checked = config.modules?.autoMod?.enabled || false;
         document.getElementById('automod-words').value = (config.modules?.autoMod?.blacklistedWords || []).join(', ');
 
-        // Chargement et déploiement du Honeypot (CORRIGÉ)
         document.getElementById('honeypot-enabled').checked = config.modules?.honeypot?.enabled || false;
         document.getElementById('honeypot-channel').value = config.modules?.honeypot?.channelId || "";
 
@@ -793,7 +865,7 @@
         document.getElementById('levels-xp').value = config.modules?.levels?.xpPerMessage || 15;
 
         document.getElementById('ai-enabled').checked = config.modules?.ai?.enabled || false;
-        document.getElementById('ai-prompt').value = config.modules?.ai?.systemPrompt || "Tu es un assistant utile.";
+        document.getElementById('ai-prompt').value = config.modules?.ai?.systemPrompt || "Tu es un assistant utile sur ce serveur Discord.";
 
         document.getElementById('backups-enabled').checked = config.modules?.backups?.enabled || false;
 
@@ -875,8 +947,8 @@
             enabled: document.getElementById('ping-enabled-toggle').checked
           },
           honeypot: {
-            enabled: document.getElementById('honeypot-enabled').checked, // CORRIGÉ
-            channelId: document.getElementById('honeypot-channel').value || null // CORRIGÉ
+            enabled: document.getElementById('honeypot-enabled').checked,
+            channelId: document.getElementById('honeypot-channel').value || null
           }
         }
       };
@@ -888,7 +960,8 @@
             'Authorization': `Bearer ${jwtToken}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
+          credentials: 'same-origin' // 🟢 FORCE l'envoi sécurisé des cookies pour valider l'enregistrement
         });
 
         if (!response.ok) {
@@ -911,7 +984,8 @@
       try {
         const response = await fetch(`/api/guilds/${guildId}/backups`, {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${jwtToken}` }
+          headers: { 'Authorization': `Bearer ${jwtToken}` },
+          credentials: 'same-origin' // 🟢 FORCE l'envoi sécurisé des cookies pour valider la création
         });
 
         if (!response.ok) {
@@ -923,6 +997,11 @@
       } catch (error) {
         alert("❌ Échec de la création de la sauvegarde : " + error.message);
       }
+    }
+
+    // Simule une trace dans le terminal de diagnostic si l'onglet est affiché
+    function addTerminalLog(type, message) {
+      console.log(`[${type.toUpperCase()}] ${message}`);
     }
 
     setupCheckboxSync();
