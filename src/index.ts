@@ -4,8 +4,8 @@ import fs from 'fs';
 import path from 'path';
 import mongoose from 'mongoose';
 import { pathToFileURL } from 'url';
-
 import express from 'express';
+import jwt from 'jsonwebtoken';
 
 import {
   Client,
@@ -16,7 +16,12 @@ import {
 } from 'discord.js';
 
 import { createApp } from './api/app.ts';
-import { CONFIG, validateProductionConfig } from './config/index.ts';
+import {
+  CONFIG,
+  validateProductionConfig,
+} from './config/index.ts';
+
+import { User } from './models/User.ts';
 
 
 /* =========================================================
@@ -24,7 +29,6 @@ import { CONFIG, validateProductionConfig } from './config/index.ts';
 ========================================================= */
 
 const PORT = CONFIG.PORT;
-
 const PROJECT_ROOT = process.cwd();
 
 
@@ -33,6 +37,7 @@ const PROJECT_ROOT = process.cwd();
 ========================================================= */
 
 interface OmnixCommand {
+
   data: {
     name: string;
     toJSON(): unknown;
@@ -45,6 +50,16 @@ interface OmnixCommand {
 }
 
 
+interface OmnixClient extends Client {
+
+  commands: Collection<
+    string,
+    OmnixCommand
+  >;
+
+}
+
+
 /* =========================================================
    CONNEXION MONGODB
 ========================================================= */
@@ -54,16 +69,22 @@ async function connectDatabase(): Promise<void> {
   const mongoUri = CONFIG.MONGO_URI;
 
   if (!mongoUri) {
+
     throw new Error(
       '[Database] MONGODB_URI / MONGO_URI est manquante.'
     );
+
   }
 
-  console.log('[Database] Connexion à MongoDB...');
+  console.log(
+    '[Database] Connexion à MongoDB...'
+  );
 
   try {
 
-    await mongoose.connect(mongoUri);
+    await mongoose.connect(
+      mongoUri
+    );
 
     console.log(
       '[Database] ✅ Connexion MongoDB établie.'
@@ -87,47 +108,252 @@ async function connectDatabase(): Promise<void> {
 
 async function setupWebServer() {
 
-  console.log('[API] Démarrage du serveur Web...');
+  console.log(
+    '[API] Démarrage du serveur Web...'
+  );
 
   const app = createApp();
 
-  const server = app.listen(
-    PORT,
-    () => {
 
-      const domain =
-        CONFIG.DOMAIN ||
-        `http://localhost:${PORT}`;
+  /*
+   * =======================================================
+   * ROUTE /api/guilds
+   *
+   * Le Dashboard utilise :
+   *
+   * GET /api/guilds
+   *
+   * avec :
+   *
+   * Authorization: Bearer JWT
+   * =======================================================
+   */
 
-      console.log('');
-      console.log('==========================================');
-      console.log('           OMNIX WEB SERVER');
-      console.log('==========================================');
+  app.get(
+    '/api/guilds',
+    async (req, res) => {
 
-      console.log(
-        `[OMNIX] 🌐 Adresse : ${domain}`
-      );
+      try {
 
-      console.log(
-        `[OMNIX] 🏠 Accueil : ${domain}/`
-      );
+        const authorization =
+          req.headers.authorization;
 
-      console.log(
-        `[OMNIX] 📊 Dashboard : ${domain}/dashboard`
-      );
 
-      console.log(
-        `[OMNIX] 👑 Founder : ${domain}/founder`
-      );
+        /*
+         * Vérification du header
+         */
 
-      console.log(
-        `[OMNIX] 🤖 AI Dev : ${domain}/ai-dev`
-      );
+        if (
+          !authorization ||
+          !authorization.startsWith('Bearer ')
+        ) {
 
-      console.log('==========================================');
-      console.log('');
+          return res.status(401).json({
+            error:
+              'Token d’authentification manquant.',
+          });
+
+        }
+
+
+        const token =
+          authorization
+            .substring(7)
+            .trim();
+
+
+        if (!token) {
+
+          return res.status(401).json({
+            error:
+              'Token d’authentification vide.',
+          });
+
+        }
+
+
+        /*
+         * Vérification JWT
+         */
+
+        const jwtSecret =
+          CONFIG.JWT_SECRET;
+
+
+        if (!jwtSecret) {
+
+          console.error(
+            '[API /guilds] JWT_SECRET manquant.'
+          );
+
+          return res.status(500).json({
+            error:
+              'Configuration JWT manquante.',
+          });
+
+        }
+
+
+        let payload: any;
+
+
+        try {
+
+          payload =
+            jwt.verify(
+              token,
+              jwtSecret
+            );
+
+        } catch (error) {
+
+          return res.status(401).json({
+            error:
+              'Session invalide ou expirée.',
+          });
+
+        }
+
+
+        /*
+         * Vérification de l'identité Discord
+         */
+
+        if (!payload?.discordId) {
+
+          return res.status(401).json({
+            error:
+              'Identifiant Discord absent du token.',
+          });
+
+        }
+
+
+        /*
+         * Recherche de l'utilisateur
+         */
+
+        const user =
+          await User
+            .findOne({
+              discordId:
+                payload.discordId,
+            })
+            .lean();
+
+
+        if (!user) {
+
+          return res.status(404).json({
+            error:
+              'Utilisateur OMNIX introuvable.',
+          });
+
+        }
+
+
+        /*
+         * Récupération des serveurs
+         */
+
+        const guilds =
+          Array.isArray(
+            (user as any).guilds
+          )
+            ? (user as any).guilds
+            : [];
+
+
+        /*
+         * Sécurité :
+         *
+         * On ne retourne que les données
+         * appartenant à cet utilisateur.
+         */
+
+        return res.json(
+          guilds
+        );
+
+      } catch (error) {
+
+        console.error(
+          '[API /guilds] ❌ Erreur :',
+          error
+        );
+
+        return res.status(500).json({
+          error:
+            'Erreur interne lors du chargement des serveurs.',
+        });
+
+      }
+
     }
   );
+
+
+  /*
+   * =======================================================
+   * DÉMARRAGE EXPRESS
+   * =======================================================
+   */
+
+  const server =
+    app.listen(
+      PORT,
+      () => {
+
+        const domain =
+          CONFIG.DOMAIN ||
+          `http://localhost:${PORT}`;
+
+
+        console.log('');
+
+        console.log(
+          '=========================================='
+        );
+
+        console.log(
+          '             OMNIX WEB SERVER'
+        );
+
+        console.log(
+          '=========================================='
+        );
+
+
+        console.log(
+          `[OMNIX] 🌐 Adresse : ${domain}`
+        );
+
+        console.log(
+          `[OMNIX] 🏠 Accueil : ${domain}/`
+        );
+
+        console.log(
+          `[OMNIX] 📊 Dashboard : ${domain}/dashboard`
+        );
+
+        console.log(
+          `[OMNIX] 👑 Founder : ${domain}/founder`
+        );
+
+        console.log(
+          `[OMNIX] 🤖 AI Dev : ${domain}/ai-dev`
+        );
+
+
+        console.log(
+          '=========================================='
+        );
+
+        console.log('');
+
+      }
+    );
+
 
   return server;
 }
@@ -138,7 +364,7 @@ async function setupWebServer() {
 ========================================================= */
 
 async function loadCommands(
-  client: Client
+  client: OmnixClient
 ): Promise<void> {
 
   const commandsPath =
@@ -149,9 +375,11 @@ async function loadCommands(
       'commands'
     );
 
+
   console.log(
     `[Bot] Recherche des commandes : ${commandsPath}`
   );
+
 
   if (!fs.existsSync(commandsPath)) {
 
@@ -165,7 +393,9 @@ async function loadCommands(
 
   const files =
     fs
-      .readdirSync(commandsPath)
+      .readdirSync(
+        commandsPath
+      )
       .filter(
         file =>
           file.endsWith('.ts') ||
@@ -186,6 +416,7 @@ async function loadCommands(
           file
         );
 
+
       const fileUrl =
         pathToFileURL(
           filePath
@@ -193,7 +424,9 @@ async function loadCommands(
 
 
       const module =
-        await import(fileUrl);
+        await import(
+          fileUrl
+        );
 
 
       const command =
@@ -209,10 +442,12 @@ async function loadCommands(
 
         client.commands.set(
           command.data.name,
-          command
+          command as OmnixCommand
         );
 
+
         loaded++;
+
 
         console.log(
           `[Bot] ✅ Commande chargée : /${command.data.name}`
@@ -223,6 +458,7 @@ async function loadCommands(
         console.warn(
           `[Bot] ⚠️ Commande invalide : ${file}`
         );
+
       }
 
     } catch (error) {
@@ -231,7 +467,9 @@ async function loadCommands(
         `[Bot] ❌ Impossible de charger ${file} :`,
         error
       );
+
     }
+
   }
 
 
@@ -246,7 +484,7 @@ async function loadCommands(
 ========================================================= */
 
 async function loadEvents(
-  client: Client
+  client: OmnixClient
 ): Promise<void> {
 
   const eventsPath =
@@ -275,7 +513,9 @@ async function loadEvents(
 
   const files =
     fs
-      .readdirSync(eventsPath)
+      .readdirSync(
+        eventsPath
+      )
       .filter(
         file =>
           file.endsWith('.ts') ||
@@ -296,6 +536,7 @@ async function loadEvents(
           file
         );
 
+
       const fileUrl =
         pathToFileURL(
           filePath
@@ -303,7 +544,9 @@ async function loadEvents(
 
 
       const module =
-        await import(fileUrl);
+        await import(
+          fileUrl
+        );
 
 
       const event =
@@ -319,6 +562,30 @@ async function loadEvents(
 
         console.warn(
           `[Bot] ⚠️ Événement invalide : ${file}`
+        );
+
+        continue;
+      }
+
+
+      /*
+       * IMPORTANT
+       *
+       * On ignore volontairement les événements
+       * "ready" qui tentent d'enregistrer les
+       * commandes eux-mêmes.
+       *
+       * La synchronisation est gérée ici,
+       * dans index.ts.
+       */
+
+      if (
+        event.name === 'ready' ||
+        event.name === 'clientReady'
+      ) {
+
+        console.log(
+          `[Bot] ℹ️ Event ${event.name} ignoré par le chargeur central.`
         );
 
         continue;
@@ -344,10 +611,12 @@ async function loadEvents(
               ...args
             )
         );
+
       }
 
 
       loaded++;
+
 
       console.log(
         `[Bot] ✅ Event chargé : ${event.name}`
@@ -359,7 +628,9 @@ async function loadEvents(
         `[Bot] ❌ Impossible de charger ${file} :`,
         error
       );
+
     }
+
   }
 
 
@@ -374,9 +645,27 @@ async function loadEvents(
 ========================================================= */
 
 async function registerSlashCommands(
-  client: Client,
+  client: OmnixClient,
   token: string
 ): Promise<void> {
+
+  /*
+   * Vérification ABSOLUE du token
+   */
+
+  if (
+    !token ||
+    typeof token !== 'string' ||
+    token.trim().length === 0
+  ) {
+
+    console.error(
+      '[Bot] ❌ Impossible de synchroniser les commandes : token Discord absent.'
+    );
+
+    return;
+  }
+
 
   const clientId =
     CONFIG.DISCORD.CLIENT_ID;
@@ -408,10 +697,19 @@ async function registerSlashCommands(
   );
 
 
+  /*
+   * REST Discord avec token explicitement défini
+   */
+
   const rest =
     new REST({
       version: '10',
-    }).setToken(token);
+    });
+
+
+  rest.setToken(
+    token
+  );
 
 
   try {
@@ -421,13 +719,14 @@ async function registerSlashCommands(
         clientId
       ),
       {
-        body: commands,
+        body:
+          commands,
       }
     );
 
 
     console.log(
-      '[Bot] ✅ Commandes slash synchronisées.'
+      `[Bot] ✅ ${commands.length} commandes slash synchronisées.`
     );
 
   } catch (error) {
@@ -436,6 +735,7 @@ async function registerSlashCommands(
       '[Bot] ❌ Erreur synchronisation slash commands :',
       error
     );
+
   }
 }
 
@@ -444,11 +744,10 @@ async function registerSlashCommands(
    CONFIGURATION DU BOT DISCORD
 ========================================================= */
 
-async function setupDiscordBot(): Promise<Client | null> {
+async function setupDiscordBot(): Promise<OmnixClient | null> {
 
   /*
-   * Permet de lancer uniquement le site
-   * si START_BOT=false
+   * START_BOT=false
    */
 
   if (
@@ -463,18 +762,25 @@ async function setupDiscordBot(): Promise<Client | null> {
   }
 
 
+  /*
+   * Token Discord
+   */
+
   const token =
     CONFIG.DISCORD.TOKEN;
 
 
-  if (!token) {
+  if (
+    !token ||
+    token.trim().length === 0
+  ) {
 
     console.error(
       '[Bot] ❌ Aucun token Discord configuré.'
     );
 
     console.error(
-      '[Bot] Utilise DISCORD_TOKEN ou DISCORD_BOT_TOKEN.'
+      '[Bot] Configure DISCORD_TOKEN / DISCORD_BOT_TOKEN dans les variables d’environnement.'
     );
 
     return null;
@@ -485,6 +791,10 @@ async function setupDiscordBot(): Promise<Client | null> {
     '[Bot] Initialisation du client Discord...'
   );
 
+
+  /*
+   * Client Discord
+   */
 
   const client =
     new Client({
@@ -501,22 +811,18 @@ async function setupDiscordBot(): Promise<Client | null> {
 
       ],
 
-    });
+    }) as OmnixClient;
 
 
   /*
    * Collection des commandes
    */
 
-  (
-    client as Client & {
-      commands: Collection<
-        string,
-        OmnixCommand
-      >;
-    }
-  ).commands =
-    new Collection();
+  client.commands =
+    new Collection<
+      string,
+      OmnixCommand
+    >();
 
 
   /*
@@ -529,7 +835,7 @@ async function setupDiscordBot(): Promise<Client | null> {
 
 
   /*
-   * Chargement événements
+   * Chargement events
    */
 
   await loadEvents(
@@ -538,7 +844,7 @@ async function setupDiscordBot(): Promise<Client | null> {
 
 
   /*
-   * READY
+   * READY CENTRAL
    */
 
   client.once(
@@ -546,6 +852,7 @@ async function setupDiscordBot(): Promise<Client | null> {
     async () => {
 
       console.log('');
+
       console.log(
         '=========================================='
       );
@@ -573,16 +880,24 @@ async function setupDiscordBot(): Promise<Client | null> {
       console.log('');
 
 
+      /*
+       * Synchronisation UNIQUEMENT après
+       * connexion réussie à Discord.
+       */
+
       await registerSlashCommands(
         client,
         token
       );
+
     }
   );
 
 
   /*
+   * =======================================================
    * INTERACTIONS SLASH
+   * =======================================================
    */
 
   client.on(
@@ -592,6 +907,7 @@ async function setupDiscordBot(): Promise<Client | null> {
       if (
         !interaction.isChatInputCommand()
       ) {
+
         return;
       }
 
@@ -635,29 +951,43 @@ async function setupDiscordBot(): Promise<Client | null> {
           ) {
 
             await interaction.editReply({
+
               content:
                 '❌ Une erreur est survenue lors de l’exécution de cette commande.',
+
             });
 
           } else {
 
             await interaction.reply({
+
               content:
                 '❌ Une erreur est survenue lors de l’exécution de cette commande.',
+
               ephemeral: true,
+
             });
+
           }
 
         } catch {
-          // Discord peut avoir déjà fermé l'interaction.
+
+          /*
+           * Interaction déjà fermée par Discord.
+           */
+
         }
+
       }
+
     }
   );
 
 
   /*
-   * LOGIN
+   * =======================================================
+   * LOGIN DISCORD
+   * =======================================================
    */
 
   try {
@@ -666,9 +996,11 @@ async function setupDiscordBot(): Promise<Client | null> {
       '[Bot] 🔐 Connexion à Discord...'
     );
 
+
     await client.login(
       token
     );
+
 
     return client;
 
@@ -678,6 +1010,7 @@ async function setupDiscordBot(): Promise<Client | null> {
       '[Bot] ❌ Échec de connexion Discord :',
       error
     );
+
 
     return null;
   }
@@ -700,14 +1033,16 @@ async function shutdown(
   try {
 
     if (
-      mongoose.connection.readyState
+      mongoose.connection.readyState !== 0
     ) {
 
       await mongoose.connection.close();
 
+
       console.log(
         '[Database] Connexion MongoDB fermée.'
       );
+
     }
 
   } catch (error) {
@@ -716,6 +1051,7 @@ async function shutdown(
       '[Database] Erreur fermeture MongoDB :',
       error
     );
+
   }
 
 
@@ -725,12 +1061,14 @@ async function shutdown(
 
 process.on(
   'SIGTERM',
-  () => shutdown('SIGTERM')
+  () =>
+    shutdown('SIGTERM')
 );
 
 process.on(
   'SIGINT',
-  () => shutdown('SIGINT')
+  () =>
+    shutdown('SIGINT')
 );
 
 
@@ -746,6 +1084,7 @@ process.on(
       '[Process] ❌ Unhandled Rejection :',
       error
     );
+
   }
 );
 
@@ -758,6 +1097,7 @@ process.on(
       '[Process] ❌ Uncaught Exception :',
       error
     );
+
   }
 );
 
@@ -769,21 +1109,23 @@ process.on(
 async function main(): Promise<void> {
 
   console.log('');
-  console.log(
-    '=========================================='
-  );
-
-  console.log(
-    '              OMNIX'
-  );
-
-  console.log(
-    '       LE ROBOT DE DEMAIN'
-  );
 
   console.log(
     '=========================================='
   );
+
+  console.log(
+    '                 OMNIX'
+  );
+
+  console.log(
+    '          LE ROBOT DE DEMAIN'
+  );
+
+  console.log(
+    '=========================================='
+  );
+
 
   console.log(
     `[System] Environnement : ${CONFIG.NODE_ENV}`
@@ -801,6 +1143,7 @@ async function main(): Promise<void> {
     `[System] Propriétaires configurés : ${CONFIG.OWNER_IDS.length}`
   );
 
+
   console.log(
     '=========================================='
   );
@@ -809,38 +1152,55 @@ async function main(): Promise<void> {
 
 
   /*
-   * Vérification production
+   * =======================================================
+   * VALIDATION CONFIGURATION
+   * =======================================================
    */
 
   validateProductionConfig();
 
 
   /*
-   * MongoDB
+   * =======================================================
+   * MONGODB
+   * =======================================================
    */
 
   await connectDatabase();
 
 
   /*
-   * Express
+   * =======================================================
+   * EXPRESS
+   * =======================================================
    */
 
   await setupWebServer();
 
 
   /*
-   * Discord
+   * =======================================================
+   * DISCORD
+   * =======================================================
    */
 
   await setupDiscordBot();
 
 
+  /*
+   * =======================================================
+   * FIN
+   * =======================================================
+   */
+
   console.log('');
+
   console.log(
     '[OMNIX] ✅ Plateforme OMNIX opérationnelle.'
   );
+
   console.log('');
+
 }
 
 
@@ -848,18 +1208,21 @@ async function main(): Promise<void> {
    LANCEMENT
 ========================================================= */
 
-main().catch(
-  error => {
+main()
+  .catch(
+    error => {
 
-    console.error('');
-    console.error(
-      '[OMNIX] ❌ ERREUR FATALE AU DÉMARRAGE'
-    );
+      console.error('');
 
-    console.error(
-      error
-    );
+      console.error(
+        '[OMNIX] ❌ ERREUR FATALE AU DÉMARRAGE'
+      );
 
-    process.exit(1);
-  }
-);
+      console.error(
+        error
+      );
+
+      process.exit(1);
+
+    }
+  );
