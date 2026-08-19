@@ -211,13 +211,17 @@ function requireOwner(
   }
 
 
-  const ownerIds =
-    Array.isArray(CONFIG.OWNER_IDS)
-      ? CONFIG.OWNER_IDS
-          .map(String)
-          .map(id => id.trim())
-          .filter(Boolean)
-      : [];
+  const ownerIds = [
+  ...(Array.isArray(CONFIG.OWNER_IDS)
+    ? CONFIG.OWNER_IDS
+    : []),
+
+  ...(process.env.OWNER_IDS || '')
+    .split(',')
+]
+  .map(String)
+  .map(id => id.trim())
+  .filter(Boolean);
 
 
   const isOwner =
