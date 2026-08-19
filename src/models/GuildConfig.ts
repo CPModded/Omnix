@@ -4,7 +4,7 @@
  * ====================================================================
  */
 
-import { Schema, model, models, Document } from 'mongoose'; // 🟢 Ajout de "models" pour la sécurité d'écrasement
+import mongoose, { Schema, Document } from 'mongoose'; // 🟢 CORRIGÉ : Import de mongoose global pour compatibilité ESM
 
 export interface ITicketCategory {
   id: string;             // Identifiant unique (ex: support_tech)
@@ -275,5 +275,5 @@ const GuildConfigSchema = new Schema<IGuildConfig>({
   }
 }, { timestamps: true });
 
-// 🟢 CORRIGÉ : Utilise "models.GuildConfig" s'il est déjà compilé (évite l'erreur OverwriteModelError)
-export const GuildConfig = models.GuildConfig || model<IGuildConfig>('GuildConfig', GuildConfigSchema);
+// 🟢 CORRIGÉ : Utilise mongoose.models.GuildConfig pour compatibilité et sécurité d'écrasement ESM
+export const GuildConfig = mongoose.models.GuildConfig || mongoose.model<IGuildConfig>('GuildConfig', GuildConfigSchema);
