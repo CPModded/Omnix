@@ -1,12 +1,87 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
-import type { IGuildConfig } from '../models/GuildConfig.ts';
+import type {
+  ChatInputCommandInteraction,
+  SlashCommandBuilder,
+} from 'discord.js';
 
+import type {
+  IGuildConfig,
+} from '../models/GuildConfig.ts';
+
+/* =========================================================
+   COMMAND CONTEXT
+========================================================= */
+
+/**
+ * Contexte transmis à chaque commande OMNIX.
+ *
+ * IMPORTANT :
+ *
+ * guildConfig correspond uniquement au serveur
+ * depuis lequel la commande est exécutée.
+ *
+ * Cela évite qu'une configuration Discord
+ * puisse fuiter d'un serveur vers un autre.
+ */
 export interface CommandContext {
-  interaction: ChatInputCommandInteraction;
-  guildConfig: IGuildConfig; // Configuration MongoDB unique au serveur émetteur
+  /**
+   * Interaction Discord ayant déclenché
+   * la commande.
+   */
+  interaction:
+    ChatInputCommandInteraction;
+
+  /**
+   * Configuration MongoDB du serveur
+   * actuellement concerné.
+   */
+  guildConfig:
+    IGuildConfig;
 }
 
+/* =========================================================
+   COMMAND
+========================================================= */
+
+/**
+ * Structure standard d'une commande OMNIX.
+ *
+ * Exemple :
+ *
+ * {
+ *   data: new SlashCommandBuilder()
+ *     .setName('ping')
+ *     .setDescription('Affiche la latence'),
+ *
+ *   async execute({
+ *     interaction,
+ *     guildConfig,
+ *   }) {
+ *     ...
+ *   }
+ * }
+ */
 export interface Command {
-  data: Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup">;
-  execute: (ctx: CommandContext) => Promise<void>;
+  /**
+   * Définition Slash Command Discord.
+   *
+   * On interdit ici les méthodes permettant
+   * d'ajouter directement des sous-commandes
+   * afin de conserver la structure actuelle
+   * de ton système.
+   */
+  data:
+    Omit<
+      SlashCommandBuilder,
+      | 'addSubcommand'
+      | 'addSubcommandGroup'
+    >;
+
+  /**
+   * Fonction exécutée lorsqu'une commande
+   * est appelée.
+   */
+  execute:
+    (
+      ctx: CommandContext
+    ) => Promise<void>;
 }
