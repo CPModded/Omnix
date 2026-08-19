@@ -1,15 +1,15 @@
-import 'dotenv/config'; // Charge les variables du fichier .env
+import 'dotenv/config'; 
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
-import { pathToFileURL } from 'url'; // Utile pour convertir les chemins de fichiers en URLs valides pour ESM
+import { pathToFileURL } from 'url'; 
 import { Client, GatewayIntentBits, Collection, REST, Routes } from 'discord.js';
-
-// ENREGISTREMENT ET MONTAGE DES ROUTEURS SÉCURISÉS ESM (.ts)
 import authRouter from './api/routes/auth.routes.ts'; 
 import adminRouter from './api/routes/admin.routes.ts'; 
+import { askOpenRouter } from './ai/openrouter.ts';
+import aiDevRouter from './api/routes/ai-dev.routes.ts';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -45,6 +45,11 @@ async function connectDatabase() {
 // 2. CONFIGURATION DU SERVEUR WEB (EXPRESS)
 // ==========================================
 function setupWebServer() {
+    app.use('/api/ai-dev', aiDevRouter);
+    app.get('/dashboard/omnix-ai', (req, res) => {
+  res.render('ai-dev');
+});
+    
   console.log("[API] Démarrage du serveur Web...");
 
   app.use(express.json());
@@ -236,6 +241,17 @@ async function setupDiscordBot() {
 async function main() {
   await connectDatabase();
   setupWebServer();
+
+  try {
+    const response = await askOpenRouter(
+      'Réponds simplement : OpenRouter fonctionne correctement avec OMNIX.'
+    );
+
+    console.log('[OMNIX AI] Réponse :', response);
+  } catch (error) {
+    console.error('[OMNIX AI] Erreur :', error);
+  }
+
   await setupDiscordBot();
 }
 
