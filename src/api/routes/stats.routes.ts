@@ -3,63 +3,229 @@ import express, {
   type Response,
 } from 'express';
 
+import type { Client } from 'discord.js';
+
 import { User } from '../../models/User.ts';
 
-const router = express.Router();
+/* =========================================================
+   ROUTER
+========================================================= */
+
+const router =
+  express.Router();
 
 /* =========================================================
-   CONFIGURATION
+   DISCORD CLIENT
 ========================================================= */
 
 /**
- * Nombre de commandes OMNIX.
+ * Le vrai client Discord est enregistré depuis :
  *
- * Temporairement récupéré depuis :
+ * src/index.ts
  *
- * OMNIX_COMMAND_COUNT
+ * Cela permet à cette route d'utiliser directement :
  *
- * Exemple Render :
- *
- * OMNIX_COMMAND_COUNT=1420
- *
- * Plus tard, cette valeur pourra être remplacée
- * par le vrai nombre de commandes chargées par le bot.
+ * discordClient.guilds.cache
+ * discordClient.ws.ping
  */
-const configuredCommandCount = Number(
-  process.env.OMNIX_COMMAND_COUNT || '0'
-);
+let discordClient:
+  Client | null = null;
+
+/**
+ * Enregistre le client Discord.
+ */
+export function registerDiscordClient(
+  client: Client
+): void {
+  discordClient =
+    client;
+
+  console.log(
+    '[Stats] Client Discord enregistré.'
+  );
+}
 
 /* =========================================================
-   TEMPS DE DÉMARRAGE
+   START TIME
 ========================================================= */
 
 /**
- * Date de démarrage du processus Node.
- *
- * Cette valeur sert uniquement à calculer
- * l'uptime du processus actuel.
+ * Date de démarrage du processus.
  */
-const startedAt = Date.now();
+const startedAt =
+  Date.now();
+
+/* =========================================================
+   COMMAND COUNT
+========================================================= */
+
+/**
+ * Nombre réel de commandes.
+ *
+ * Cette valeur peut être alimentée plus tard directement
+ * par ton système loadCommands().
+ *
+ * Pour l'instant, on utilise :
+ *
+ * globalThis.__OMNIX_COMMAND_COUNT
+ *
+ * si elle existe.
+ *
+ * Sinon :
+ *
+ * process.env.OMNIX_COMMAND_COUNT
+ *
+ * Cela permet au système de fonctionner même avant
+ * la modification du loader de commandes.
+ */
+function getCommandCount(): number {
+  const globalValue =
+    (
+      globalThis as typeof globalThis & {
+        __OMNIX_COMMAND_COUNT?: number;
+      }
+    ).__OMNIX_COMMAND_COUNT;
+
+  if (
+    typeof globalValue ===
+    'number' &&
+    Number.isFinite(
+      globalValue
+    )
+  ) {
+    return Math.max(
+      0,
+      Math.floor(
+        globalValue
+      )
+    );
+  }
+
+  const envValue =
+    Number(
+      process.env.OMNIX_COMMAND_COUNT ||
+      0
+    );
+
+  if (
+    Number.isFinite(
+      envValue
+    )
+  ) {
+    return Math.max(
+      0,
+      Math.floor(
+        envValue
+      )
+    );
+  }
+
+  return 0;
+}
+
+/* =========================================================
+   DISCORD GUILD STATS
+========================================================= */
+
+function getDiscordGuildStats() {
+  /**
+   * Le client n'est pas encore disponible.
+   */
+  if (!discordClient) {
+    return {
+      connected:
+        false,
+
+      guildsCount:
+        0,
+
+      membersCount:
+        0,
+
+      ping:
+        0,
+    };
+  }
+
+  /**
+   * Nombre réel de serveurs présents
+   * dans le cache Discord.
+   */
+  const guildsCount =
+    discordClient.guilds.cache.size;
+
+  /**
+   * Nombre total de membres.
+   *
+   * guild.memberCount représente le nombre de membres
+   * de chaque serveur.
+   */
+  let membersCount =
+    0;
+
+  for (
+    const guild of
+    discordClient.guilds.cache.values()
+  ) {
+    membersCount +=
+      Number(
+        guild.memberCount || 0
+      );
+  }
+
+  /**
+   * Ping WebSocket Discord.
+   *
+   * -1 signifie généralement que Discord n'est
+   * pas encore prêt à fournir la latence.
+   */
+  const rawPing =
+    Number(
+      discordClient.ws.ping
+    );
+
+  const ping =
+    Number.isFinite(
+      rawPing
+    ) &&
+    rawPing >= 0
+      ? Math.round(
+          rawPing
+        )
+      : 0;
+
+  return {
+    connected:
+      discordClient.isReady(),
+
+    guildsCount,
+
+    membersCount,
+
+    ping,
+  };
+}
 
 /* =========================================================
    UPTIME
 ========================================================= */
 
 /**
- * Retourne l'état actuel du processus.
+ * Uptime du processus OMNIX.
  *
- * IMPORTANT :
+ * Ici on considère qu'un processus qui répond
+ * correctement est à 100%.
  *
- * Cette fonction ne prétend pas calculer
- * l'uptime historique de Render.
- *
- * Elle indique simplement que le processus
- * OMNIX fonctionne actuellement.
+ * Ce n'est pas un historique d'uptime Render.
  */
 function getUptime(): number {
-  const elapsed = Date.now() - startedAt;
+  const elapsed =
+    Date.now() -
+    startedAt;
 
-  if (elapsed >= 0) {
+  if (
+    elapsed >= 0
+  ) {
     return 100;
   }
 
@@ -67,23 +233,16 @@ function getUptime(): number {
 }
 
 /* =========================================================
-   STATISTIQUES PUBLIQUES
+   PUBLIC STATS
 ========================================================= */
 
 /**
- * GET
+ * GET /api/stats
  *
- * /api/stats
+ * Cette route est volontairement PUBLIC.
  *
- * Cette route est PUBLIQUE.
- *
- * Aucun JWT n'est nécessaire.
- *
- * Elle est utilisée par :
- *
- * - la page d'accueil
- * - les cartes statistiques
- * - les statistiques générales OMNIX
+ * La page d'accueil doit pouvoir afficher les statistiques
+ * sans connexion Discord.
  */
 router.get(
   '/api/stats',
@@ -91,194 +250,191 @@ router.get(
     req: Request,
     res: Response
   ) => {
-    const requestStartedAt = Date.now();
+    const requestStarted =
+      Date.now();
 
     try {
-      /* =====================================================
-         UTILISATEURS OMNIX
-      ===================================================== */
+      /* ===================================================
+         DISCORD
+      =================================================== */
 
-      /**
-       * Nombre total d'utilisateurs enregistrés
-       * dans MongoDB.
-       */
-      const totalUsers =
-        await User.countDocuments();
+      const discordStats =
+        getDiscordGuildStats();
 
-      /* =====================================================
-         SERVEURS DISCORD
-      ===================================================== */
+      /* ===================================================
+         MONGODB
+      =================================================== */
 
-      /**
-       * On récupère uniquement le champ guilds.
-       *
-       * Cela évite de charger inutilement
-       * toutes les données utilisateurs.
-       */
-      const users =
-        await User.find(
-          {},
-          {
-            guilds: 1,
-          }
-        ).lean();
+      let totalUsers =
+        0;
 
-      /**
-       * Set permettant d'éviter les doublons.
-       *
-       * Exemple :
-       *
-       * User A → serveur 123
-       * User B → serveur 123
-       *
-       * Le serveur 123 ne sera compté qu'une fois.
-       */
-      const guildIds =
-        new Set<string>();
+      try {
+        totalUsers =
+          await User.countDocuments();
+      } catch (databaseError) {
+        /**
+         * MongoDB ne doit pas empêcher la page publique
+         * d'afficher les statistiques Discord.
+         */
+        console.warn(
+          '[Stats] MongoDB indisponible :',
+          databaseError
+        );
 
-      for (const user of users) {
-        const guilds =
-          Array.isArray(
-            (user as any).guilds
-          )
-            ? (user as any).guilds
-            : [];
-
-        for (const guild of guilds) {
-          const guildId =
-            String(
-              guild?.id || ''
-            ).trim();
-
-          if (guildId) {
-            guildIds.add(guildId);
-          }
-        }
+        totalUsers =
+          0;
       }
 
-      const guildsCount =
-        guildIds.size;
+      /* ===================================================
+         API LATENCY
+      =================================================== */
 
-      /* =====================================================
-         LATENCE
-      ===================================================== */
-
-      /**
-       * Temps nécessaire pour construire
-       * la réponse statistique.
-       *
-       * Ce n'est PAS encore la vraie latence
-       * WebSocket du bot Discord.
-       */
-      const latency =
+      const apiLatency =
         Date.now() -
-        requestStartedAt;
+        requestStarted;
 
-      /* =====================================================
+      /* ===================================================
+         COMMANDS
+      =================================================== */
+
+      const commandCount =
+        getCommandCount();
+
+      /* ===================================================
          UPTIME
-      ===================================================== */
+      =================================================== */
 
       const uptime =
         getUptime();
 
-      /* =====================================================
-         COMMANDES
-      ===================================================== */
-
-      const commands =
-        Number.isFinite(
-          configuredCommandCount
-        )
-          ? configuredCommandCount
-          : 0;
-
-      /* =====================================================
-         RÉPONSE
-      ===================================================== */
+      /* ===================================================
+         RESPONSE
+      =================================================== */
 
       return res.json({
-        success: true,
+        success:
+          true,
 
         bot: {
           /**
-           * Nombre de serveurs connus
-           * dans MongoDB.
+           * Nombre réel de guilds Discord.
            */
-          guildsCount,
+          guildsCount:
+            discordStats.guildsCount,
 
           /**
-           * Latence actuelle de la requête API.
+           * Nombre réel de membres présents
+           * sur les serveurs du bot.
            */
-          ping: latency,
+          membersCount:
+            discordStats.membersCount,
 
           /**
-           * État du processus.
+           * Ping réel du WebSocket Discord.
+           */
+          ping:
+            discordStats.ping,
+
+          /**
+           * Uptime du processus.
            */
           uptime,
+
+          /**
+           * Permet au frontend de savoir
+           * si le bot Discord est réellement connecté.
+           */
+          connected:
+            discordStats.connected,
         },
 
         database: {
           /**
-           * Nombre d'utilisateurs OMNIX.
+           * Utilisateurs OMNIX enregistrés.
            */
           totalUsers,
 
           /**
-           * Temps de réponse MongoDB/API.
+           * Temps nécessaire pour traiter
+           * la requête API.
            */
-          latency,
+          latency:
+            apiLatency,
         },
 
         /**
-         * Nombre de commandes configuré.
+         * Nombre de commandes OMNIX.
          */
-        commands,
+        commands:
+          commandCount,
+
+        /**
+         * Latence de cette requête.
+         */
+        api: {
+          latency:
+            apiLatency,
+        },
+
+        timestamp:
+          new Date().toISOString(),
       });
     } catch (error) {
-      /* =====================================================
-         ERREUR
-      ===================================================== */
-
       console.error(
-        '[Public Stats]',
+        '[Public Stats] Erreur :',
         error
       );
 
       /**
-       * On renvoie volontairement HTTP 200
-       * avec success:false.
+       * Même en cas de problème,
+       * on retourne une structure JSON cohérente.
        *
-       * Pourquoi ?
-       *
-       * Pour que le frontend puisse distinguer :
-       *
-       * API disponible
-       * +
-       * statistiques momentanément indisponibles
-       *
-       * d'une véritable panne HTTP.
+       * On évite ainsi que le frontend obtienne
+       * une réponse complètement différente.
        */
       return res.status(200).json({
-        success: false,
+        success:
+          false,
 
         bot: {
-          guildsCount: 0,
+          guildsCount:
+            0,
 
-          ping: 0,
+          membersCount:
+            0,
 
-          uptime: 100,
+          ping:
+            0,
+
+          uptime:
+            getUptime(),
+
+          connected:
+            false,
         },
 
         database: {
-          totalUsers: 0,
+          totalUsers:
+            0,
 
-          latency: 0,
+          latency:
+            0,
         },
 
-        commands: 0,
+        commands:
+          0,
+
+        api: {
+          latency:
+            Date.now() -
+            requestStarted,
+        },
 
         error:
           'Statistiques temporairement indisponibles.',
+
+        timestamp:
+          new Date().toISOString(),
       });
     }
   }
@@ -289,12 +445,11 @@ router.get(
 ========================================================= */
 
 /**
- * GET
+ * GET /api/stats/health
  *
- * /api/stats/health
+ * Petite route utile pour Render.
  *
- * Petite route permettant de vérifier rapidement
- * que l'API publique fonctionne.
+ * Elle permet de vérifier rapidement que l'API répond.
  */
 router.get(
   '/api/stats/health',
@@ -302,12 +457,23 @@ router.get(
     req: Request,
     res: Response
   ) => {
+    const discordStats =
+      getDiscordGuildStats();
+
     return res.json({
-      success: true,
+      success:
+        true,
 
-      status: 'online',
+      service:
+        'OMNIX',
 
-      uptime: getUptime(),
+      status:
+        'online',
+
+      discord:
+        discordStats.connected
+          ? 'connected'
+          : 'disconnected',
 
       timestamp:
         new Date().toISOString(),
