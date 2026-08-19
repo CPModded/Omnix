@@ -15,7 +15,7 @@ import {
 
 import {
   loadCommands,
-} from './loaders/commandLoader.ts';
+} from './bot/handlers/commandHandler.ts';
 
 /*
  * Si ton loader d'événements existe sous un autre nom,
