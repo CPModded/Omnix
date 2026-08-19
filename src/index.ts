@@ -11,7 +11,7 @@ import createApp from './api/app.ts';
 
 import {
   client as discordClient,
-} from './client.ts';
+} from '.src/bot/client.ts';
 
 import {
   loadCommands,
@@ -278,17 +278,16 @@ async function loadBotCommands(): Promise<void> {
 }
 
 /* =========================================================
+  /* =========================================================
    LOAD EVENTS
 ========================================================= */
 
 async function loadBotEvents(): Promise<void> {
   console.log(
-    '[Bot] Initialisation du chargeur d'événements...'
+    '[Bot] Initialisation du chargeur des événements...'
   );
 
-  await loadEvents(
-    discordClient
-  );
+  await loadEvents(discordClient);
 
   console.log(
     '[Bot] Événements Discord chargés.'
