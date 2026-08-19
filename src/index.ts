@@ -1,14 +1,7 @@
 import 'dotenv/config';
 
 import http from 'http';
-
 import mongoose from 'mongoose';
-
-import {
-  Client,
-  GatewayIntentBits,
-  Partials,
-} from 'discord.js';
 
 import { Server as SocketIOServer } from 'socket.io';
 
@@ -16,7 +9,25 @@ import { CONFIG } from './config/index.ts';
 
 import createApp from './api/app.ts';
 
-import { registerDiscordClient } from './api/routes/stats.routes.ts';
+import {
+  client as discordClient,
+} from './client.ts';
+
+import {
+  loadCommands,
+} from './loaders/commandLoader.ts';
+
+/*
+ * Si ton loader d'événements existe sous un autre nom,
+ * nous l'ajusterons ensuite.
+ */
+import {
+  loadEvents,
+} from './loaders/eventLoader.ts';
+
+import {
+  registerDiscordClient,
+} from './api/routes/stats.routes.ts';
 
 /* =========================================================
    CONFIGURATION
@@ -27,30 +38,6 @@ const PORT = Number(
   CONFIG.PORT ||
   3000
 );
-
-/* =========================================================
-   DISCORD CLIENT
-========================================================= */
-
-const discordClient =
-  new Client({
-    intents: [
-      GatewayIntentBits.Guilds,
-
-      GatewayIntentBits.GuildMembers,
-
-      GatewayIntentBits.GuildMessages,
-
-      GatewayIntentBits.MessageContent,
-    ],
-
-    partials: [
-      Partials.Channel,
-      Partials.GuildMember,
-      Partials.Message,
-      Partials.User,
-    ],
-  });
 
 /* =========================================================
    EXPRESS
@@ -88,7 +75,7 @@ const io =
   );
 
 /* =========================================================
-   SOCKET.IO GLOBAL
+   SOCKET.IO
 ========================================================= */
 
 io.on(
@@ -114,16 +101,11 @@ io.on(
 ========================================================= */
 
 /**
- * On donne à stats.routes.ts accès au vrai client Discord.
+ * On transmet l'instance Discord UNIQUE
+ * à l'API statistiques.
  *
- * Ainsi /api/stats pourra récupérer :
- *
- * - nombre réel de serveurs
- * - nombre réel de membres
- * - ping Discord
- * - nombre réel de commandes
- *
- * au lieu d'utiliser uniquement MongoDB.
+ * Cette instance est exactement la même
+ * que celle utilisée par le bot.
  */
 registerDiscordClient(
   discordClient
@@ -135,7 +117,7 @@ registerDiscordClient(
 
 discordClient.once(
   'ready',
-  (client) => {
+  (readyClient) => {
     console.log(
       '================================================='
     );
@@ -149,25 +131,26 @@ discordClient.once(
     );
 
     console.log(
-      `[Discord] Connecté en tant que ${client.user.tag}`
+      `[Discord] Connecté en tant que ${readyClient.user.tag}`
     );
 
     console.log(
-      `[Discord] ID : ${client.user.id}`
+      `[Discord] ID : ${readyClient.user.id}`
     );
 
     console.log(
-      `[Discord] Serveurs : ${client.guilds.cache.size}`
+      `[Discord] Serveurs : ${readyClient.guilds.cache.size}`
     );
 
-    /*
-     * Nombre total de membres présents
-     * dans les guilds actuellement en cache.
-     */
+    /* -----------------------------------------------------
+       MEMBRES
+    ----------------------------------------------------- */
+
     let totalMembers = 0;
 
     for (
-      const guild of client.guilds.cache.values()
+      const guild of
+      readyClient.guilds.cache.values()
     ) {
       totalMembers +=
         guild.memberCount || 0;
@@ -177,8 +160,20 @@ discordClient.once(
       `[Discord] Membres : ${totalMembers}`
     );
 
+    /* -----------------------------------------------------
+       PING
+    ----------------------------------------------------- */
+
     console.log(
-      `[Discord] Ping : ${client.ws.ping} ms`
+      `[Discord] Ping : ${readyClient.ws.ping} ms`
+    );
+
+    /* -----------------------------------------------------
+       COMMANDES
+    ----------------------------------------------------- */
+
+    console.log(
+      `[Discord] Commandes chargées : ${readyClient.commands.size}`
     );
 
     console.log(
@@ -264,6 +259,43 @@ async function connectDatabase(): Promise<void> {
 }
 
 /* =========================================================
+   LOAD COMMANDS
+========================================================= */
+
+async function loadBotCommands(): Promise<void> {
+  console.log(
+    '[Bot] Initialisation du chargeur de commandes...'
+  );
+
+  const count =
+    await loadCommands(
+      discordClient
+    );
+
+  console.log(
+    `[Bot] ${count} commandes slash chargées en mémoire.`
+  );
+}
+
+/* =========================================================
+   LOAD EVENTS
+========================================================= */
+
+async function loadBotEvents(): Promise<void> {
+  console.log(
+    '[Bot] Initialisation du chargeur d'événements...'
+  );
+
+  await loadEvents(
+    discordClient
+  );
+
+  console.log(
+    '[Bot] Événements Discord chargés.'
+  );
+}
+
+/* =========================================================
    DISCORD LOGIN
 ========================================================= */
 
@@ -342,19 +374,15 @@ async function shutdown(
   );
 
   try {
-    /*
-     * -------------------------------------------------------
-     * SOCKET.IO
-     * -------------------------------------------------------
-     */
+    /* -----------------------------------------------------
+       SOCKET.IO
+    ----------------------------------------------------- */
 
     io.close();
 
-    /*
-     * -------------------------------------------------------
-     * HTTP
-     * -------------------------------------------------------
-     */
+    /* -----------------------------------------------------
+       HTTP
+    ----------------------------------------------------- */
 
     await new Promise<void>(
       (resolve) => {
@@ -364,11 +392,9 @@ async function shutdown(
       }
     );
 
-    /*
-     * -------------------------------------------------------
-     * DISCORD
-     * -------------------------------------------------------
-     */
+    /* -----------------------------------------------------
+       DISCORD
+    ----------------------------------------------------- */
 
     if (
       discordClient.isReady()
@@ -376,15 +402,13 @@ async function shutdown(
       discordClient.destroy();
     }
 
-    /*
-     * -------------------------------------------------------
-     * MONGODB
-     * -------------------------------------------------------
-     */
+    /* -----------------------------------------------------
+       MONGODB
+    ----------------------------------------------------- */
 
     if (
-      mongoose.connection.readyState !==
-      0
+      mongoose.connection
+        .readyState !== 0
     ) {
       await mongoose.connection.close();
     }
@@ -427,7 +451,7 @@ process.on(
 );
 
 /* =========================================================
-   UNHANDLED ERROR
+   UNHANDLED REJECTION
 ========================================================= */
 
 process.on(
@@ -439,6 +463,10 @@ process.on(
     );
   }
 );
+
+/* =========================================================
+   UNCAUGHT EXCEPTION
+========================================================= */
 
 process.on(
   'uncaughtException',
@@ -472,32 +500,33 @@ async function start(): Promise<void> {
       '================================================='
     );
 
-    /*
-     * -------------------------------------------------------
-     * DATABASE
-     * -------------------------------------------------------
-     */
+    /* -----------------------------------------------------
+       DATABASE
+    ----------------------------------------------------- */
 
     await connectDatabase();
 
-    /*
-     * -------------------------------------------------------
-     * HTTP
-     * -------------------------------------------------------
-     *
-     * On démarre Express avant Discord.
-     *
-     * Render peut ainsi vérifier immédiatement
-     * que le serveur HTTP répond.
-     */
+    /* -----------------------------------------------------
+       COMMANDS
+    ----------------------------------------------------- */
+
+    await loadBotCommands();
+
+    /* -----------------------------------------------------
+       EVENTS
+    ----------------------------------------------------- */
+
+    await loadBotEvents();
+
+    /* -----------------------------------------------------
+       HTTP
+    ----------------------------------------------------- */
 
     await startHttpServer();
 
-    /*
-     * -------------------------------------------------------
-     * DISCORD
-     * -------------------------------------------------------
-     */
+    /* -----------------------------------------------------
+       DISCORD
+    ----------------------------------------------------- */
 
     await loginDiscord();
 
@@ -529,10 +558,6 @@ async function start(): Promise<void> {
       '================================================='
     );
 
-    /*
-     * Fermeture propre en cas d'échec.
-     */
-
     try {
       if (
         discordClient.isReady()
@@ -541,15 +566,19 @@ async function start(): Promise<void> {
       }
 
       if (
-        mongoose.connection.readyState !==
-        0
+        mongoose.connection
+          .readyState !== 0
       ) {
         await mongoose.connection.close();
       }
 
       io.close();
 
-      httpServer.close();
+      if (
+        httpServer.listening
+      ) {
+        httpServer.close();
+      }
     } catch {
       // Rien à faire.
     }
