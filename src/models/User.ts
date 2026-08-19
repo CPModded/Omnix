@@ -1,42 +1,104 @@
-import mongoose, { Schema, Document } from 'mongoose';
-
-export interface ILicense {
-  licenseKey: string;
-  tier: string;
-  status: string;
-}
+import mongoose, {
+  Document,
+  Model,
+  Schema,
+} from 'mongoose';
 
 export interface IUser extends Document {
   discordId: string;
+
   username: string;
+
+  globalName?: string;
+
   avatar?: string;
-  isAdmin: boolean;
-  rewards: {
-    points: number;
-  };
-  licenses: ILicense[];
-  accessToken?: string; // 🟢 AJOUT CRUCIAL : Déclaration de type pour votre session Discord
+
+  accessToken?: string;
+
+  refreshToken?: string;
+
+  tokenExpiresAt?: Date;
+
+  guilds: Array<{
+    id: string;
+    name: string;
+    icon?: string | null;
+    owner?: boolean;
+    permissions?: string;
+  }>;
+
   createdAt: Date;
+
+  updatedAt: Date;
 }
 
-const LicenseSchema = new Schema({
-  licenseKey: { type: String, required: true },
-  tier: { type: String, required: true, default: 'premium' },
-  status: { type: String, required: true, default: 'active' }
-});
 
-const UserSchema = new Schema({
-  discordId: { type: String, required: true, unique: true, index: true },
-  username: { type: String, required: true },
-  avatar: { type: String, default: null },
-  isAdmin: { type: Boolean, default: false },
-  rewards: {
-    points: { type: Number, default: 0 }
-  },
-  licenses: [LicenseSchema],
-  accessToken: { type: String, default: null }, // 🟢 AJOUT CRUCIAL : Autorise Mongoose à sauvegarder la clé d'accès Discord
-  createdAt: { type: Date, default: Date.now }
-});
+const UserSchema =
+  new Schema<IUser>(
+    {
+      discordId: {
+        type: String,
+        required: true,
+        unique: true,
+        index: true,
+      },
 
-// Export nommé conforme aux importations de vos routeurs d'administration ({ User })
-export const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+      username: {
+        type: String,
+        required: true,
+      },
+
+      globalName: {
+        type: String,
+      },
+
+      avatar: {
+        type: String,
+      },
+
+      accessToken: {
+        type: String,
+
+        select: false,
+      },
+
+      refreshToken: {
+        type: String,
+
+        select: false,
+      },
+
+      tokenExpiresAt: {
+        type: Date,
+      },
+
+      guilds: [
+        {
+          id: String,
+
+          name: String,
+
+          icon: String,
+
+          owner: Boolean,
+
+          permissions: String,
+        },
+      ],
+    },
+
+    {
+      timestamps: true,
+    }
+  );
+
+
+export const User: Model<IUser> =
+  mongoose.models.User ||
+  mongoose.model<IUser>(
+    'User',
+    UserSchema
+  );
+
+
+export default User;

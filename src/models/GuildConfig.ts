@@ -1,279 +1,293 @@
-/**
- * ====================================================================
- * SCHÉMA DE CONFIGURATION DES SERVEURS (OMNIX CORE - TICKETS ULTRA PRO)
- * ====================================================================
- */
-
-import mongoose, { Schema, Document } from 'mongoose'; // 🟢 CORRIGÉ : Import de mongoose global pour compatibilité ESM
-
-export interface ITicketCategory {
-  id: string;             // Identifiant unique (ex: support_tech)
-  name: string;           // Nom de l'affichage (ex: Support technique)
-  emoji: string;          // Émoji d'affichage (ex: 🔧)
-  type: 'category' | 'channel' | 'thread'; // Type d'ouverture du ticket
-  targetId: string | null; // ID Discord du salon ou de la catégorie de destination
-  welcomeMessage: string; // Message d'accueil personnalisé modifiable depuis le site
-}
+import mongoose, {
+  Document,
+  Model,
+  Schema,
+} from 'mongoose';
 
 export interface IGuildConfig extends Document {
   guildId: string;
-  premium: {
-    isPremium: boolean;
-    tier: 'free' | 'premium' | 'lifetime' | 'enterprise';
-    expiresAt: Date | null;
-  };
+
+  prefix: string;
+
+  language: string;
+
   modules: {
+    moderation: {
+      enabled: boolean;
+    };
+
     tickets: {
       enabled: boolean;
-      categoryId: string | null;         // Catégorie de repli par défaut
-      counter: number;                   // Compteur pour les numéros de tickets
-      categoriesList: ITicketCategory[]; // Liste des catégories de tickets créées
+      categoryId?: string;
+      supportRoleId?: string;
     };
+
+    giveaways: {
+      enabled: boolean;
+    };
+
+    suggestions: {
+      enabled: boolean;
+    };
+
+    logs: {
+      enabled: boolean;
+      channelId?: string;
+    };
+
+    welcome: {
+      enabled: boolean;
+      channelId?: string;
+      message?: string;
+    };
+
+    goodbye: {
+      enabled: boolean;
+      channelId?: string;
+      message?: string;
+    };
+
+    autoRole: {
+      enabled: boolean;
+      roleId?: string;
+    };
+
     antiRaid: {
       enabled: boolean;
-      thresholdCount: number;
-      thresholdSeconds: number;
     };
+
     antiSpam: {
       enabled: boolean;
-      maxMessages: number;
-      windowSeconds: number;
     };
+
     antiLink: {
       enabled: boolean;
-      allowedDomains: string[];
     };
+
     autoMod: {
       enabled: boolean;
-      blacklistedWords: string[];
     };
+
     levels: {
       enabled: boolean;
-      xpPerMessage: number;
-      rewardRoles: { level: number; roleId: string }[];
     };
+
     economy: {
       enabled: boolean;
-      currencySymbol: string;
-      workCooldownMinutes: number;
     };
+
     music: {
       enabled: boolean;
     };
+
     ai: {
       enabled: boolean;
       systemPrompt: string;
-      contextLimit: number;
     };
+
     counting: {
       enabled: boolean;
-      channelId: string | null;
-      currentNumber: number;
+      channelId?: string;
     };
+
     autoReactions: {
       enabled: boolean;
-      rules: { trigger: string; emojis: string[] }[];
     };
+
     scheduledMessages: {
       enabled: boolean;
-      list: { message: string; cronPattern: string; channelId: string }[];
     };
+
     polls: {
       enabled: boolean;
     };
+
     verification: {
       enabled: boolean;
-      roleId: string | null;
     };
+
     backups: {
       enabled: boolean;
     };
+
     customCommands: {
       enabled: boolean;
-      list: { trigger: string; response: string }[];
     };
+
     statistics: {
       enabled: boolean;
     };
+
     ping: {
       enabled: boolean;
-    };
-    honeypot: {
-      enabled: boolean;
-      channelId: string | null;
-    };
-    // ==========================================
-    // NOUVEAUX MODULES INTÉGRÉS
-    // ==========================================
-    say: {
-      enabled: boolean;
-    };
-    autoRole: {
-      enabled: boolean;
-      roleId: string | null;
-    };
-    reactionRoles: {
-      enabled: boolean;
-      list: { messageId: string; emoji: string; roleId: string }[];
-    };
-    logs: {
-      enabled: boolean;
-      joinsChannelId: string | null;
-      leavesChannelId: string | null;
-      modChannelId: string | null;
-      ticketsChannelId: string | null;
-      securityChannelId: string | null;
-      errorsChannelId: string | null;
-      botChannelId: string | null;
-      voiceChannelId: string | null;
-      roleChannelId: string | null;
     };
   };
+
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-// Schéma secondaire pour les catégories de tickets
-const TicketCategorySchema = new Schema<ITicketCategory>({
-  id: { type: String, required: true },
-  name: { type: String, required: true },
-  emoji: { type: String, default: '' },
-  type: { type: String, enum: ['category', 'channel', 'thread'], default: 'channel' },
-  targetId: { type: String, default: null },
-  welcomeMessage: { type: String, default: 'Bienvenue dans votre ticket.' }
-}, { _id: false });
 
-// Schéma principal de configuration du serveur
-const GuildConfigSchema = new Schema<IGuildConfig>({
-  guildId: { type: String, required: true, unique: true, index: true },
-  premium: {
-    isPremium: { type: Boolean, default: false },
-    tier: { type: String, enum: ['free', 'premium', 'lifetime', 'enterprise'], default: 'free' },
-    expiresAt: { type: Date, default: null }
+const enabledModule = () => ({
+  enabled: {
+    type: Boolean,
+    default: false,
   },
-  modules: {
-    tickets: {
-      enabled: { type: Boolean, default: false },
-      categoryId: { type: String, default: null },
-      counter: { type: Number, default: 0 },
-      categoriesList: [TicketCategorySchema]
-    },
-    antiRaid: {
-      enabled: { type: Boolean, default: false },
-      thresholdCount: { type: Number, default: 5 },
-      thresholdSeconds: { type: Number, default: 10 }
-    },
-    antiSpam: {
-      enabled: { type: Boolean, default: false },
-      maxMessages: { type: Number, default: 5 },
-      windowSeconds: { type: Number, default: 5 }
-    },
-    antiLink: {
-      enabled: { type: Boolean, default: false },
-      allowedDomains: [{ type: String }]
-    },
-    autoMod: {
-      enabled: { type: Boolean, default: false },
-      blacklistedWords: [{ type: String }]
-    },
-    levels: {
-      enabled: { type: Boolean, default: false },
-      xpPerMessage: { type: Number, default: 15 },
-      rewardRoles: [{
-        level: { type: Number, required: true },
-        roleId: { type: String, required: true }
-      }]
-    },
-    economy: {
-      enabled: { type: Boolean, default: false },
-      currencySymbol: { type: String, default: '$' },
-      workCooldownMinutes: { type: Number, default: 60 }
-    },
-    music: {
-      enabled: { type: Boolean, default: false }
-    },
-    ai: {
-      enabled: { type: Boolean, default: false },
-      systemPrompt: { type: String, default: 'Tu es un assistant utile.' },
-      contextLimit: { type: Number, default: 10 }
-    },
-    counting: {
-      enabled: { type: Boolean, default: false },
-      channelId: { type: String, default: null },
-      currentNumber: { type: Number, default: 0 }
-    },
-    autoReactions: {
-      enabled: { type: Boolean, default: false },
-      rules: [{
-        trigger: { type: String, required: true },
-        emojis: [{ type: String }]
-      }]
-    },
-    scheduledMessages: {
-      enabled: { type: Boolean, default: false },
-      list: [{
-        message: { type: String, required: true },
-        cronPattern: { type: String, required: true },
-        channelId: { type: String, required: true }
-      }]
-    },
-    polls: {
-      enabled: { type: Boolean, default: false }
-    },
-    verification: {
-      enabled: { type: Boolean, default: false },
-      roleId: { type: String, default: null }
-    },
-    backups: {
-      enabled: { type: Boolean, default: false }
-    },
-    customCommands: {
-      enabled: { type: Boolean, default: false },
-      list: [{
-        trigger: { type: String, required: true },
-        response: { type: String, required: true }
-      }]
-    },
-    statistics: {
-      enabled: { type: Boolean, default: false }
-    },
-    ping: {
-      enabled: { type: Boolean, default: true }
-    },
-    honeypot: {
-      enabled: { type: Boolean, default: false },
-      channelId: { type: String, default: null }
-    },
-    // ==========================================
-    // INITIALISATIONS DES NOUVEAUX MODULES EN BD
-    // ==========================================
-    say: {
-      enabled: { type: Boolean, default: false }
-    },
-    autoRole: {
-      enabled: { type: Boolean, default: false },
-      roleId: { type: String, default: null }
-    },
-    reactionRoles: {
-      enabled: { type: Boolean, default: false },
-      list: [{
-        messageId: { type: String, required: true },
-        emoji: { type: String, required: true },
-        roleId: { type: String, required: true }
-      }]
-    },
-    logs: {
-      enabled: { type: Boolean, default: false },
-      joinsChannelId: { type: String, default: null },
-      leavesChannelId: { type: String, default: null },
-      modChannelId: { type: String, default: null },
-      ticketsChannelId: { type: String, default: null },
-      securityChannelId: { type: String, default: null },
-      errorsChannelId: { type: String, default: null },
-      botChannelId: { type: String, default: null },
-      voiceChannelId: { type: String, default: null },
-      roleChannelId: { type: String, default: null }
-    }
-  }
-}, { timestamps: true });
+});
 
-// 🟢 CORRIGÉ : Utilise mongoose.models.GuildConfig pour compatibilité et sécurité d'écrasement ESM
-export const GuildConfig = mongoose.models.GuildConfig || mongoose.model<IGuildConfig>('GuildConfig', GuildConfigSchema);
+
+const GuildConfigSchema =
+  new Schema<IGuildConfig>(
+    {
+      guildId: {
+        type: String,
+        required: true,
+        unique: true,
+        index: true,
+      },
+
+      prefix: {
+        type: String,
+        default: '!cm-',
+      },
+
+      language: {
+        type: String,
+        default: 'fr',
+      },
+
+      modules: {
+        moderation: enabledModule(),
+
+        tickets: {
+          enabled: {
+            type: Boolean,
+            default: false,
+          },
+
+          categoryId: String,
+
+          supportRoleId: String,
+        },
+
+        giveaways: enabledModule(),
+
+        suggestions: enabledModule(),
+
+        logs: {
+          enabled: {
+            type: Boolean,
+            default: false,
+          },
+
+          channelId: String,
+        },
+
+        welcome: {
+          enabled: {
+            type: Boolean,
+            default: false,
+          },
+
+          channelId: String,
+
+          message: String,
+        },
+
+        goodbye: {
+          enabled: {
+            type: Boolean,
+            default: false,
+          },
+
+          channelId: String,
+
+          message: String,
+        },
+
+        autoRole: {
+          enabled: {
+            type: Boolean,
+            default: false,
+          },
+
+          roleId: String,
+        },
+
+        antiRaid: enabledModule(),
+
+        antiSpam: enabledModule(),
+
+        antiLink: enabledModule(),
+
+        autoMod: enabledModule(),
+
+        levels: enabledModule(),
+
+        economy: enabledModule(),
+
+        music: enabledModule(),
+
+        ai: {
+          enabled: {
+            type: Boolean,
+            default: false,
+          },
+
+          systemPrompt: {
+            type: String,
+
+            default:
+              'Tu es OMNIX, un assistant intelligent pour un serveur Discord. Réponds clairement, utilement et en français.',
+          },
+        },
+
+        counting: {
+          enabled: {
+            type: Boolean,
+            default: false,
+          },
+
+          channelId: String,
+        },
+
+        autoReactions: enabledModule(),
+
+        scheduledMessages: enabledModule(),
+
+        polls: enabledModule(),
+
+        verification: enabledModule(),
+
+        backups: enabledModule(),
+
+        customCommands: enabledModule(),
+
+        statistics: enabledModule(),
+
+        ping: {
+          enabled: {
+            type: Boolean,
+            default: true,
+          },
+        },
+      },
+    },
+
+    {
+      timestamps: true,
+
+      minimize: false,
+    }
+  );
+
+
+export const GuildConfig: Model<IGuildConfig> =
+  mongoose.models.GuildConfig ||
+  mongoose.model<IGuildConfig>(
+    'GuildConfig',
+    GuildConfigSchema
+  );
+
+
+export default GuildConfig;
