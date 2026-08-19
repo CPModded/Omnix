@@ -7,94 +7,126 @@ import express, {
 import jwt from 'jsonwebtoken';
 
 import { CONFIG } from '../../config/index.ts';
-
+import { User } from '../../models/User.ts';
 import AiSession from '../../models/AiSession.ts';
 
 const router = express.Router();
-
-const COOKIE_NAME = 'jwt_token';
-
 
 /* =========================================================
    TYPES
 ========================================================= */
 
-interface AuthenticatedRequest
-  extends Request {
-
+interface AuthenticatedRequest extends Request {
   user?: {
     discordId: string;
-
     username?: string;
-
     isOwner?: boolean;
-
     isAdmin?: boolean;
   };
 }
 
+/* =========================================================
+   OWNER IDS
+========================================================= */
+
+/**
+ * Récupère les IDs propriétaires depuis la configuration.
+ *
+ * Priorité :
+ * 1. CONFIG.OWNER_IDS
+ * 2. process.env.OWNER_IDS
+ */
+function getOwnerIds(): string[] {
+  const configured = (CONFIG as any).OWNER_IDS;
+
+  if (Array.isArray(configured)) {
+    return configured
+      .map((id) => String(id).trim())
+      .filter(Boolean);
+  }
+
+  return (process.env.OWNER_IDS || '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
+}
+
+/* =========================================================
+   OWNER CHECK
+========================================================= */
+
+export function isOwner(discordId: string): boolean {
+  const ownerIds = getOwnerIds();
+
+  return ownerIds.includes(String(discordId).trim());
+}
 
 /* =========================================================
    TOKEN
 ========================================================= */
 
-function getToken(
-  req: Request
-): string | null {
+/**
+ * Récupère le JWT depuis :
+ *
+ * 1. Authorization: Bearer <token>
+ * 2. Cookie httpOnly: jwt_token
+ *
+ * IMPORTANT :
+ * On ne cherche plus "omnix_token".
+ */
+function getToken(req: Request): string | null {
+  /* -------------------------------------------------------
+     BEARER TOKEN
+  ------------------------------------------------------- */
 
-  /*
-   * Authorization: Bearer TOKEN
-   */
-
-  const authorization =
-    req.headers.authorization;
+  const authorization = req.headers.authorization;
 
   if (
     authorization &&
-    authorization.startsWith('Bearer ')
+    authorization.toLowerCase().startsWith('bearer ')
   ) {
+    const bearer = authorization
+      .substring(7)
+      .trim();
 
-    const token =
-      authorization
-        .substring(7)
-        .trim();
-
-    if (token) {
-      return token;
+    if (bearer) {
+      return bearer;
     }
   }
 
+  /* -------------------------------------------------------
+     COOKIE
+  ------------------------------------------------------- */
 
-  /*
-   * Cookie principal
-   */
+  const cookieToken = req.cookies?.jwt_token;
 
-  const cookie =
-    req.cookies?.[COOKIE_NAME];
-
-  if (cookie) {
-    return cookie;
+  if (
+    typeof cookieToken === 'string' &&
+    cookieToken.trim()
+  ) {
+    return cookieToken.trim();
   }
-
-
-  /*
-   * Ancien cookie pour compatibilité
-   */
-
-  const oldCookie =
-    req.cookies?.omnix_token;
-
-  if (oldCookie) {
-    return oldCookie;
-  }
-
 
   return null;
 }
 
+/* =========================================================
+   JWT VERIFY
+========================================================= */
+
+function verifyToken(token: string): any | null {
+  try {
+    return jwt.verify(
+      token,
+      CONFIG.JWT_SECRET
+    );
+  } catch {
+    return null;
+  }
+}
 
 /* =========================================================
-   AUTHENTIFICATION
+   REQUIRE AUTH
 ========================================================= */
 
 function requireAuth(
@@ -102,305 +134,238 @@ function requireAuth(
   res: Response,
   next: NextFunction
 ) {
+  const token = getToken(req);
 
-  const token =
-    getToken(req);
-
+  /* -------------------------------------------------------
+     AUCUNE SESSION
+  ------------------------------------------------------- */
 
   if (!token) {
-
-    return res
-      .status(401)
-      .json({
-        success: false,
-
-        error:
-          'Non connecté.',
-      });
-  }
-
-
-  try {
-
-    const decoded =
-      jwt.verify(
-        token,
-        CONFIG.JWT_SECRET
-      ) as {
-        discordId: string;
-
-        username?: string;
-
-        isOwner?: boolean;
-
-        isAdmin?: boolean;
-      };
-
-
-    if (!decoded.discordId) {
-
-      return res
-        .status(401)
-        .json({
-          success: false,
-
-          error:
-            'JWT invalide.',
-        });
-    }
-
-
-    req.user =
-      decoded;
-
-
-    return next();
-
-  } catch (error) {
-
-    console.error(
-      '[Admin Auth] JWT invalide :',
-      error
+    console.warn(
+      `[Admin] Session absente : ${req.method} ${req.originalUrl}`
     );
 
+    if (req.path.startsWith('/api/')) {
+      return res.status(401).json({
+        success: false,
+        error: 'Session inexistante.',
+      });
+    }
+
+    return res.redirect('/');
+  }
+
+  /* -------------------------------------------------------
+     VALIDATION JWT
+  ------------------------------------------------------- */
+
+  const decoded = verifyToken(token);
+
+  if (!decoded || !decoded.discordId) {
+    console.warn(
+      `[Admin] JWT invalide ou expiré : ${req.method} ${req.originalUrl}`
+    );
 
     res.clearCookie(
-      COOKIE_NAME,
+      'jwt_token',
       {
+        httpOnly: true,
+        secure:
+          process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
         path: '/',
       }
     );
 
-
-    return res
-      .status(401)
-      .json({
+    if (req.path.startsWith('/api/')) {
+      return res.status(401).json({
         success: false,
-
-        error:
-          'Session expirée.',
+        error: 'Session invalide ou expirée.',
       });
+    }
+
+    return res.redirect('/');
   }
+
+  /* -------------------------------------------------------
+     UTILISATEUR AUTHENTIFIÉ
+  ------------------------------------------------------- */
+
+  req.user = {
+    discordId: String(decoded.discordId),
+    username: decoded.username,
+    isOwner: Boolean(decoded.isOwner),
+    isAdmin: Boolean(decoded.isAdmin),
+  };
+
+  next();
 }
 
-
 /* =========================================================
-   OWNER
+   REQUIRE OWNER
 ========================================================= */
 
-function requireOwner(
+async function requireOwner(
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ) {
-
-  const discordId =
-    req.user?.discordId;
-
+  const discordId = req.user?.discordId;
 
   if (!discordId) {
-
-    return res
-      .status(401)
-      .json({
-        success: false,
-
-        error:
-          'Non authentifié.',
-      });
+    return res.status(401).json({
+      success: false,
+      error: 'Non authentifié.',
+    });
   }
 
+  const ownerIds = getOwnerIds();
 
-  const ownerIds = [
-  ...(Array.isArray(CONFIG.OWNER_IDS)
-    ? CONFIG.OWNER_IDS
-    : []),
+  const owner = ownerIds.includes(
+    String(discordId).trim()
+  );
 
-  ...(process.env.OWNER_IDS || '')
-    .split(',')
-]
-  .map(String)
-  .map(id => id.trim())
-  .filter(Boolean);
+  /* -------------------------------------------------------
+     REFUS
+  ------------------------------------------------------- */
 
-
-  const isOwner =
-    ownerIds.includes(
-      String(discordId)
-    );
-
-
-  if (!isOwner) {
-
+  if (!owner) {
     console.warn(
       `[Admin] Tentative d'accès refusée : ${discordId}`
     );
 
+    console.warn(
+      `[Admin] OWNER_IDS configurés : ${
+        ownerIds.join(', ') || 'AUCUN'
+      }`
+    );
 
-    return res
-      .status(403)
-      .json({
-        success: false,
-
-        error:
-          'Accès réservé au propriétaire d’OMNIX.',
-      });
+    return res.status(403).json({
+      success: false,
+      error:
+        'Accès réservé au propriétaire d’OMNIX.',
+    });
   }
 
+  /* -------------------------------------------------------
+     SYNCHRONISATION MONGO
+  ------------------------------------------------------- */
 
-  return next();
+  try {
+    await User.updateOne(
+      {
+        discordId,
+      },
+      {
+        $set: {
+          isAdmin: true,
+        },
+      }
+    );
+  } catch (error) {
+    console.warn(
+      '[Admin] Impossible de synchroniser isAdmin.',
+      error
+    );
+  }
+
+  next();
 }
 
-
 /* =========================================================
-   TEST AUTH
+   ADMIN DEBUG
 ========================================================= */
 
+/**
+ * Route de diagnostic.
+ *
+ * URL :
+ * /api/admin/debug
+ *
+ * Cette route permet de vérifier :
+ *
+ * - le compte Discord connecté
+ * - les OWNER_IDS
+ * - si le compte est propriétaire
+ * - l'environnement
+ */
 router.get(
-  '/api/admin/auth',
+  '/api/admin/debug',
   requireAuth,
-  requireOwner,
   (
     req: AuthenticatedRequest,
     res: Response
   ) => {
+    const ownerIds = getOwnerIds();
 
-    return res.json({
+    const discordId =
+      req.user?.discordId || null;
 
-      success: true,
-
-      owner: true,
-
-      discordId:
-        req.user?.discordId,
-
-      username:
-        req.user?.username,
-
-      model:
-        CONFIG.OPENROUTER.MODEL,
-    });
-  }
-);
-
-
-/* =========================================================
-   STATS GLOBALES
-========================================================= */
-
-router.get(
-  '/api/stats',
-  requireAuth,
-  requireOwner,
-  async (
-    req: AuthenticatedRequest,
-    res: Response
-  ) => {
-
-    try {
-
-      const sessions =
-        await AiSession.find({});
-
-
-      const stats =
-        sessions.reduce(
-          (
-            total,
-            session
-          ) => {
-
-            total.requests +=
-              session.totalRequests || 0;
-
-            total.promptTokens +=
-              session.totalPromptTokens || 0;
-
-            total.completionTokens +=
-              session.totalCompletionTokens || 0;
-
-            total.tokens +=
-              session.totalTokens || 0;
-
-            return total;
-          },
-
-          {
-            requests: 0,
-
-            promptTokens: 0,
-
-            completionTokens: 0,
-
-            tokens: 0,
-          }
-        );
-
-
-      return res.json({
-
-        success: true,
-
-        stats,
-
-      });
-
-    } catch (error) {
-
-      console.error(
-        '[Stats]',
-        error
+    const owner =
+      discordId !== null &&
+      ownerIds.includes(
+        String(discordId).trim()
       );
 
+    return res.json({
+      success: true,
 
-      return res
-        .status(500)
-        .json({
+      discordId,
 
-          success: false,
+      ownerIds,
 
-          error:
-            'Impossible de récupérer les statistiques.',
-        });
-    }
+      isOwner: owner,
+
+      environment:
+        process.env.NODE_ENV || 'undefined',
+    });
   }
 );
 
-
 /* =========================================================
-   AI DEV ACCESS
+   ADMIN OWNER
 ========================================================= */
 
+/**
+ * Vérifie que l'utilisateur connecté
+ * est bien le propriétaire OMNIX.
+ */
 router.get(
-  '/api/admin/ai-dev/access',
+  '/api/admin/owner',
   requireAuth,
   requireOwner,
   (
     req: AuthenticatedRequest,
     res: Response
   ) => {
-
     return res.json({
-
       success: true,
 
       owner: true,
 
       discordId:
-        req.user?.discordId,
+        req.user?.discordId || null,
 
-      model:
-        CONFIG.OPENROUTER.MODEL,
-
+      message:
+        'Bienvenue dans la console propriétaire OMNIX.',
     });
   }
 );
 
-
 /* =========================================================
-   AI DEV STATS
+   STATISTIQUES IA
 ========================================================= */
 
+/**
+ * Statistiques privées de l'IA.
+ *
+ * IMPORTANT :
+ *
+ * Cette route n'est PAS la route publique
+ * /api/stats.
+ *
+ * Elle est réservée au propriétaire.
+ */
 router.get(
   '/api/admin/ai-dev/stats',
   requireAuth,
@@ -409,12 +374,9 @@ router.get(
     req: AuthenticatedRequest,
     res: Response
   ) => {
-
     try {
-
       const sessions =
         await AiSession.find({});
-
 
       let requests = 0;
 
@@ -424,31 +386,40 @@ router.get(
 
       let totalTokens = 0;
 
+      /* -----------------------------------------------------
+         CALCUL
+      ----------------------------------------------------- */
 
-      for (
-        const session of sessions
-      ) {
-
+      for (const session of sessions) {
         requests +=
-          session.totalRequests || 0;
+          Number(
+            session.totalRequests || 0
+          );
 
         promptTokens +=
-          session.totalPromptTokens || 0;
+          Number(
+            session.totalPromptTokens || 0
+          );
 
         completionTokens +=
-          session.totalCompletionTokens || 0;
+          Number(
+            session.totalCompletionTokens || 0
+          );
 
         totalTokens +=
-          session.totalTokens || 0;
+          Number(
+            session.totalTokens || 0
+          );
       }
 
+      /* -----------------------------------------------------
+         RÉPONSE
+      ----------------------------------------------------- */
 
       return res.json({
-
         success: true,
 
         stats: {
-
           requests,
 
           promptTokens,
@@ -459,62 +430,53 @@ router.get(
 
           sessions:
             sessions.length,
-
         },
-
       });
-
     } catch (error) {
-
       console.error(
-        '[AI Stats]',
+        '[Admin AI Stats]',
         error
       );
 
+      return res.status(500).json({
+        success: false,
 
-      return res
-        .status(500)
-        .json({
-
-          success: false,
-
-          error:
-            'Erreur statistiques IA.',
-        });
+        error:
+          'Erreur lors du chargement des statistiques IA.',
+      });
     }
   }
 );
 
-
 /* =========================================================
-   OWNER PANEL
+   AI DEV ACCESS
 ========================================================= */
 
+/**
+ * Vérifie l'accès à la console AI Developer.
+ */
 router.get(
-  '/api/admin/owner',
+  '/api/admin/ai-dev/access',
   requireAuth,
   requireOwner,
   (
     req: AuthenticatedRequest,
     res: Response
   ) => {
-
     return res.json({
-
       success: true,
 
       owner: true,
 
-      message:
-        'Bienvenue dans la console propriétaire OMNIX.',
-
       discordId:
-        req.user?.discordId,
+        req.user?.discordId || null,
 
+      model:
+        (CONFIG as any).OPENROUTER?.MODEL ||
+        'non-configuré',
     });
   }
 );
-
 
 /* =========================================================
    EXPORT
