@@ -12,14 +12,14 @@ import { CONFIG } from '../../config/index.ts';
 const router = express.Router();
 
 /* =========================================================
-   CONFIGURATION DISCORD
+   CONFIGURATION
 ========================================================= */
 
-const DISCORD_API =
-  'https://discord.com/api/v10';
+const DISCORD_API = 'https://discord.com/api/v10';
+const DISCORD_OAUTH_API = 'https://discord.com/api/oauth2/token';
 
-const DISCORD_OAUTH_API =
-  'https://discord.com/api/oauth2/token';
+const COOKIE_NAME = 'jwt_token';
+const JWT_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 
 
 /* =========================================================
@@ -53,22 +53,11 @@ interface DiscordGuild {
 
 
 /* =========================================================
-   OUTILS
+   OWNER
 ========================================================= */
 
-/**
- * Retourne la liste des propriétaires OMNIX.
- *
- * Compatible avec :
- *
- * OWNER_IDS=123456789,987654321
- *
- * ou avec une configuration CONFIG.OWNER_IDS.
- */
 function getOwnerIds(): string[] {
-
-  const configured =
-    (CONFIG as any).OWNER_IDS;
+  const configured = CONFIG.OWNER_IDS;
 
   if (Array.isArray(configured)) {
     return configured
@@ -77,39 +66,28 @@ function getOwnerIds(): string[] {
       .filter(Boolean);
   }
 
-  const envValue =
-    process.env.OWNER_IDS || '';
-
-  return envValue
+  return (process.env.OWNER_IDS || '')
     .split(',')
     .map(id => id.trim())
     .filter(Boolean);
 }
 
 
-/**
- * Vérifie si un utilisateur est propriétaire
- * d'OMNIX.
- */
-function isOwner(
-  discordId: string
-): boolean {
-
-  return getOwnerIds()
-    .includes(discordId);
+function isOwner(discordId: string): boolean {
+  return getOwnerIds().includes(String(discordId));
 }
 
 
-/**
- * Crée un JWT OMNIX.
- */
+/* =========================================================
+   JWT
+========================================================= */
+
 function createJwt(
   user: DiscordUser,
   premium = false
 ): string {
 
-  const owner =
-    isOwner(user.id);
+  const owner = isOwner(user.id);
 
   return jwt.sign(
     {
@@ -138,51 +116,109 @@ function createJwt(
 }
 
 
-/**
- * Vérifie un JWT envoyé dans Authorization.
- */
-function extractBearerToken(
-  req: Request
-): string | null {
-
-  const header =
-    req.headers.authorization;
-
-  if (!header) {
-    return null;
-  }
-
-  if (!header.startsWith('Bearer ')) {
-    return null;
-  }
-
-  return header.substring(7).trim();
-}
-
-
-/**
- * Vérifie un JWT et retourne son contenu.
- */
-function verifyJwt(
-  token: string
-): any | null {
-
+function verifyJwt(token: string): any | null {
   try {
-
     return jwt.verify(
       token,
       CONFIG.JWT_SECRET
     );
-
   } catch {
-
     return null;
   }
 }
 
 
 /* =========================================================
-   1. CONNEXION DISCORD
+   TOKEN EXTRACTION
+========================================================= */
+
+function extractToken(
+  req: Request
+): string | null {
+
+  /*
+   * 1. Authorization Bearer
+   */
+
+  const authorization =
+    req.headers.authorization;
+
+  if (
+    authorization &&
+    authorization.startsWith('Bearer ')
+  ) {
+    const token =
+      authorization
+        .substring(7)
+        .trim();
+
+    if (token) {
+      return token;
+    }
+  }
+
+
+  /*
+   * 2. Cookie principal
+   */
+
+  const cookieToken =
+    req.cookies?.[COOKIE_NAME];
+
+  if (cookieToken) {
+    return cookieToken;
+  }
+
+
+  /*
+   * 3. Ancien cookie éventuel
+   *
+   * Permet de récupérer les anciennes sessions.
+   */
+
+  const legacyToken =
+    req.cookies?.omnix_token;
+
+  if (legacyToken) {
+    return legacyToken;
+  }
+
+
+  return null;
+}
+
+
+/* =========================================================
+   COOKIE
+========================================================= */
+
+function setAuthCookie(
+  res: Response,
+  token: string
+): void {
+
+  res.cookie(
+    COOKIE_NAME,
+    token,
+    {
+      httpOnly: true,
+
+      secure:
+        process.env.NODE_ENV === 'production',
+
+      sameSite: 'lax',
+
+      maxAge:
+        JWT_MAX_AGE,
+
+      path: '/',
+    }
+  );
+}
+
+
+/* =========================================================
+   1. LOGIN DISCORD
 ========================================================= */
 
 router.get(
@@ -194,21 +230,21 @@ router.get(
 
     const clientId =
       process.env.DISCORD_CLIENT_ID ||
-      (CONFIG as any).DISCORD?.CLIENT_ID;
+      CONFIG.DISCORD.CLIENT_ID;
 
     const redirectUri =
       process.env.DISCORD_REDIRECT_URI ||
-      (CONFIG as any).DISCORD?.REDIRECT_URI;
+      CONFIG.DISCORD.REDIRECT_URI;
+
 
     if (!clientId) {
-
       return res.status(500).send(
         '❌ DISCORD_CLIENT_ID est manquant.'
       );
     }
 
-    if (!redirectUri) {
 
+    if (!redirectUri) {
       return res.status(500).send(
         '❌ DISCORD_REDIRECT_URI est manquant.'
       );
@@ -217,27 +253,19 @@ router.get(
 
     const params =
       new URLSearchParams({
+        client_id: clientId,
 
-        client_id:
-          clientId,
+        redirect_uri: redirectUri,
 
-        redirect_uri:
-          redirectUri,
+        response_type: 'code',
 
-        response_type:
-          'code',
-
-        scope:
-          'identify guilds',
-
+        scope: 'identify guilds',
       });
 
 
-    const url =
-      `https://discord.com/oauth2/authorize?${params.toString()}`;
-
-
-    return res.redirect(url);
+    return res.redirect(
+      `https://discord.com/oauth2/authorize?${params.toString()}`
+    );
   }
 );
 
@@ -271,15 +299,15 @@ router.get(
 
       const clientId =
         process.env.DISCORD_CLIENT_ID ||
-        (CONFIG as any).DISCORD?.CLIENT_ID;
+        CONFIG.DISCORD.CLIENT_ID;
 
       const clientSecret =
         process.env.DISCORD_CLIENT_SECRET ||
-        (CONFIG as any).DISCORD?.CLIENT_SECRET;
+        CONFIG.DISCORD.CLIENT_SECRET;
 
       const redirectUri =
         process.env.DISCORD_REDIRECT_URI ||
-        (CONFIG as any).DISCORD?.REDIRECT_URI;
+        CONFIG.DISCORD.REDIRECT_URI;
 
 
       if (
@@ -298,20 +326,18 @@ router.get(
       }
 
 
-      /* -----------------------------------------------------
-         ÉCHANGE DU CODE CONTRE UN ACCESS TOKEN
-      ----------------------------------------------------- */
+      /* =====================================================
+         CODE → ACCESS TOKEN
+      ===================================================== */
 
       const tokenResponse =
         await axios.post<DiscordTokenResponse>(
           DISCORD_OAUTH_API,
+
           new URLSearchParams({
+            client_id: clientId,
 
-            client_id:
-              clientId,
-
-            client_secret:
-              clientSecret,
+            client_secret: clientSecret,
 
             grant_type:
               'authorization_code',
@@ -320,8 +346,8 @@ router.get(
 
             redirect_uri:
               redirectUri,
-
           }).toString(),
+
           {
             headers: {
               'Content-Type':
@@ -336,16 +362,15 @@ router.get(
 
 
       if (!accessToken) {
-
         throw new Error(
-          'Discord n\'a pas retourné d\'access_token.'
+          'Discord n’a pas retourné d’access_token.'
         );
       }
 
 
-      /* -----------------------------------------------------
-         RÉCUPÉRATION DU PROFIL DISCORD
-      ----------------------------------------------------- */
+      /* =====================================================
+         PROFIL DISCORD
+      ===================================================== */
 
       const userResponse =
         await axios.get<DiscordUser>(
@@ -363,9 +388,9 @@ router.get(
         userResponse.data;
 
 
-      /* -----------------------------------------------------
-         RÉCUPÉRATION DES SERVEURS
-      ----------------------------------------------------- */
+      /* =====================================================
+         SERVEURS DISCORD
+      ===================================================== */
 
       const guildResponse =
         await axios.get<DiscordGuild[]>(
@@ -383,27 +408,19 @@ router.get(
         guildResponse.data || [];
 
 
-      /* -----------------------------------------------------
+      /* =====================================================
          SERVEURS ADMINISTRABLES
-      ----------------------------------------------------- */
+      ===================================================== */
 
       const manageableGuilds =
         guilds.filter(
           guild => {
 
-            /*
-             * Propriétaire du serveur
-             */
             if (guild.owner) {
               return true;
             }
 
 
-            /*
-             * Permission Administrator
-             *
-             * 0x8 = ADMINISTRATOR
-             */
             if (guild.permissions) {
 
               try {
@@ -414,12 +431,11 @@ router.get(
                   );
 
                 return (
-                  permissions &
+                  (permissions & 0x8n) ===
                   0x8n
-                ) === 0x8n;
+                );
 
               } catch {
-
                 return false;
               }
             }
@@ -430,36 +446,32 @@ router.get(
         );
 
 
-      /* -----------------------------------------------------
-         DONNÉES SERVEURS POUR MONGO
-      ----------------------------------------------------- */
-
       const guildData =
         manageableGuilds.map(
           guild => ({
             id: guild.id,
+
             name: guild.name,
+
             icon: guild.icon,
+
             owner:
               Boolean(guild.owner),
+
             permissions:
               guild.permissions || '0',
           })
         );
 
 
-      /* -----------------------------------------------------
-         UTILISATEUR OMNIX
-      ----------------------------------------------------- */
+      /* =====================================================
+         USER OMNIX
+      ===================================================== */
 
       const owner =
         isOwner(discordUser.id);
 
 
-      /*
-       * On tente de conserver le statut Premium
-       * existant.
-       */
       const existingUser =
         await User.findOne({
           discordId:
@@ -477,9 +489,9 @@ router.get(
         );
 
 
-      /* -----------------------------------------------------
-         CRÉATION / MISE À JOUR USER
-      ----------------------------------------------------- */
+      /* =====================================================
+         MISE À JOUR MONGO
+      ===================================================== */
 
       await User.findOneAndUpdate(
 
@@ -489,7 +501,6 @@ router.get(
         },
 
         {
-
           discordId:
             discordUser.id,
 
@@ -514,20 +525,22 @@ router.get(
 
           lastLogin:
             new Date(),
-
         },
 
         {
           upsert: true,
+
           new: true,
-          setDefaultsOnInsert: true,
+
+          setDefaultsOnInsert:
+            true,
         }
       );
 
 
-      /* -----------------------------------------------------
-         JWT OMNIX
-      ----------------------------------------------------- */
+      /* =====================================================
+         JWT
+      ===================================================== */
 
       const token =
         createJwt(
@@ -536,35 +549,26 @@ router.get(
         );
 
 
-      /* -----------------------------------------------------
+      /* =====================================================
          COOKIE
-      ----------------------------------------------------- */
+      ===================================================== */
 
-      res.cookie(
-        'jwt_token',
-        token,
-        {
-          httpOnly: true,
-
-          secure:
-            process.env.NODE_ENV ===
-            'production',
-
-          sameSite:
-            'lax',
-
-          maxAge:
-            7 * 24 * 60 * 60 * 1000,
-
-          path:
-            '/',
-        }
+      setAuthCookie(
+        res,
+        token
       );
 
 
-      /* -----------------------------------------------------
-         REDIRECTION DASHBOARD
-      ----------------------------------------------------- */
+      /*
+       * IMPORTANT :
+       *
+       * On ne dépend plus uniquement
+       * de localStorage.
+       *
+       * Le cookie HTTP-only contient
+       * également la session.
+       */
+
 
       const dashboardUrl =
         process.env.CLIENT_URL ||
@@ -573,21 +577,46 @@ router.get(
 
 
       /*
-       * Le Dashboard actuel récupère le JWT
-       * depuis ?token=...
+       * Si CLIENT_URL vaut :
        *
-       * Il le place ensuite dans localStorage.
+       * https://omnix.fr
+       *
+       * on redirige vers :
+       *
+       * https://omnix.fr/dashboard
        */
+
+      let destination =
+        dashboardUrl;
+
+
+      if (
+        !destination.includes('/dashboard')
+      ) {
+
+        destination =
+          destination.replace(
+            /\/$/,
+            ''
+          ) +
+          '/dashboard';
+      }
+
+
+      /*
+       * On garde temporairement ?token
+       * pour compatibilité avec ton Dashboard.
+       */
+
       const separator =
-        dashboardUrl.includes('?')
+        destination.includes('?')
           ? '&'
           : '?';
 
 
       return res.redirect(
-        `${dashboardUrl}${separator}token=${encodeURIComponent(token)}`
+        `${destination}${separator}token=${encodeURIComponent(token)}`
       );
-
 
     } catch (error: any) {
 
@@ -600,77 +629,74 @@ router.get(
 
 
       return res.status(500).send(`
-        <!DOCTYPE html>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Erreur OAuth — OMNIX</title>
 
-        <html lang="fr">
+<style>
+body {
+  background:#030712;
+  color:white;
+  font-family:Arial,sans-serif;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:100vh;
+  text-align:center;
+}
 
-        <head>
-          <meta charset="UTF-8">
-          <title>Erreur OAuth — OMNIX</title>
+.box {
+  max-width:500px;
+  padding:40px;
+  background:#0f172a;
+  border:1px solid #1e293b;
+  border-radius:18px;
+}
 
-          <style>
-            body {
-              background: #030712;
-              color: white;
-              font-family: Arial, sans-serif;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              min-height: 100vh;
-              text-align: center;
-            }
+h1 {
+  color:#f87171;
+}
 
-            .box {
-              max-width: 500px;
-              padding: 40px;
-              background: #0f172a;
-              border: 1px solid #1e293b;
-              border-radius: 18px;
-            }
+a {
+  display:inline-block;
+  margin-top:20px;
+  color:#38bdf8;
+  text-decoration:none;
+}
+</style>
+</head>
 
-            h1 {
-              color: #f87171;
-            }
+<body>
 
-            a {
-              display: inline-block;
-              margin-top: 20px;
-              color: #38bdf8;
-              text-decoration: none;
-            }
-          </style>
-        </head>
+<div class="box">
 
-        <body>
+<h1>
+Connexion impossible
+</h1>
 
-          <div class="box">
+<p>
+Une erreur est survenue pendant
+la connexion Discord.
+</p>
 
-            <h1>
-              Connexion impossible
-            </h1>
+<a href="/">
+← Retour à OMNIX
+</a>
 
-            <p>
-              Une erreur est survenue
-              pendant la connexion Discord.
-            </p>
+</div>
 
-            <a href="/">
-              ← Retour à OMNIX
-            </a>
-
-          </div>
-
-        </body>
-
-        </html>
-      `);
+</body>
+</html>
+`);
     }
   }
 );
 
 
 /* =========================================================
-   3. SERVEURS DU DASHBOARD
+   3. GUILDS
 ========================================================= */
 
 router.get(
@@ -683,14 +709,16 @@ router.get(
     try {
 
       const token =
-        extractBearerToken(req);
+        extractToken(req);
 
 
       if (!token) {
 
         return res.status(401).json({
+          success: false,
+
           error:
-            'Token d\'authentification manquant.',
+            'Token d’authentification manquant.',
         });
       }
 
@@ -702,6 +730,8 @@ router.get(
       if (!payload) {
 
         return res.status(401).json({
+          success: false,
+
           error:
             'Session invalide ou expirée.',
         });
@@ -718,24 +748,21 @@ router.get(
       if (!user) {
 
         return res.status(404).json({
+          success: false,
+
           error:
             'Utilisateur OMNIX introuvable.',
         });
       }
 
 
-      const guilds =
+      return res.json(
         Array.isArray(
           (user as any).guilds
         )
           ? (user as any).guilds
-          : [];
-
-
-      return res.json(
-        guilds
+          : []
       );
-
 
     } catch (error) {
 
@@ -746,6 +773,8 @@ router.get(
 
 
       return res.status(500).json({
+        success: false,
+
         error:
           'Impossible de récupérer les serveurs.',
       });
@@ -755,7 +784,7 @@ router.get(
 
 
 /* =========================================================
-   4. SESSION COURANTE
+   4. SESSION /ME
 ========================================================= */
 
 router.get(
@@ -767,31 +796,15 @@ router.get(
 
     try {
 
-      /*
-       * Ton Dashboard actuel utilise
-       * principalement localStorage.
-       *
-       * On accepte donc :
-       *
-       * 1. Authorization Bearer
-       * 2. cookie jwt_token
-       */
-
-      const bearer =
-        extractBearerToken(req);
-
-      const cookieToken =
-        req.cookies?.jwt_token;
-
       const token =
-        bearer ||
-        cookieToken;
+        extractToken(req);
 
 
       if (!token) {
 
         return res.status(401).json({
           success: false,
+
           error:
             'Utilisateur non connecté.',
         });
@@ -806,6 +819,7 @@ router.get(
 
         return res.status(401).json({
           success: false,
+
           error:
             'Session expirée.',
         });
@@ -823,10 +837,19 @@ router.get(
 
         return res.status(404).json({
           success: false,
+
           error:
             'Utilisateur introuvable.',
         });
       }
+
+
+      const owner =
+        isOwner(
+          String(
+            (user as any).discordId
+          )
+        );
 
 
       return res.json({
@@ -848,9 +871,13 @@ router.get(
             (user as any).avatar,
 
           isAdmin:
+            owner ||
             Boolean(
               (user as any).isAdmin
             ),
+
+          isOwner:
+            owner,
 
           isPremium:
             Boolean(
@@ -858,12 +885,10 @@ router.get(
             ),
 
           guilds:
-            (user as any).guilds || [],
-
+            (user as any).guilds ||
+            [],
         },
-
       });
-
 
     } catch (error) {
 
@@ -875,6 +900,7 @@ router.get(
 
       return res.status(401).json({
         success: false,
+
         error:
           'Session invalide.',
       });
@@ -884,7 +910,7 @@ router.get(
 
 
 /* =========================================================
-   5. DÉCONNEXION
+   5. LOGOUT
 ========================================================= */
 
 router.get(
@@ -895,7 +921,27 @@ router.get(
   ) => {
 
     res.clearCookie(
-      'jwt_token',
+      COOKIE_NAME,
+      {
+        httpOnly: true,
+
+        secure:
+          process.env.NODE_ENV ===
+          'production',
+
+        sameSite: 'lax',
+
+        path: '/',
+      }
+    );
+
+
+    /*
+     * Nettoyage ancien cookie.
+     */
+
+    res.clearCookie(
+      'omnix_token',
       {
         path: '/',
       }
