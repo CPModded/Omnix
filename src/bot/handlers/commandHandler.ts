@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { ExtendedClient } from '../client';
+import { ExtendedClient } from '../../client';
 
 /* =========================================================
    TYPES
