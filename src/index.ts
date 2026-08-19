@@ -11,7 +11,7 @@ import createApp from './api/app.ts';
 
 import {
   client as discordClient,
-} from '.src/bot/client.ts';
+} from './src/bot/client.ts';
 
 import {
   loadCommands,
