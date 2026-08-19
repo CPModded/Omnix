@@ -1,258 +1,865 @@
-import 'dotenv/config'; 
-import express from 'express';
-import path from 'path';
+import 'dotenv/config';
+
 import fs from 'fs';
+import path from 'path';
 import mongoose from 'mongoose';
-import cookieParser from 'cookie-parser';
-import { pathToFileURL } from 'url'; 
-import { Client, GatewayIntentBits, Collection, REST, Routes } from 'discord.js';
-import authRouter from './api/routes/auth.routes.ts'; 
-import adminRouter from './api/routes/admin.routes.ts'; 
-import { askOpenRouter } from './ai/openrouter.ts';
-import aiDevRouter from './api/routes/ai-dev.routes.ts';
+import { pathToFileURL } from 'url';
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+import express from 'express';
 
-// ==========================================
-// 1. CONNEXION À LA BASE DE DONNÉES
-// ==========================================
-async function connectDatabase() {
-  const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || process.env.DATABASE_URL;
-  
+import {
+  Client,
+  Collection,
+  GatewayIntentBits,
+  REST,
+  Routes,
+} from 'discord.js';
+
+import { createApp } from './api/app.ts';
+import { CONFIG, validateProductionConfig } from './config/index.ts';
+
+
+/* =========================================================
+   CONFIGURATION
+========================================================= */
+
+const PORT = CONFIG.PORT;
+
+const PROJECT_ROOT = process.cwd();
+
+
+/* =========================================================
+   TYPES
+========================================================= */
+
+interface OmnixCommand {
+  data: {
+    name: string;
+    toJSON(): unknown;
+  };
+
+  execute(args: {
+    client: Client;
+    interaction: any;
+  }): Promise<void> | void;
+}
+
+
+/* =========================================================
+   CONNEXION MONGODB
+========================================================= */
+
+async function connectDatabase(): Promise<void> {
+
+  const mongoUri = CONFIG.MONGO_URI;
+
   if (!mongoUri) {
-    console.error("[Database] ❌ ERREUR : Aucune adresse de connexion MongoDB trouvée.");
-    console.error("[Database] Veuillez configurer MONGODB_URI ou MONGO_URI dans votre fichier .env.");
-    process.exit(1);
+    throw new Error(
+      '[Database] MONGODB_URI / MONGO_URI est manquante.'
+    );
   }
 
-  if (mongoUri.includes('mongodb+srv')) {
-    console.log("[Database] Connexion à MongoDB Atlas...");
-  } else {
-    console.log("[Database] Connexion à MongoDB local...");
-  }
+  console.log('[Database] Connexion à MongoDB...');
 
   try {
+
     await mongoose.connect(mongoUri);
-    console.log("[Database] Connexion MongoDB établie.");
+
+    console.log(
+      '[Database] ✅ Connexion MongoDB établie.'
+    );
+
   } catch (error) {
-    console.error("[Database] Échec de la connexion à la base de données :", error);
-    process.exit(1);
+
+    console.error(
+      '[Database] ❌ Échec de connexion :',
+      error
+    );
+
+    throw error;
   }
 }
 
-// ==========================================
-// 2. CONFIGURATION DU SERVEUR WEB (EXPRESS)
-// ==========================================
-function setupWebServer() {
-    app.use('/api/ai-dev', aiDevRouter);
-    app.get('/dashboard/omnix-ai', (req, res) => {
-  res.render('ai-dev');
-});
-    
-  console.log("[API] Démarrage du serveur Web...");
 
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
-  app.use(cookieParser());
+/* =========================================================
+   SERVEUR EXPRESS
+========================================================= */
 
-  // Configuration robuste du dossier des Vues (EJS) et des fichiers statiques
-  // (Utilise process.cwd() pour éviter les erreurs de chemin sur Render et Eternodes)
-  const viewsPath = fs.existsSync(path.join(process.cwd(), 'views'))
-    ? path.join(process.cwd(), 'views')
-    : path.join(process.cwd(), 'src/dashboard/views');
+async function setupWebServer() {
 
-  app.set('view engine', 'ejs');
-  app.set('views', viewsPath);
-  app.use(express.static(path.join(process.cwd(), 'public')));
+  console.log('[API] Démarrage du serveur Web...');
 
-  // MONTAGE DE VOS ROUTEURS ALIGNÉS AVEC VOTRE STRATÉGIE D'API
-  // auth.routes.ts gère "/callback", monté sur "/api/auth" -> devient "/api/auth/callback"
-  app.use('/api/auth', authRouter);
-  
-  // admin.routes.ts déclare déjà ses routes avec "/api/admin/..." et "/api/stats",
-  // on le monte donc à la racine sans doublon de préfixe pour que les requêtes fonctionnent.
-  app.use(adminRouter); 
+  const app = createApp();
 
-  // Routes de base pour le fonctionnement du site
-  app.get('/', (req, res) => {
-    res.render('index', {
-      clientId: process.env.DISCORD_CLIENT_ID || "",
-      redirectUri: process.env.DISCORD_REDIRECT_URI || ""
-    });
-  });
+  const server = app.listen(
+    PORT,
+    () => {
 
-  app.get('/founder', (req, res) => {
-    res.render('founder', {
-      founder: {
-        name: "Weritale",
-        description: "Créateur et développeur principal de la plateforme OMNIX.",
-        officialServer: "https://discord.gg/omnix"
-      }
-    });
-  });
+      const domain =
+        CONFIG.DOMAIN ||
+        `http://localhost:${PORT}`;
 
-  app.get('/dashboard', (req, res) => {
-    res.render('dashboard', { clientId: process.env.DISCORD_CLIENT_ID || "" });
-  });
+      console.log('');
+      console.log('==========================================');
+      console.log('           OMNIX WEB SERVER');
+      console.log('==========================================');
 
-  // 🟢 AJOUTÉ : Route dynamique pour afficher la console de gestion d'un serveur spécifique (manage.ejs)
-  app.get('/dashboard/:guildId', (req, res) => {
-    res.render('manage', { 
-      guildId: req.params.guildId,
-      clientId: process.env.DISCORD_CLIENT_ID || "" 
-    });
-  });
+      console.log(
+        `[OMNIX] 🌐 Adresse : ${domain}`
+      );
 
-  app.get('/pricing', (req, res) => {
-    res.render('pricing');
-  });
+      console.log(
+        `[OMNIX] 🏠 Accueil : ${domain}/`
+      );
 
-  app.get('/learn-more', (req, res) => {
-    res.render('learn-more');
-  });
+      console.log(
+        `[OMNIX] 📊 Dashboard : ${domain}/dashboard`
+      );
 
-  app.listen(PORT, () => {
-    const domain = process.env.DOMAIN || `http://localhost:${PORT}`;
-    console.log(`[OMNIX] Adresse de connexion : ${domain}`);
-    console.log(`[OMNIX] Page Founder : ${domain}/founder`);
-    console.log("[System] Plateforme OMNIX opérationnelle.");
-  });
+      console.log(
+        `[OMNIX] 👑 Founder : ${domain}/founder`
+      );
+
+      console.log(
+        `[OMNIX] 🤖 AI Dev : ${domain}/ai-dev`
+      );
+
+      console.log('==========================================');
+      console.log('');
+    }
+  );
+
+  return server;
 }
 
-// ==========================================
-// 3. CHARGEMENT ET ENREGISTREMENT DU BOT
-// ==========================================
-async function setupDiscordBot() {
-  // SÉCURITÉ CONFLIT DOUBLE INSTANCE
-  if (process.env.START_BOT === 'false') {
-    console.log("[Bot] Lancement du bot désactivé sur cette instance (Mode Site Web uniquement).");
+
+/* =========================================================
+   CHARGEMENT DES COMMANDES
+========================================================= */
+
+async function loadCommands(
+  client: Client
+): Promise<void> {
+
+  const commandsPath =
+    path.join(
+      PROJECT_ROOT,
+      'src',
+      'bot',
+      'commands'
+    );
+
+  console.log(
+    `[Bot] Recherche des commandes : ${commandsPath}`
+  );
+
+  if (!fs.existsSync(commandsPath)) {
+
+    console.warn(
+      '[Bot] ⚠️ Le dossier src/bot/commands est introuvable.'
+    );
+
     return;
   }
 
-  // Détection intelligente : cherche sous les 3 noms les plus courants du développement
-  const token = process.env.DISCORD_TOKEN || process.env.DISCORD_BOT_TOKEN || process.env.TOKEN;
+
+  const files =
+    fs
+      .readdirSync(commandsPath)
+      .filter(
+        file =>
+          file.endsWith('.ts') ||
+          file.endsWith('.js')
+      );
+
+
+  let loaded = 0;
+
+
+  for (const file of files) {
+
+    try {
+
+      const filePath =
+        path.join(
+          commandsPath,
+          file
+        );
+
+      const fileUrl =
+        pathToFileURL(
+          filePath
+        ).href;
+
+
+      const module =
+        await import(fileUrl);
+
+
+      const command =
+        module.default ||
+        module;
+
+
+      if (
+        command &&
+        command.data &&
+        typeof command.execute === 'function'
+      ) {
+
+        client.commands.set(
+          command.data.name,
+          command
+        );
+
+        loaded++;
+
+        console.log(
+          `[Bot] ✅ Commande chargée : /${command.data.name}`
+        );
+
+      } else {
+
+        console.warn(
+          `[Bot] ⚠️ Commande invalide : ${file}`
+        );
+      }
+
+    } catch (error) {
+
+      console.error(
+        `[Bot] ❌ Impossible de charger ${file} :`,
+        error
+      );
+    }
+  }
+
+
+  console.log(
+    `[Bot] ${loaded}/${files.length} commandes chargées.`
+  );
+}
+
+
+/* =========================================================
+   CHARGEMENT DES EVENTS
+========================================================= */
+
+async function loadEvents(
+  client: Client
+): Promise<void> {
+
+  const eventsPath =
+    path.join(
+      PROJECT_ROOT,
+      'src',
+      'bot',
+      'events'
+    );
+
+
+  console.log(
+    `[Bot] Recherche des événements : ${eventsPath}`
+  );
+
+
+  if (!fs.existsSync(eventsPath)) {
+
+    console.warn(
+      '[Bot] ⚠️ Le dossier src/bot/events est introuvable.'
+    );
+
+    return;
+  }
+
+
+  const files =
+    fs
+      .readdirSync(eventsPath)
+      .filter(
+        file =>
+          file.endsWith('.ts') ||
+          file.endsWith('.js')
+      );
+
+
+  let loaded = 0;
+
+
+  for (const file of files) {
+
+    try {
+
+      const filePath =
+        path.join(
+          eventsPath,
+          file
+        );
+
+      const fileUrl =
+        pathToFileURL(
+          filePath
+        ).href;
+
+
+      const module =
+        await import(fileUrl);
+
+
+      const event =
+        module.default ||
+        module;
+
+
+      if (
+        !event ||
+        !event.name ||
+        typeof event.execute !== 'function'
+      ) {
+
+        console.warn(
+          `[Bot] ⚠️ Événement invalide : ${file}`
+        );
+
+        continue;
+      }
+
+
+      if (event.once) {
+
+        client.once(
+          event.name,
+          (...args: any[]) =>
+            event.execute(
+              ...args
+            )
+        );
+
+      } else {
+
+        client.on(
+          event.name,
+          (...args: any[]) =>
+            event.execute(
+              ...args
+            )
+        );
+      }
+
+
+      loaded++;
+
+      console.log(
+        `[Bot] ✅ Event chargé : ${event.name}`
+      );
+
+    } catch (error) {
+
+      console.error(
+        `[Bot] ❌ Impossible de charger ${file} :`,
+        error
+      );
+    }
+  }
+
+
+  console.log(
+    `[Bot] ${loaded}/${files.length} événements chargés.`
+  );
+}
+
+
+/* =========================================================
+   SYNCHRONISATION DES COMMANDES DISCORD
+========================================================= */
+
+async function registerSlashCommands(
+  client: Client,
+  token: string
+): Promise<void> {
+
+  const clientId =
+    CONFIG.DISCORD.CLIENT_ID;
+
+
+  if (!clientId) {
+
+    console.error(
+      '[Bot] ❌ DISCORD_CLIENT_ID manquant.'
+    );
+
+    return;
+  }
+
+
+  const commands =
+    Array
+      .from(
+        client.commands.values()
+      )
+      .map(
+        command =>
+          command.data.toJSON()
+      );
+
+
+  console.log(
+    `[Bot] Synchronisation de ${commands.length} commandes...`
+  );
+
+
+  const rest =
+    new REST({
+      version: '10',
+    }).setToken(token);
+
+
+  try {
+
+    await rest.put(
+      Routes.applicationCommands(
+        clientId
+      ),
+      {
+        body: commands,
+      }
+    );
+
+
+    console.log(
+      '[Bot] ✅ Commandes slash synchronisées.'
+    );
+
+  } catch (error) {
+
+    console.error(
+      '[Bot] ❌ Erreur synchronisation slash commands :',
+      error
+    );
+  }
+}
+
+
+/* =========================================================
+   CONFIGURATION DU BOT DISCORD
+========================================================= */
+
+async function setupDiscordBot(): Promise<Client | null> {
+
+  /*
+   * Permet de lancer uniquement le site
+   * si START_BOT=false
+   */
+
+  if (
+    process.env.START_BOT === 'false'
+  ) {
+
+    console.log(
+      '[Bot] ℹ️ START_BOT=false → Bot désactivé.'
+    );
+
+    return null;
+  }
+
+
+  const token =
+    CONFIG.DISCORD.TOKEN;
+
 
   if (!token) {
-    console.error("[Bot] ❌ ERREUR : Aucun token Discord trouvé.");
-    console.error("[Bot] Veuillez vérifier que votre fichier .env contient la variable DISCORD_BOT_TOKEN ou DISCORD_TOKEN.");
-    return;
+
+    console.error(
+      '[Bot] ❌ Aucun token Discord configuré.'
+    );
+
+    console.error(
+      '[Bot] Utilise DISCORD_TOKEN ou DISCORD_BOT_TOKEN.'
+    );
+
+    return null;
   }
 
-  console.log("[Bot] Chargement des commandes et des événements...");
 
-  const client = new Client({
-    intents: [
-      GatewayIntentBits.Guilds,
-      GatewayIntentBits.GuildMessages,
-      GatewayIntentBits.MessageContent,
-      GatewayIntentBits.GuildMembers
-    ]
-  }) as any;
+  console.log(
+    '[Bot] Initialisation du client Discord...'
+  );
 
-  client.commands = new Collection();
 
-  // CHARGEUR DYNAMIQUE COMPATIBLE ESM (Scan src/bot/commands)
-  const commandsPath = path.join(process.cwd(), 'src/bot/commands');
-  if (fs.existsSync(commandsPath)) {
-    const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts') || file.endsWith('.js'));
-    for (const file of commandFiles) {
-      const filePath = path.join(commandsPath, file);
-      // Convertit le chemin local en URL valide pour l'import ESM
-      const fileUrl = pathToFileURL(filePath).href;
-      const commandModule = await import(fileUrl);
-      
-      // Supporte à la fois "export const data" et "export default { data }"
-      const command = commandModule.default || commandModule;
+  const client =
+    new Client({
 
-      if (command && 'data' in command && 'execute' in command) {
-        client.commands.set(command.data.name, command);
-      } else {
-        console.warn(`[Bot] ⚠️ La commande dans le fichier ${file} n'a pas pu être chargée (propriétés requises manquantes).`);
-      }
+      intents: [
+
+        GatewayIntentBits.Guilds,
+
+        GatewayIntentBits.GuildMessages,
+
+        GatewayIntentBits.MessageContent,
+
+        GatewayIntentBits.GuildMembers,
+
+      ],
+
+    });
+
+
+  /*
+   * Collection des commandes
+   */
+
+  (
+    client as Client & {
+      commands: Collection<
+        string,
+        OmnixCommand
+      >;
     }
-    console.log(`[Bot] ${client.commands.size} commandes slash chargées en mémoire.`);
-  }
+  ).commands =
+    new Collection();
 
-  // CHARGEUR DYNAMIQUE COMPATIBLE ESM (Scan src/bot/events)
-  const eventsPath = path.join(process.cwd(), 'src/bot/events');
-  if (fs.existsSync(eventsPath)) {
-    const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.ts') || file.endsWith('.js'));
-    for (const file of eventFiles) {
-      const filePath = path.join(eventsPath, file);
-      const fileUrl = pathToFileURL(filePath).href;
-      const eventModule = await import(fileUrl);
-      
-      // Supporte à la fois les exports par défaut et nommés pour les événements
-      const event = eventModule.default || eventModule;
 
-      if (event && event.name) {
-        if (event.once) {
-          client.once(event.name, (...args: any[]) => event.execute(...args));
-        } else {
-          client.on(event.name, (...args: any[]) => event.execute(...args));
+  /*
+   * Chargement commandes
+   */
+
+  await loadCommands(
+    client
+  );
+
+
+  /*
+   * Chargement événements
+   */
+
+  await loadEvents(
+    client
+  );
+
+
+  /*
+   * READY
+   */
+
+  client.once(
+    'ready',
+    async () => {
+
+      console.log('');
+      console.log(
+        '=========================================='
+      );
+
+      console.log(
+        `[Bot] 🟢 Connecté : ${client.user?.tag}`
+      );
+
+      console.log(
+        `[Bot] 🆔 ID : ${client.user?.id}`
+      );
+
+      console.log(
+        `[Bot] 🏠 Serveurs : ${client.guilds.cache.size}`
+      );
+
+      console.log(
+        `[Bot] ⚡ Commandes : ${client.commands.size}`
+      );
+
+      console.log(
+        '=========================================='
+      );
+
+      console.log('');
+
+
+      await registerSlashCommands(
+        client,
+        token
+      );
+    }
+  );
+
+
+  /*
+   * INTERACTIONS SLASH
+   */
+
+  client.on(
+    'interactionCreate',
+    async interaction => {
+
+      if (
+        !interaction.isChatInputCommand()
+      ) {
+        return;
+      }
+
+
+      const command =
+        client.commands.get(
+          interaction.commandName
+        );
+
+
+      if (!command) {
+
+        console.warn(
+          `[Bot] Commande inconnue : /${interaction.commandName}`
+        );
+
+        return;
+      }
+
+
+      try {
+
+        await command.execute({
+          client,
+          interaction,
+        });
+
+      } catch (error) {
+
+        console.error(
+          `[Bot] ❌ Erreur /${interaction.commandName} :`,
+          error
+        );
+
+
+        try {
+
+          if (
+            interaction.replied ||
+            interaction.deferred
+          ) {
+
+            await interaction.editReply({
+              content:
+                '❌ Une erreur est survenue lors de l’exécution de cette commande.',
+            });
+
+          } else {
+
+            await interaction.reply({
+              content:
+                '❌ Une erreur est survenue lors de l’exécution de cette commande.',
+              ephemeral: true,
+            });
+          }
+
+        } catch {
+          // Discord peut avoir déjà fermé l'interaction.
         }
       }
     }
-    console.log(`[Bot] ${eventFiles.length} gestionnaires d'événements chargés.`);
-  }
+  );
 
-  console.log("[Bot] Authentification auprès de Discord...");
 
-  client.once('ready', async () => {
-    console.log(`[Bot] Connecté en tant que ${client.user?.tag}`);
-    
-    // Enregistrement et synchronisation automatique des commandes auprès de Discord
-    const commandsJson = Array.from(client.commands.values()).map((cmd: any) => cmd.data.toJSON());
-    const rest = new REST({ version: '10' }).setToken(token);
-    try {
-      console.log("[Bot] Envoi des commandes (/) à l'API de Discord...");
-      await rest.put(
-        Routes.applicationCommands(process.env.DISCORD_CLIENT_ID!),
-        { body: commandsJson }
-      );
-      console.log("[Bot] Commandes globales synchronisées avec succès.");
-    } catch (error) {
-      console.error("[Bot] Erreur lors de l'enregistrement des commandes slash :", error);
-    }
-  });
-
-  // Intercepteur pour exécuter les commandes Slash
-  client.on('interactionCreate', async (interaction: any) => {
-    if (!interaction.isChatInputCommand()) return;
-    const command = client.commands.get(interaction.commandName);
-    if (!command) return;
-    try {
-      await command.execute({ client, interaction });
-    } catch (error) {
-      console.error(error);
-      await interaction.reply({ content: 'Une erreur est survenue lors de l\'exécution de cette commande.', ephemeral: true });
-    }
-  });
+  /*
+   * LOGIN
+   */
 
   try {
-    await client.login(token);
-  } catch (err) {
-    console.error("[Bot] Échec d'authentification auprès de Discord :", err);
-  }
-}
 
-// Lancement général
-async function main() {
-  await connectDatabase();
-  setupWebServer();
-
-  try {
-    const response = await askOpenRouter(
-      'Réponds simplement : OpenRouter fonctionne correctement avec OMNIX.'
+    console.log(
+      '[Bot] 🔐 Connexion à Discord...'
     );
 
-    console.log('[OMNIX AI] Réponse :', response);
-  } catch (error) {
-    console.error('[OMNIX AI] Erreur :', error);
-  }
+    await client.login(
+      token
+    );
 
-  await setupDiscordBot();
+    return client;
+
+  } catch (error) {
+
+    console.error(
+      '[Bot] ❌ Échec de connexion Discord :',
+      error
+    );
+
+    return null;
+  }
 }
 
-main();
+
+/* =========================================================
+   ARRÊT PROPRE
+========================================================= */
+
+async function shutdown(
+  signal: string
+): Promise<void> {
+
+  console.log(
+    `[OMNIX] Réception de ${signal}. Arrêt...`
+  );
+
+
+  try {
+
+    if (
+      mongoose.connection.readyState
+    ) {
+
+      await mongoose.connection.close();
+
+      console.log(
+        '[Database] Connexion MongoDB fermée.'
+      );
+    }
+
+  } catch (error) {
+
+    console.error(
+      '[Database] Erreur fermeture MongoDB :',
+      error
+    );
+  }
+
+
+  process.exit(0);
+}
+
+
+process.on(
+  'SIGTERM',
+  () => shutdown('SIGTERM')
+);
+
+process.on(
+  'SIGINT',
+  () => shutdown('SIGINT')
+);
+
+
+/* =========================================================
+   GESTION DES ERREURS NON CAPTURÉES
+========================================================= */
+
+process.on(
+  'unhandledRejection',
+  error => {
+
+    console.error(
+      '[Process] ❌ Unhandled Rejection :',
+      error
+    );
+  }
+);
+
+
+process.on(
+  'uncaughtException',
+  error => {
+
+    console.error(
+      '[Process] ❌ Uncaught Exception :',
+      error
+    );
+  }
+);
+
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+async function main(): Promise<void> {
+
+  console.log('');
+  console.log(
+    '=========================================='
+  );
+
+  console.log(
+    '              OMNIX'
+  );
+
+  console.log(
+    '       LE ROBOT DE DEMAIN'
+  );
+
+  console.log(
+    '=========================================='
+  );
+
+  console.log(
+    `[System] Environnement : ${CONFIG.NODE_ENV}`
+  );
+
+  console.log(
+    `[System] Port : ${PORT}`
+  );
+
+  console.log(
+    `[System] Modèle IA : ${CONFIG.OPENROUTER.MODEL}`
+  );
+
+  console.log(
+    `[System] Propriétaires configurés : ${CONFIG.OWNER_IDS.length}`
+  );
+
+  console.log(
+    '=========================================='
+  );
+
+  console.log('');
+
+
+  /*
+   * Vérification production
+   */
+
+  validateProductionConfig();
+
+
+  /*
+   * MongoDB
+   */
+
+  await connectDatabase();
+
+
+  /*
+   * Express
+   */
+
+  await setupWebServer();
+
+
+  /*
+   * Discord
+   */
+
+  await setupDiscordBot();
+
+
+  console.log('');
+  console.log(
+    '[OMNIX] ✅ Plateforme OMNIX opérationnelle.'
+  );
+  console.log('');
+}
+
+
+/* =========================================================
+   LANCEMENT
+========================================================= */
+
+main().catch(
+  error => {
+
+    console.error('');
+    console.error(
+      '[OMNIX] ❌ ERREUR FATALE AU DÉMARRAGE'
+    );
+
+    console.error(
+      error
+    );
+
+    process.exit(1);
+  }
+);
