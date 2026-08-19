@@ -4,7 +4,7 @@
  * ====================================================================
  */
 
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, models, Document } from 'mongoose'; // 🟢 Ajout de "models" pour la sécurité d'écrasement
 
 export interface ITicketCategory {
   id: string;             // Identifiant unique (ex: support_tech)
@@ -275,4 +275,5 @@ const GuildConfigSchema = new Schema<IGuildConfig>({
   }
 }, { timestamps: true });
 
-export const GuildConfig = model<IGuildConfig>('GuildConfig', GuildConfigSchema);
+// 🟢 CORRIGÉ : Utilise "models.GuildConfig" s'il est déjà compilé (évite l'erreur OverwriteModelError)
+export const GuildConfig = models.GuildConfig || model<IGuildConfig>('GuildConfig', GuildConfigSchema);
