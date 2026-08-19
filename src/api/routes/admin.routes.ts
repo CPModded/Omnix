@@ -1,290 +1,381 @@
-import { Router } from 'express';
-import axios from 'axios';
-import { client as botClient } from '../../bot/client.ts';
-import { EmbedBuilder, TextChannel } from 'discord.js';
-import { User } from '../../models/User.ts';
-import AuditLog from '../../models/AuditLog.ts';
-import { GuildConfig } from '../../models/GuildConfig.ts'; // 🟢 Ajout de l'importation de GuildConfig
-import { isAuthenticated } from '../middlewares/auth.ts';
-import { adminCheck } from '../middlewares/adminCheck.ts';
+import express, {
+  type Request,
+  type Response,
+  type NextFunction,
+} from 'express';
 
-const router = Router();
+import jwt from 'jsonwebtoken';
 
-// ==========================================
-// 1. STATISTIQUES GLOBAL DU DASHBOARD (Fetch de l'accueil)
-// ==========================================
-router.get('/api/stats', async (req, res) => {
+import { CONFIG } from '../../config/index.ts';
+
+import AiSession from '../../models/AiSession.ts';
+
+
+const router =
+  express.Router();
+
+
+/*
+ * ==========================================
+ * AUTHENTIFICATION
+ * ==========================================
+ */
+
+interface AuthenticatedRequest
+  extends Request {
+
+  user?: {
+    discordId: string;
+  };
+}
+
+
+/*
+ * Vérifie le JWT
+ */
+
+function requireAuth(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) {
+
+  const token =
+    req.cookies?.omnix_token;
+
+  if (!token) {
+
+    if (
+      req.path.startsWith('/api/')
+    ) {
+      return res
+        .status(401)
+        .json({
+          success: false,
+          error: 'Non connecté.',
+        });
+    }
+
+    return res.redirect(
+      '/api/auth/login'
+    );
+  }
+
+
   try {
-    const guildsCount = botClient && botClient.readyAt ? botClient.guilds.cache.size : 0;
-    const ping = botClient && botClient.readyAt ? botClient.ws.ping : 0;
 
-    const totalUsers = await User.countDocuments().catch(() => 0);
+    const decoded =
+      jwt.verify(
+        token,
+        CONFIG.JWT_SECRET
+      ) as {
+        discordId: string;
+      };
+
+
+    req.user = decoded;
+
+    next();
+
+  } catch {
+
+    res.clearCookie(
+      'omnix_token'
+    );
+
+    if (
+      req.path.startsWith('/api/')
+    ) {
+      return res
+        .status(401)
+        .json({
+          success: false,
+          error:
+            'Session expirée.',
+        });
+    }
+
+    return res.redirect(
+      '/api/auth/login'
+    );
+  }
+}
+
+
+/*
+ * ==========================================
+ * PROPRIÉTAIRE UNIQUEMENT
+ * ==========================================
+ */
+
+function requireOwner(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) {
+
+  const discordId =
+    req.user?.discordId;
+
+
+  if (!discordId) {
+
+    return res
+      .status(401)
+      .json({
+        success: false,
+        error: 'Non authentifié.',
+      });
+  }
+
+
+  const isOwner =
+    CONFIG.OWNER_IDS.includes(
+      discordId
+    );
+
+
+  if (!isOwner) {
+
+    return res
+      .status(403)
+      .json({
+        success: false,
+        error:
+          'Accès réservé au propriétaire d’OMNIX.',
+      });
+  }
+
+
+  next();
+}
+
+
+/*
+ * ==========================================
+ * TEST API
+ * ==========================================
+ */
+
+router.get(
+  '/api/stats',
+  requireAuth,
+  async (
+    req: AuthenticatedRequest,
+    res: Response
+  ) => {
+
+    try {
+
+      const sessions =
+        await AiSession.find({});
+
+
+      const stats =
+        sessions.reduce(
+          (total, session) => {
+
+            total.requests +=
+              session.totalRequests || 0;
+
+            total.promptTokens +=
+              session.totalPromptTokens || 0;
+
+            total.completionTokens +=
+              session.totalCompletionTokens || 0;
+
+            total.tokens +=
+              session.totalTokens || 0;
+
+            return total;
+
+          },
+
+          {
+            requests: 0,
+
+            promptTokens: 0,
+
+            completionTokens: 0,
+
+            tokens: 0,
+          }
+        );
+
+
+      return res.json({
+        success: true,
+
+        stats,
+      });
+
+    } catch (error) {
+
+      console.error(
+        '[Stats]',
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          error:
+            'Impossible de récupérer les statistiques.',
+        });
+    }
+  }
+);
+
+
+/*
+ * ==========================================
+ * CONSOLE AI — PAGE
+ * ==========================================
+ */
+
+router.get(
+  '/api/admin/ai-dev/access',
+  requireAuth,
+  requireOwner,
+  (
+    req: AuthenticatedRequest,
+    res: Response
+  ) => {
 
     return res.json({
       success: true,
-      bot: {
-        guildsCount,
-        ping
-      },
-      database: {
-        totalUsers
+
+      owner: true,
+
+      discordId:
+        req.user?.discordId,
+
+      model:
+        CONFIG.OPENROUTER.MODEL,
+    });
+  }
+);
+
+
+/*
+ * ==========================================
+ * STATISTIQUES IA DU PROPRIÉTAIRE
+ * ==========================================
+ */
+
+router.get(
+  '/api/admin/ai-dev/stats',
+  requireAuth,
+  requireOwner,
+  async (
+    req: AuthenticatedRequest,
+    res: Response
+  ) => {
+
+    try {
+
+      const sessions =
+        await AiSession.find({});
+
+
+      let requests = 0;
+
+      let promptTokens = 0;
+
+      let completionTokens = 0;
+
+      let totalTokens = 0;
+
+
+      for (
+        const session of sessions
+      ) {
+
+        requests +=
+          session.totalRequests || 0;
+
+        promptTokens +=
+          session.totalPromptTokens || 0;
+
+        completionTokens +=
+          session.totalCompletionTokens || 0;
+
+        totalTokens +=
+          session.totalTokens || 0;
       }
-    });
-  } catch (error: any) {
-    console.error('[API Stats Error] :', error);
-    return res.status(500).json({ 
-      success: false, 
-      error: 'Une erreur interne est survenue lors de la récupération des statistiques.' 
-    });
-  }
-});
 
-// ==========================================
-// 2. RÉCUPÉRATION DES SERVEURS DISCORD (Dashboard)
-// ==========================================
-router.get('/api/guilds', isAuthenticated, async (req: any, res) => {
-  try {
-    const discordId = req.user?.discordId; 
-    if (!discordId) {
-      return res.status(401).json({ error: 'Non authentifié.' });
-    }
 
-    const user = await User.findOne({ discordId });
-    if (!user || !user.accessToken) {
-      return res.status(401).json({ error: 'Session Discord expirée. Veuillez vous reconnecter.' });
-    }
+      return res.json({
 
-    const response = await axios.get('https://discord.com/api/users/@me/guilds', {
-      headers: { Authorization: `Bearer ${user.accessToken}` }
-    });
+        success: true,
 
-    const guilds = response.data;
+        stats: {
 
-    const adminGuilds = guilds.filter((g: any) => 
-      g.owner || 
-      (parseInt(g.permissions) & 0x8) === 0x8 || 
-      (parseInt(g.permissions) & 0x20) === 0x20
-    );
+          requests,
 
-    return res.json(adminGuilds);
-  } catch (error: any) {
-    console.error('[API Guilds Error] :', error.response?.data || error.message);
-    if (error.response?.status === 401) {
-      return res.status(401).json({ error: 'Jeton de session Discord expiré.' });
-    }
-    return res.status(500).json({ error: 'Impossible de récupérer vos serveurs.' });
-  }
-});
+          promptTokens,
 
-// ==========================================
-// 3. CHARGEMENT CONFIGURATION DU SERVEUR (manage.ejs - CORRIGÉ)
-// ==========================================
-router.get('/api/guilds/:guildId/config', isAuthenticated, async (req: any, res) => {
-  try {
-    const { guildId } = req.params;
+          completionTokens,
 
-    // Trouver ou créer automatiquement la configuration par défaut pour ce serveur
-    let config = await GuildConfig.findOne({ guildId });
-    if (!config) {
-      config = await GuildConfig.create({
-        guildId,
-        premium: { isPremium: false, tier: 'free', expiresAt: null },
-        modules: {
-          welcome: { enabled: false, message: "Bienvenue {user} !", channelId: null },
-          goodbye: { enabled: false, message: "Au revoir {user}...", channelId: null },
-          moderation: { enabled: false, logChannelId: null },
-          autoMod: { enabled: false, blacklistedWords: [] },
-          tickets: { enabled: false, categoryId: null, counter: 0, categoriesList: [] },
-          economy: { enabled: false, currencySymbol: '$', workCooldownMinutes: 60 },
-          levels: { enabled: false, xpPerMessage: 15, rewardRoles: [] },
-          ai: { enabled: false, systemPrompt: "Tu es un assistant utile sur ce serveur Discord.", contextLimit: 10 },
-          backups: { enabled: false },
-          ping: { enabled: true },
-          honeypot: { enabled: false, channelId: null }
-        }
+          totalTokens,
+
+          sessions:
+            sessions.length,
+
+        },
+
       });
+
+    } catch (error) {
+
+      console.error(
+        '[AI Stats]',
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+
+          success: false,
+
+          error:
+            'Erreur statistiques IA.',
+
+        });
     }
-
-    return res.json(config);
-  } catch (error: any) {
-    console.error('[API Get Config Error] :', error);
-    return res.status(500).json({ error: 'Impossible de charger la configuration du serveur.' });
   }
-});
+);
 
-// ==========================================
-// 4. MISE À JOUR CONFIGURATION DU SERVEUR (manage.ejs - CORRIGÉ)
-// ==========================================
-router.put('/api/guilds/:guildId/config', isAuthenticated, async (req: any, res) => {
-  try {
-    const { guildId } = req.params;
-    const updatedConfig = req.body;
 
-    const config = await GuildConfig.findOneAndUpdate(
-      { guildId },
-      { $set: updatedConfig },
-      { new: true, upsert: true }
-    );
+/*
+ * ==========================================
+ * DASHBOARD PROPRIÉTAIRE
+ * ==========================================
+ */
 
-    return res.json(config);
-  } catch (error: any) {
-    console.error('[API Update Config Error] :', error);
-    return res.status(500).json({ error: 'Impossible d\'enregistrer la configuration.' });
+router.get(
+  '/api/admin/owner',
+  requireAuth,
+  requireOwner,
+  (
+    req: AuthenticatedRequest,
+    res: Response
+  ) => {
+
+    return res.json({
+
+      success: true,
+
+      owner: true,
+
+      message:
+        'Bienvenue dans la console propriétaire OMNIX.',
+
+    });
   }
-});
+);
 
-// ==========================================
-// 5. CRÉATION D'UNE SAUVEGARDE (manage.ejs - CORRIGÉ)
-// ==========================================
-router.post('/api/guilds/:guildId/backups', isAuthenticated, async (req: any, res) => {
-  try {
-    const { guildId } = req.params;
-    // (Ici, insérez votre logique d'archivage JSON si applicable)
-    return res.json({ success: true, message: 'Sauvegarde créée avec succès.' });
-  } catch (error: any) {
-    console.error('[API Create Backup Error] :', error);
-    return res.status(500).json({ error: 'Impossible de créer la sauvegarde.' });
-  }
-});
-
-// ==========================================
-// 6. AFFICHAGE DE LA CONSOLE D'ADMINISTRATION (EJS)
-// ==========================================
-router.get('/admin', isAuthenticated, adminCheck, (req, res) => {
-  res.render('admin'); 
-});
-
-// ==========================================
-// 7. ADMINISTRATION DES UTILISATEURS (Staff Only)
-// ==========================================
-router.get('/api/admin/users', isAuthenticated, adminCheck, async (req, res) => {
-  try {
-    const users = await User.find()
-      .select('discordId username avatar isAdmin rewards licenses')
-      .limit(50);
-      
-    return res.json(users);
-  } catch (error: any) {
-    console.error('[API Admin Users Error] :', error);
-    return res.status(500).json({ error: 'Impossible de récupérer la liste des utilisateurs.' });
-  }
-});
-
-// ==========================================
-// 8. JOURNALISATION AUDIT CENTER (Staff Only)
-// ==========================================
-router.get('/api/admin/audit-logs', isAuthenticated, adminCheck, async (req, res) => {
-  try {
-    const logs = await AuditLog.find()
-      .sort({ createdAt: -1 })
-      .limit(30);
-      
-    return res.json(logs);
-  } catch (error: any) {
-    console.error('[API Admin Audit Logs Error] :', error);
-    return res.status(500).json({ error: 'Impossible de récupérer le journal d\'audit.' });
-  }
-});
-
-// ==========================================
-// 9. ATTRIBUTION DE LICENCE PREMIUM (Staff Only)
-// ==========================================
-router.post('/api/admin/users/:userId/grant-premium', isAuthenticated, adminCheck, async (req: any, res) => {
-  try {
-    const { userId } = req.params;
-    const { duration } = req.body; 
-
-    const user = await User.findOne({ discordId: userId });
-    if (!user) {
-      return res.status(404).json({ error: 'Utilisateur introuvable.' });
-    }
-
-    let expiresAt: Date | null = null;
-    if (duration !== 'lifetime') {
-      expiresAt = new Date();
-      if (duration === '1m') expiresAt.setMonth(expiresAt.getMonth() + 1);
-      else if (duration === '3m') expiresAt.setMonth(expiresAt.getMonth() + 3);
-      else if (duration === '6m') expiresAt.setMonth(expiresAt.getMonth() + 6);
-      else if (duration === '1y') expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-    }
-
-    const licenseKey = `OMNIX-PREM-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-
-    const newLicense = {
-      licenseKey,
-      tier: 'premium',
-      status: 'active',
-      expiresAt
-    };
-
-    user.licenses = user.licenses || [];
-    user.licenses.push(newLicense);
-    await user.save();
-
-    console.log(`[Staff Action] Licence Premium (${duration}) attribuée à @${user.username} : ${licenseKey}`);
-
-    return res.json({ success: true, license: newLicense });
-  } catch (error: any) {
-    console.error('[API Grant Premium Error] :', error);
-    return res.status(500).json({ error: 'Impossible d\'attribuer la licence Premium.' });
-  }
-});
-
-// ==========================================
-// 10. PROMOTION / DÉGRADATION DE DROITS (Staff Only)
-// ==========================================
-router.post('/api/admin/users/:userId/toggle-admin', isAuthenticated, adminCheck, async (req: any, res) => {
-  try {
-    const { userId } = req.params;
-
-    const user = await User.findOne({ discordId: userId });
-    if (!user) {
-      return res.status(404).json({ error: 'Utilisateur introuvable.' });
-    }
-
-    user.isAdmin = !user.isAdmin;
-    await user.save();
-
-    console.log(`[Staff Action] Statut Admin de @${user.username} changé à : ${user.isAdmin}`);
-
-    return res.json({ success: true, isAdmin: user.isAdmin });
-  } catch (error: any) {
-    console.error('[API Toggle Admin Error] :', error);
-    return res.status(500).json({ error: 'Impossible de modifier les privilèges d\'administration.' });
-  }
-});
-
-// ==========================================
-// 11. WEBHOOK DE PUBLICATION DE CHANGELOG
-// ==========================================
-router.post('/api/admin/deploy-changelog', async (req, res) => {
-  const { secret, version, description, author } = req.body;
-  const changelogChannelId = "1527176322319777832"; 
-
-  if (secret !== process.env.JWT_SECRET) {
-    return res.status(401).json({ error: 'Non autorisé.' });
-  }
-
-  try {
-    const channel = await botClient.channels.fetch(changelogChannelId) as TextChannel;
-    if (!channel) {
-      return res.status(404).json({ error: 'Salon changelog introuvable.' });
-    }
-
-    const changelogEmbed = new EmbedBuilder()
-      .setTitle(`🚀 NOUVELLE MISE À JOUR — VERSION ${version}`)
-      .setColor(0x7c3aed) 
-      .setDescription(description)
-      .addFields({ name: 'Déployeur', value: `🔧 ${author || 'OMNIX Engine'}`, inline: true })
-      .setFooter({ text: 'OMNIX Auto-Changelog' })
-      .setTimestamp();
-
-    await channel.send({ embeds: [changelogEmbed] });
-    return res.json({ message: 'Changelog poussé avec succès sur Discord.' });
-  } catch (err: any) {
-    console.error('[Changelog Webhook Error] :', err.message);
-    return res.status(500).json({ error: 'Échec de la publication.' });
-  }
-});
 
 export default router;
