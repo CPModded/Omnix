@@ -13,21 +13,38 @@ import helmet from 'helmet';
 import authRouter from './routes/auth.routes.ts';
 import adminRouter from './routes/admin.routes.ts';
 
+import type { Client } from 'discord.js';
+
 
 /* =========================================================
-   TEMPS DE DÉMARRAGE
+   TYPES
 ========================================================= */
 
-const START_TIME = Date.now();
+interface OmnixRuntime {
+  discordClient?: Client | null;
+  startedAt: number;
+}
 
 
 /* =========================================================
-   CRÉATION DE L'APPLICATION
+   APPLICATION
 ========================================================= */
 
 export function createApp(): Express {
 
   const app = express();
+
+
+  /* =======================================================
+     RUNTIME OMNIX
+  ======================================================= */
+
+  const runtime: OmnixRuntime = {
+    discordClient: null,
+    startedAt: Date.now(),
+  };
+
+  app.locals.omnix = runtime;
 
 
   /* =======================================================
@@ -83,7 +100,17 @@ export function createApp(): Express {
 
       res.setHeader(
         'Cache-Control',
-        'no-store'
+        'no-store, no-cache, must-revalidate, proxy-revalidate'
+      );
+
+      res.setHeader(
+        'Pragma',
+        'no-cache'
+      );
+
+      res.setHeader(
+        'Expires',
+        '0'
       );
 
       next();
@@ -173,7 +200,7 @@ export function createApp(): Express {
 
 
   /* =======================================================
-     API AUTH
+     API AUTHENTIFICATION
   ======================================================= */
 
   app.use(
@@ -183,7 +210,7 @@ export function createApp(): Express {
 
 
   /* =======================================================
-     API ADMIN
+     ADMIN
   ======================================================= */
 
   app.use(
@@ -192,11 +219,7 @@ export function createApp(): Express {
 
 
   /* =======================================================
-     API STATUS
-     
-     IMPORTANT :
-     Cette route sert aux systèmes qui vérifient
-     si OMNIX fonctionne correctement.
+     API ÉTAT OMNIX
   ======================================================= */
 
   app.get(
@@ -206,95 +229,202 @@ export function createApp(): Express {
       res: Response
     ) => {
 
-      const uptime =
-        Math.floor(
-          (Date.now() - START_TIME) / 1000
+      try {
+
+        const currentRuntime =
+          app.locals.omnix as OmnixRuntime;
+
+
+        const client =
+          currentRuntime.discordClient;
+
+
+        /*
+         * ---------------------------------------------------
+         * BOT NON CONNECTÉ
+         * ---------------------------------------------------
+         */
+
+        if (
+          !client ||
+          !client.isReady()
+        ) {
+
+          return res.json({
+
+            success: true,
+
+            status: 'offline',
+
+            online: false,
+
+            servers: 0,
+
+            members: 0,
+
+            commands: 0,
+
+            latency: 0,
+
+            uptime: Math.floor(
+              process.uptime()
+            ),
+
+            uptimeSeconds: Math.floor(
+              process.uptime()
+            ),
+
+            timestamp: Date.now(),
+
+          });
+
+        }
+
+
+        /* ---------------------------------------------------
+           SERVEURS
+        --------------------------------------------------- */
+
+        const servers =
+          client.guilds.cache.size;
+
+
+        /* ---------------------------------------------------
+           MEMBRES
+        --------------------------------------------------- */
+
+        let members = 0;
+
+
+        for (
+          const guild
+          of client.guilds.cache.values()
+        ) {
+
+          members +=
+            guild.memberCount || 0;
+
+        }
+
+
+        /* ---------------------------------------------------
+           COMMANDES
+        --------------------------------------------------- */
+
+        const commands =
+          (
+            client as Client & {
+              commands?: {
+                size: number;
+              };
+            }
+          ).commands?.size || 0;
+
+
+        /* ---------------------------------------------------
+           LATENCE
+        --------------------------------------------------- */
+
+        const latency =
+          client.ws.ping >= 0
+            ? Math.round(
+                client.ws.ping
+              )
+            : 0;
+
+
+        /* ---------------------------------------------------
+           UPTIME
+        --------------------------------------------------- */
+
+        const uptimeSeconds =
+          Math.floor(
+            process.uptime()
+          );
+
+
+        /* ---------------------------------------------------
+           RÉPONSE
+        --------------------------------------------------- */
+
+        return res.json({
+
+          success: true,
+
+          status: 'online',
+
+          online: true,
+
+          servers,
+
+          members,
+
+          commands,
+
+          latency,
+
+          uptime:
+            uptimeSeconds,
+
+          uptimeSeconds,
+
+          timestamp:
+            Date.now(),
+
+        });
+
+
+      } catch (error) {
+
+        console.error(
+          '[API Status] Erreur :',
+          error
         );
 
 
-      return res.status(200).json({
+        return res.status(500).json({
 
-        success: true,
+          success: false,
 
-        status: 'online',
+          status: 'error',
 
-        service: 'OMNIX',
+          online: false,
 
-        version:
-          process.env.npm_package_version ||
-          'unknown',
+          servers: 0,
 
-        environment:
-          process.env.NODE_ENV ||
-          'development',
+          members: 0,
 
-        uptime,
+          commands: 0,
 
-        uptimeFormatted:
-          formatUptime(uptime),
+          latency: 0,
 
-        api: {
-          status: 'online',
-        },
-
-        database: {
-          configured:
-            Boolean(
-              process.env.MONGO_URI ||
-              process.env.MONGODB_URI ||
-              process.env.DATABASE_URL
+          uptime:
+            Math.floor(
+              process.uptime()
             ),
 
-          status:
-            'managed-by-application',
-        },
-
-        discord: {
-          configured:
-            Boolean(
-              process.env.DISCORD_TOKEN ||
-              process.env.DISCORD_BOT_TOKEN
+          uptimeSeconds:
+            Math.floor(
+              process.uptime()
             ),
 
-          status:
-            'managed-by-bot',
-        },
+          error:
+            'Impossible de récupérer l’état d’OMNIX.',
 
-        ai: {
-          provider:
-            'OpenRouter',
+        });
 
-          configured:
-            Boolean(
-              process.env.OPENROUTER_API_KEY
-            ),
+      }
 
-          model:
-            process.env.OPENROUTER_MODEL ||
-            'openrouter/free',
-
-          status:
-            process.env.OPENROUTER_API_KEY
-              ? 'configured'
-              : 'not_configured',
-        },
-
-        timestamp:
-          new Date().toISOString(),
-
-      });
     }
   );
 
 
   /* =======================================================
-     API HEALTH
-     
-     Route simplifiée pour Render / monitoring.
+     HEALTH CHECK RENDER
   ======================================================= */
 
   app.get(
-    '/api/health',
+    '/health',
     (
       req: Request,
       res: Response
@@ -302,19 +432,19 @@ export function createApp(): Express {
 
       return res.status(200).json({
 
-        status: 'ok',
+        success: true,
 
-        service: 'OMNIX',
+        service:
+          'OMNIX',
 
-        uptime:
-          Math.floor(
-            (Date.now() - START_TIME) / 1000
-          ),
+        status:
+          'healthy',
 
         timestamp:
           new Date().toISOString(),
 
       });
+
     }
   );
 
@@ -330,7 +460,7 @@ export function createApp(): Express {
       res: Response
     ) => {
 
-      res.render(
+      return res.render(
         'index',
         {
 
@@ -344,6 +474,7 @@ export function createApp(): Express {
 
         }
       );
+
     }
   );
 
@@ -359,7 +490,7 @@ export function createApp(): Express {
       res: Response
     ) => {
 
-      res.render(
+      return res.render(
         'dashboard',
         {
 
@@ -369,6 +500,7 @@ export function createApp(): Express {
 
         }
       );
+
     }
   );
 
@@ -384,7 +516,7 @@ export function createApp(): Express {
       res: Response
     ) => {
 
-      res.render(
+      return res.render(
         'manage',
         {
 
@@ -397,6 +529,7 @@ export function createApp(): Express {
 
         }
       );
+
     }
   );
 
@@ -412,7 +545,7 @@ export function createApp(): Express {
       res: Response
     ) => {
 
-      res.render(
+      return res.render(
         'founder',
         {
 
@@ -431,6 +564,7 @@ export function createApp(): Express {
 
         }
       );
+
     }
   );
 
@@ -446,9 +580,10 @@ export function createApp(): Express {
       res: Response
     ) => {
 
-      res.render(
+      return res.render(
         'pricing'
       );
+
     }
   );
 
@@ -464,19 +599,16 @@ export function createApp(): Express {
       res: Response
     ) => {
 
-      res.render(
+      return res.render(
         'learn-more'
       );
+
     }
   );
 
 
   /* =======================================================
-     CONSOLE OMNIX AI
-     
-     La protection doit être faite dans admin.routes.ts.
-     
-     JAMAIS exposer OPENROUTER_API_KEY au navigateur.
+     CONSOLE IA
   ======================================================= */
 
   app.get(
@@ -486,15 +618,16 @@ export function createApp(): Express {
       res: Response
     ) => {
 
-      res.render(
+      return res.render(
         'ai-dev'
       );
+
     }
   );
 
 
   /* =======================================================
-     404
+     404 API
   ======================================================= */
 
   app.use(
@@ -520,12 +653,14 @@ export function createApp(): Express {
             'Route API introuvable.',
 
         });
+
       }
 
 
       return res.render(
         'index'
       );
+
     }
   );
 
@@ -555,6 +690,7 @@ export function createApp(): Express {
         return next(
           error
         );
+
       }
 
 
@@ -584,6 +720,7 @@ export function createApp(): Express {
               message,
 
           });
+
       }
 
 
@@ -592,83 +729,13 @@ export function createApp(): Express {
         .send(
           message
         );
+
     }
   );
 
 
   return app;
-}
 
-
-/* =========================================================
-   FORMATAGE UPTIME
-========================================================= */
-
-function formatUptime(
-  seconds: number
-): string {
-
-  const days =
-    Math.floor(
-      seconds / 86400
-    );
-
-  seconds %= 86400;
-
-
-  const hours =
-    Math.floor(
-      seconds / 3600
-    );
-
-  seconds %= 3600;
-
-
-  const minutes =
-    Math.floor(
-      seconds / 60
-    );
-
-  seconds %= 60;
-
-
-  const parts: string[] = [];
-
-
-  if (days > 0) {
-    parts.push(
-      `${days}j`
-    );
-  }
-
-  if (
-    hours > 0 ||
-    days > 0
-  ) {
-
-    parts.push(
-      `${hours}h`
-    );
-  }
-
-  if (
-    minutes > 0 ||
-    hours > 0 ||
-    days > 0
-  ) {
-
-    parts.push(
-      `${minutes}m`
-    );
-  }
-
-
-  parts.push(
-    `${seconds}s`
-  );
-
-
-  return parts.join(' ');
 }
 
 
