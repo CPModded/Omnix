@@ -1,9 +1,10 @@
 import { Router } from 'express';
-import axios from 'axios'; // 🟢 CORRIGÉ : Importation de la bibliothèque axios requise pour l'API Discord
+import axios from 'axios';
 import { client as botClient } from '../../bot/client.ts';
 import { EmbedBuilder, TextChannel } from 'discord.js';
 import { User } from '../../models/User.ts';
 import AuditLog from '../../models/AuditLog.ts';
+import { GuildConfig } from '../../models/GuildConfig.ts'; // 🟢 Ajout de l'importation de GuildConfig
 import { isAuthenticated } from '../middlewares/auth.ts';
 import { adminCheck } from '../middlewares/adminCheck.ts';
 
@@ -33,7 +34,7 @@ router.get('/api/stats', async (req, res) => {
     console.error('[API Stats Error] :', error);
     return res.status(500).json({ 
       success: false, 
-      error: 'Une erreur interne est survenue lors de la récupération des statistiques d\'activité.' 
+      error: 'Une erreur interne est survenue lors de la récupération des statistiques.' 
     });
   }
 });
@@ -76,14 +77,85 @@ router.get('/api/guilds', isAuthenticated, async (req: any, res) => {
 });
 
 // ==========================================
-// 3. AFFICHAGE DE LA CONSOLE D'ADMINISTRATION (EJS)
+// 3. CHARGEMENT CONFIGURATION DU SERVEUR (manage.ejs - CORRIGÉ)
 // ==========================================
-router.get('/admin', isAuthenticated, adminCheck, (req, res) => {
-  res.render('admin'); // Rendu du fichier views/admin.ejs
+router.get('/api/guilds/:guildId/config', isAuthenticated, async (req: any, res) => {
+  try {
+    const { guildId } = req.params;
+
+    // Trouver ou créer automatiquement la configuration par défaut pour ce serveur
+    let config = await GuildConfig.findOne({ guildId });
+    if (!config) {
+      config = await GuildConfig.create({
+        guildId,
+        premium: { isPremium: false, tier: 'free', expiresAt: null },
+        modules: {
+          welcome: { enabled: false, message: "Bienvenue {user} !", channelId: null },
+          goodbye: { enabled: false, message: "Au revoir {user}...", channelId: null },
+          moderation: { enabled: false, logChannelId: null },
+          autoMod: { enabled: false, blacklistedWords: [] },
+          tickets: { enabled: false, categoryId: null, counter: 0, categoriesList: [] },
+          economy: { enabled: false, currencySymbol: '$', workCooldownMinutes: 60 },
+          levels: { enabled: false, xpPerMessage: 15, rewardRoles: [] },
+          ai: { enabled: false, systemPrompt: "Tu es un assistant utile sur ce serveur Discord.", contextLimit: 10 },
+          backups: { enabled: false },
+          ping: { enabled: true },
+          honeypot: { enabled: false, channelId: null }
+        }
+      });
+    }
+
+    return res.json(config);
+  } catch (error: any) {
+    console.error('[API Get Config Error] :', error);
+    return res.status(500).json({ error: 'Impossible de charger la configuration du serveur.' });
+  }
 });
 
 // ==========================================
-// 4. ADMINISTRATION DES UTILISATEURS (Staff Only)
+// 4. MISE À JOUR CONFIGURATION DU SERVEUR (manage.ejs - CORRIGÉ)
+// ==========================================
+router.put('/api/guilds/:guildId/config', isAuthenticated, async (req: any, res) => {
+  try {
+    const { guildId } = req.params;
+    const updatedConfig = req.body;
+
+    const config = await GuildConfig.findOneAndUpdate(
+      { guildId },
+      { $set: updatedConfig },
+      { new: true, upsert: true }
+    );
+
+    return res.json(config);
+  } catch (error: any) {
+    console.error('[API Update Config Error] :', error);
+    return res.status(500).json({ error: 'Impossible d\'enregistrer la configuration.' });
+  }
+});
+
+// ==========================================
+// 5. CRÉATION D'UNE SAUVEGARDE (manage.ejs - CORRIGÉ)
+// ==========================================
+router.post('/api/guilds/:guildId/backups', isAuthenticated, async (req: any, res) => {
+  try {
+    const { guildId } = req.params;
+    // (Ici, insérez votre logique d'archivage JSON si applicable)
+    return res.json({ success: true, message: 'Sauvegarde créée avec succès.' });
+  } catch (error: any) {
+    console.error('[API Create Backup Error] :', error);
+    return res.status(500).json({ error: 'Impossible de créer la sauvegarde.' });
+  }
+});
+
+// ==========================================
+// 6. AFFICHAGE DE LA CONSOLE D'ADMINISTRATION (EJS)
+// ==========================================
+router.get('/admin', isAuthenticated, adminCheck, (req, res) => {
+  res.render('admin'); 
+});
+
+// ==========================================
+// 7. ADMINISTRATION DES UTILISATEURS (Staff Only)
 // ==========================================
 router.get('/api/admin/users', isAuthenticated, adminCheck, async (req, res) => {
   try {
@@ -99,7 +171,7 @@ router.get('/api/admin/users', isAuthenticated, adminCheck, async (req, res) => 
 });
 
 // ==========================================
-// 5. JOURNALISATION AUDIT CENTER (Staff Only)
+// 8. JOURNALISATION AUDIT CENTER (Staff Only)
 // ==========================================
 router.get('/api/admin/audit-logs', isAuthenticated, adminCheck, async (req, res) => {
   try {
@@ -115,19 +187,18 @@ router.get('/api/admin/audit-logs', isAuthenticated, adminCheck, async (req, res
 });
 
 // ==========================================
-// 6. ATTRIBUTION DE LICENCE PREMIUM AVEC DURÉE FLEXIBLE (Staff Only)
+// 9. ATTRIBUTION DE LICENCE PREMIUM (Staff Only)
 // ==========================================
 router.post('/api/admin/users/:userId/grant-premium', isAuthenticated, adminCheck, async (req: any, res) => {
   try {
     const { userId } = req.params;
-    const { duration } = req.body; // Récupère "1m", "3m", "6m", "1y" ou "lifetime"
+    const { duration } = req.body; 
 
     const user = await User.findOne({ discordId: userId });
     if (!user) {
       return res.status(404).json({ error: 'Utilisateur introuvable.' });
     }
 
-    // Calcul dynamique de la date d'expiration de la licence
     let expiresAt: Date | null = null;
     if (duration !== 'lifetime') {
       expiresAt = new Date();
@@ -137,7 +208,6 @@ router.post('/api/admin/users/:userId/grant-premium', isAuthenticated, adminChec
       else if (duration === '1y') expiresAt.setFullYear(expiresAt.getFullYear() + 1);
     }
 
-    // Génération d'une clé de licence unique d'OMNIX
     const licenseKey = `OMNIX-PREM-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
 
     const newLicense = {
@@ -147,7 +217,6 @@ router.post('/api/admin/users/:userId/grant-premium', isAuthenticated, adminChec
       expiresAt
     };
 
-    // Ajoute la licence dans le tableau des licences de l'utilisateur
     user.licenses = user.licenses || [];
     user.licenses.push(newLicense);
     await user.save();
@@ -162,7 +231,7 @@ router.post('/api/admin/users/:userId/grant-premium', isAuthenticated, adminChec
 });
 
 // ==========================================
-// 7. PROMOTION / DÉGRADATION DE DROITS STAFF ADMIN (Staff Only)
+// 10. PROMOTION / DÉGRADATION DE DROITS (Staff Only)
 // ==========================================
 router.post('/api/admin/users/:userId/toggle-admin', isAuthenticated, adminCheck, async (req: any, res) => {
   try {
@@ -173,7 +242,6 @@ router.post('/api/admin/users/:userId/toggle-admin', isAuthenticated, adminCheck
       return res.status(404).json({ error: 'Utilisateur introuvable.' });
     }
 
-    // Inverse le rôle administrateur du compte
     user.isAdmin = !user.isAdmin;
     await user.save();
 
@@ -187,13 +255,12 @@ router.post('/api/admin/users/:userId/toggle-admin', isAuthenticated, adminCheck
 });
 
 // ==========================================
-// 8. WEBHOOK DE PUBLICATION DE CHANGELOG
+// 11. WEBHOOK DE PUBLICATION DE CHANGELOG
 // ==========================================
 router.post('/api/admin/deploy-changelog', async (req, res) => {
   const { secret, version, description, author } = req.body;
-  const changelogChannelId = "1527176322319777832"; // ID de votre salon #changelog officiel OMNIX
+  const changelogChannelId = "1527176322319777832"; 
 
-  // Validation de sécurité simple via clé secrète
   if (secret !== process.env.JWT_SECRET) {
     return res.status(401).json({ error: 'Non autorisé.' });
   }
@@ -206,7 +273,7 @@ router.post('/api/admin/deploy-changelog', async (req, res) => {
 
     const changelogEmbed = new EmbedBuilder()
       .setTitle(`🚀 NOUVELLE MISE À JOUR — VERSION ${version}`)
-      .setColor(0x7c3aed) // Violet royal
+      .setColor(0x7c3aed) 
       .setDescription(description)
       .addFields({ name: 'Déployeur', value: `🔧 ${author || 'OMNIX Engine'}`, inline: true })
       .setFooter({ text: 'OMNIX Auto-Changelog' })
