@@ -4,25 +4,13 @@ import { GuildsController } from '../controllers/guilds.controller.ts';
 import { isAuthenticated } from '../middlewares/auth.ts';
 import { canManageGuild } from '../middlewares/guildAuth.ts';
 
-/* =========================================================
-   ROUTER
-========================================================= */
-
 const router = Router();
-
-/* =========================================================
-   GLOBAL GUILDS
-========================================================= */
 
 /**
  * GET /api/guilds
  *
- * Retourne les serveurs Discord accessibles
+ * Récupère les serveurs Discord accessibles
  * par l'utilisateur connecté.
- *
- * Protection :
- * - JWT / session
- * - utilisateur authentifié
  */
 router.get(
   '/',
@@ -30,18 +18,10 @@ router.get(
   GuildsController.getUserGuilds
 );
 
-/* =========================================================
-   GUILD CHANNELS
-========================================================= */
-
 /**
  * GET /api/guilds/:guildId/channels
  *
- * Retourne les salons du serveur.
- *
- * Protection :
- * - utilisateur authentifié
- * - vérification des permissions sur le serveur
+ * Récupère les salons du serveur.
  */
 router.get(
   '/:guildId/channels',
@@ -50,18 +30,10 @@ router.get(
   GuildsController.getGuildChannels
 );
 
-/* =========================================================
-   GUILD ROLES
-========================================================= */
-
 /**
  * GET /api/guilds/:guildId/roles
  *
- * Retourne les rôles du serveur.
- *
- * Protection :
- * - utilisateur authentifié
- * - vérification des permissions sur le serveur
+ * Récupère les rôles du serveur.
  */
 router.get(
   '/:guildId/roles',
@@ -69,9 +41,5 @@ router.get(
   canManageGuild as any,
   GuildsController.getGuildRoles
 );
-
-/* =========================================================
-   EXPORT
-========================================================= */
 
 export default router;
