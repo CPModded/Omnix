@@ -3,222 +3,305 @@ import type {
   Response,
   NextFunction,
 } from 'express';
+
 import jwt from 'jsonwebtoken';
-import { CONFIG } from '../../config/index.ts';
+
+
 /* =========================================================
    TYPES
 ========================================================= */
+
+export interface AuthenticatedUser {
+  id: string;
+  username?: string;
+  global_name?: string;
+  avatar?: string;
+  avatarURL?: string;
+  email?: string;
+  owner?: boolean;
+  premium?: boolean;
+  plan?: string;
+  [key: string]: unknown;
+}
+
+
 export interface AuthenticatedRequest
   extends Request {
-  user?: any;
-  token?: string;
+
+  user?: AuthenticatedUser;
+
 }
+
+
 /* =========================================================
    JWT SECRET
 ========================================================= */
+
 function getJwtSecret(): string {
+
   const secret =
-    CONFIG.JWT_SECRET ||
     process.env.JWT_SECRET;
-  if (!secret) {
+
+  if (
+    !secret ||
+    secret.trim().length < 16
+  ) {
+
     throw new Error(
-      '[Auth] JWT_SECRET / CONFIG.JWT_SECRET est manquant.'
+      '[AUTH] JWT_SECRET est absent ou trop court.'
     );
+
   }
+
   return secret;
+
 }
+
+
 /* =========================================================
-   TOKEN EXTRACTION
+   GET TOKEN
 ========================================================= */
-function extractToken(
+
+function getToken(
   req: Request
 ): string | null {
+
   /*
-   * Authorization: Bearer <token>
+   * 1. Cookie HTTP-only
    */
-  const authorization =
-    req.headers.authorization;
-  if (
-    authorization &&
-    authorization.startsWith('Bearer ')
-  ) {
-    return authorization
-      .slice(7)
-      .trim();
-  }
-  /*
-   * Cookie éventuel.
-   *
-   * Cela permet à OMNIX de fonctionner aussi
-   * avec une authentification par cookie.
-   */
-  const cookies =
+
+  const cookieToken =
     (req as Request & {
       cookies?: Record<string, string>;
-    }).cookies;
-  if (cookies) {
-    const cookieToken =
-      cookies.omnix_token ||
-      cookies.token ||
-      cookies.access_token;
-    if (cookieToken) {
-      return cookieToken;
-    }
+    }).cookies?.omnix_token;
+
+  if (cookieToken) {
+    return cookieToken;
   }
+
+
   /*
-   * Query token.
-   *
-   * Utile notamment pour certains retours OAuth.
+   * 2. Authorization Bearer
    */
-  const queryToken =
-    req.query?.token;
+
+  const authorization =
+    req.headers.authorization;
+
   if (
-    typeof queryToken === 'string' &&
-    queryToken.trim()
+    authorization &&
+    authorization.startsWith(
+      'Bearer '
+    )
   ) {
-    return queryToken.trim();
+
+    const token =
+      authorization.slice(
+        7
+      ).trim();
+
+    if (token) {
+      return token;
+    }
+
   }
+
+
+  /*
+   * 3. Query token
+   *
+   * Utilisé uniquement pour permettre
+   * au callback OAuth de transmettre
+   * temporairement le token.
+   */
+
+  const queryToken =
+    typeof req.query.token ===
+    'string'
+      ? req.query.token
+      : null;
+
+  if (queryToken) {
+    return queryToken;
+  }
+
+
   return null;
+
 }
+
+
 /* =========================================================
-   VERIFY JWT
+   VERIFY TOKEN
 ========================================================= */
+
 export function verifyToken(
   token: string
-): any | null {
+): AuthenticatedUser | null {
+
   try {
-    return jwt.verify(
-      token,
-      getJwtSecret()
+
+    const decoded =
+      jwt.verify(
+        token,
+        getJwtSecret()
+      );
+
+    if (
+      typeof decoded !==
+      'object' ||
+      decoded === null
+    ) {
+
+      return null;
+
+    }
+
+    const payload =
+      decoded as Record<
+        string,
+        unknown
+      >;
+
+    const id =
+      payload.id ??
+      payload.userId ??
+      payload.sub;
+
+    if (!id) {
+      return null;
+    }
+
+    return {
+      ...payload,
+      id: String(id),
+    } as AuthenticatedUser;
+
+  } catch (error) {
+
+    console.warn(
+      '[AUTH] JWT invalide ou expiré.'
     );
-  } catch {
+
     return null;
+
   }
+
 }
+
+
 /* =========================================================
-   AUTHENTICATION MIDDLEWARE
+   AUTHENTICATED MIDDLEWARE
 ========================================================= */
+
 export function isAuthenticated(
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction
-): void {
+) {
+
   try {
+
     const token =
-      extractToken(req);
-    /*
-     * Aucun token.
-     */
+      getToken(req);
+
     if (!token) {
-      res.status(401).json({
+
+      return res.status(
+        401
+      ).json({
         success: false,
         error: 'Authentification requise.',
         code: 'AUTH_REQUIRED',
       });
-      return;
+
     }
-    /*
-     * Vérification JWT.
-     */
-    const payload =
+
+    const user =
       verifyToken(token);
-    if (!payload) {
-      res.status(401).json({
+
+    if (!user) {
+
+      return res.status(
+        401
+      ).json({
         success: false,
-        error: 'Session invalide ou expirée.',
-        code: 'INVALID_TOKEN',
+        error: 'Session expirée.',
+        code: 'SESSION_EXPIRED',
       });
-      return;
+
     }
-    /*
-     * Stockage du token et de l'utilisateur
-     * dans la requête.
-     */
-    req.token =
-      token;
-    req.user =
-      payload;
-    next();
+
+    (
+      req as AuthenticatedRequest
+    ).user =
+      user;
+
+    return next();
+
   } catch (error) {
+
     console.error(
-      '[Auth] Erreur middleware :',
+      '[AUTH] Erreur middleware :',
       error
     );
-    res.status(401).json({
+
+    return res.status(
+      401
+    ).json({
       success: false,
-      error: 'Authentification invalide.',
-      code: 'AUTH_ERROR',
+      error: 'Session invalide.',
+      code: 'INVALID_SESSION',
     });
+
   }
+
 }
+
+
 /* =========================================================
-   OPTIONAL AUTHENTICATION
+   OPTIONAL AUTH
 ========================================================= */
-/**
- * Même fonctionnement que isAuthenticated,
- * mais ne bloque pas la requête si aucun token
- * n'est présent.
- *
- * Utile pour les pages publiques pouvant afficher
- * des informations différentes selon la connexion.
- */
+
 export function optionalAuthentication(
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction
-): void {
+) {
+
   try {
+
     const token =
-      extractToken(req);
+      getToken(req);
+
     if (!token) {
-      next();
-      return;
+      return next();
     }
-    const payload =
+
+    const user =
       verifyToken(token);
-    if (payload) {
-      req.token =
-        token;
-      req.user =
-        payload;
+
+    if (user) {
+
+      (
+        req as AuthenticatedRequest
+      ).user =
+        user;
+
     }
-    next();
-  } catch (error) {
-    console.warn(
-      '[Auth] Authentification optionnelle échouée :',
-      error
-    );
-    next();
+
+    return next();
+
+  } catch {
+
+    return next();
+
   }
+
 }
+
+
 /* =========================================================
-   REQUIRE USER
+   DEFAULT EXPORT
 ========================================================= */
-/**
- * Vérifie qu'un utilisateur authentifié existe
- * réellement dans la requête.
- */
-export function requireUser(
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-): void {
-  if (!req.user) {
-    res.status(401).json({
-      success: false,
-      error: 'Utilisateur non authentifié.',
-      code: 'USER_REQUIRED',
-    });
-    return;
-  }
-  next();
-}
-/* =========================================================
-   EXPORT DEFAULT
-========================================================= */
-export default {
-  isAuthenticated,
-  optionalAuthentication,
-  requireUser,
-  verifyToken,
-};
+
+export default isAuthenticated;
