@@ -1,572 +1,237 @@
-import express, {
-  type Express,
-  type Request,
-  type Response,
-  type NextFunction,
-} from 'express';
-
+import express from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import path from 'path';
-import fs from 'fs';
-
-import cookieParser from 'cookie-parser';
+import { fileURLToPath } from 'url';
 import helmet from 'helmet';
-
-import authRouter from './routes/auth.routes.ts';
-import adminRouter from './routes/admin.routes.ts';
-import statsRouter from './routes/stats.routes.ts';
-
-/* =========================================================
-   CREATE APP
-========================================================= */
-
-export function createApp(): Express {
-  const app = express();
-
-  /* =======================================================
-     CONFIGURATION EXPRESS
-  ======================================================= */
-
-  /**
-   * Render utilise un reverse proxy.
-   *
-   * Cela permet notamment à Express de comprendre
-   * correctement que la connexion originale est HTTPS.
-   */
-  app.set('trust proxy', 1);
-
-  /**
-   * Ne pas révéler Express dans les headers.
-   */
-  app.disable('x-powered-by');
-
-  /* =======================================================
-     SECURITY
-  ======================================================= */
-
-  app.use(
-    helmet({
-      /**
-       * La CSP est volontairement désactivée ici
-       * car ton frontend actuel peut utiliser :
-       *
-       * - scripts inline
-       * - ressources externes
-       * - SVG
-       * - éventuels scripts CDN
-       *
-       * On pourra mettre en place une CSP stricte
-       * plus tard lorsque le frontend sera stabilisé.
-       */
-      contentSecurityPolicy: false,
-    })
-  );
-
-  /* =======================================================
-     BODY PARSER
-  ======================================================= */
-
-  app.use(
-    express.json({
-      /**
-       * Limite raisonnable pour les API OMNIX.
-       */
-      limit: '10mb',
-    })
-  );
-
-  app.use(
-    express.urlencoded({
-      extended: true,
-      limit: '10mb',
-    })
-  );
-
-  /* =======================================================
-     COOKIES
-  ======================================================= */
-
-  /**
-   * Obligatoire pour :
-   *
-   * req.cookies.jwt_token
-   *
-   * utilisé par auth.routes.ts et admin.routes.ts.
-   */
-  app.use(cookieParser());
-
-  /* =======================================================
-     CACHE
-  ======================================================= */
-
-  app.use(
-    (
-      req: Request,
-      res: Response,
-      next: NextFunction
-    ) => {
-      /**
-       * Les API d'OMNIX ne doivent pas être mises
-       * en cache par le navigateur ou un proxy.
-       *
-       * Cela évite notamment d'afficher d'anciennes
-       * statistiques ou une ancienne session.
-       */
-      if (req.path.startsWith('/api/')) {
-        res.setHeader(
-          'Cache-Control',
-          'no-store, no-cache, must-revalidate, proxy-revalidate'
-        );
-
-        res.setHeader(
-          'Pragma',
-          'no-cache'
-        );
-
-        res.setHeader(
-          'Expires',
-          '0'
-        );
-
-        res.setHeader(
-          'Surrogate-Control',
-          'no-store'
-        );
-      }
-
-      next();
-    }
-  );
-
-  /* =======================================================
-     ROOT PATH
-  ======================================================= */
-
-  const root =
-    process.cwd();
-
-  /* =======================================================
-     VIEWS
-  ======================================================= */
-
-  /**
-   * Plusieurs chemins sont supportés afin que le projet
-   * fonctionne aussi bien en développement qu'après
-   * compilation.
-   */
-  const possibleViewsPaths = [
-    path.join(
-      root,
-      'views'
-    ),
-
-    path.join(
-      root,
-      'src',
-      'dashboard',
-      'views'
-    ),
-
-    path.join(
-      root,
-      'dist',
-      'dashboard',
-      'views'
-    ),
-  ];
-
-  const viewsPath =
-    possibleViewsPaths.find(
-      (directory) =>
-        fs.existsSync(directory)
-    ) ||
-    possibleViewsPaths[0];
-
-  app.set(
-    'view engine',
-    'ejs'
-  );
-
-  app.set(
-    'views',
-    viewsPath
-  );
-
-  /* =======================================================
-     PUBLIC FILES
-  ======================================================= */
-
-  const possiblePublicPaths = [
-    path.join(
-      root,
-      'public'
-    ),
-
-    path.join(
-      root,
-      'src',
-      'dashboard',
-      'public'
-    ),
-
-    path.join(
-      root,
-      'dist',
-      'dashboard',
-      'public'
-    ),
-  ];
-
-  const publicPath =
-    possiblePublicPaths.find(
-      (directory) =>
-        fs.existsSync(directory)
-    ) ||
-    possiblePublicPaths[0];
-
-  /**
-   * Fichiers statiques :
-   *
-   * CSS
-   * JS
-   * images
-   * favicon
-   * etc.
-   */
-  app.use(
-    express.static(
-      publicPath,
-      {
-        maxAge:
-          process.env.NODE_ENV ===
-          'production'
-            ? '1h'
-            : 0,
-      }
-    )
-  );
-
-  /* =======================================================
-     API AUTHENTIFICATION
-  ======================================================= */
-
-  /**
-   * Toutes les routes :
-   *
-   * /api/auth/*
-   *
-   * sont maintenant gérées par auth.routes.ts.
-   */
-  app.use(
-    '/api/auth',
-    authRouter
-  );
-
-  /* =======================================================
-     API STATISTIQUES
-  ======================================================= */
-
-  /**
-   * IMPORTANT :
-   *
-   * statsRouter est PUBLIC.
-   *
-   * Il ne faut surtout pas placer un middleware
-   * d'authentification global avant cette route.
-   *
-   * Sinon :
-   *
-   * GET /api/stats
-   *
-   * retournerait 401 pour les visiteurs.
-   */
-  app.use(
-    statsRouter
-  );
-
-  /* =======================================================
-     API ADMIN
-  ======================================================= */
-
-  /**
-   * Les routes admin possèdent leur propre protection :
-   *
-   * requireAuth
-   * requireOwner
-   */
-  app.use(
-    adminRouter
-  );
-
-  /* =======================================================
-     PAGE D'ACCUEIL
-  ======================================================= */
-
-  app.get(
-    '/',
-    (
-      req: Request,
-      res: Response
-    ) => {
-      return res.render(
-        'index',
-        {
-          clientId:
-            process.env.DISCORD_CLIENT_ID ||
-            '',
-
-          redirectUri:
-            process.env.DISCORD_REDIRECT_URI ||
-            '',
-        }
-      );
-    }
-  );
-
-  /* =======================================================
-     DASHBOARD
-  ======================================================= */
-
-  app.get(
-    '/dashboard',
-    (
-      req: Request,
-      res: Response
-    ) => {
-      return res.render(
-        'dashboard',
-        {
-          clientId:
-            process.env.DISCORD_CLIENT_ID ||
-            '',
-        }
-      );
-    }
-  );
-
-  /* =======================================================
-     GESTION D'UN SERVEUR
-  ======================================================= */
-
-  app.get(
-    '/dashboard/:guildId',
-    (
-      req: Request,
-      res: Response
-    ) => {
-      return res.render(
-        'manage',
-        {
-          guildId:
-            req.params.guildId,
-
-          clientId:
-            process.env.DISCORD_CLIENT_ID ||
-            '',
-        }
-      );
-    }
-  );
-
-  /* =======================================================
-     FOUNDER
-  ======================================================= */
-
-  app.get(
-    '/founder',
-    (
-      req: Request,
-      res: Response
-    ) => {
-      return res.render(
-        'founder',
-        {
-          founder: {
-            name:
-              'Weritale',
-
-            description:
-              'Créateur et développeur principal de la plateforme OMNIX.',
-
-            officialServer:
-              'https://discord.gg/omnix',
-          },
-        }
-      );
-    }
-  );
-
-  /* =======================================================
-     PRICING
-  ======================================================= */
-
-  app.get(
-    '/pricing',
-    (
-      req: Request,
-      res: Response
-    ) => {
-      return res.render(
-        'pricing'
-      );
-    }
-  );
-
-  /* =======================================================
-     LEARN MORE
-  ======================================================= */
-
-  app.get(
-    '/learn-more',
-    (
-      req: Request,
-      res: Response
-    ) => {
-      return res.render(
-        'learn-more'
-      );
-    }
-  );
-
-  /* =======================================================
-     AI DEV
-  ======================================================= */
-
-  /**
-   * La page elle-même est rendue ici.
-   *
-   * Les API privées de la console sont protégées
-   * dans admin.routes.ts.
-   *
-   * Le frontend de la page doit appeler :
-   *
-   * /api/admin/ai-dev/access
-   *
-   * pour vérifier l'accès.
-   */
-  app.get(
-    '/ai-dev',
-    (
-      req: Request,
-      res: Response
-    ) => {
-      return res.render(
-        'ai-dev'
-      );
-    }
-  );
-
-  /* =======================================================
-     API 404
-  ======================================================= */
-
-  app.use(
-    (
-      req: Request,
-      res: Response
-    ) => {
-      /**
-       * Si c'est une route API inexistante,
-       * on retourne du JSON.
-       */
-      if (
-        req.path.startsWith('/api/')
-      ) {
-        return res.status(404).json({
-          success: false,
-
-          error:
-            'Route API introuvable.',
-        });
-      }
-
-      /**
-       * Pour les pages inexistantes,
-       * on renvoie vers la page d'accueil.
-       */
-      return res
-        .status(404)
-        .render(
-          'index',
-          {
-            clientId:
-              process.env.DISCORD_CLIENT_ID ||
-              '',
-
-            redirectUri:
-              process.env.DISCORD_REDIRECT_URI ||
-              '',
-          }
-        );
-    }
-  );
-
-  /* =======================================================
-     GLOBAL ERROR HANDLER
-  ======================================================= */
-
-  app.use(
-    (
-      error: any,
-      req: Request,
-      res: Response,
-      next: NextFunction
-    ) => {
+import rateLimit from 'express-rate-limit';
+// ============================================================
+// PATHS
+// ============================================================
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const PROJECT_ROOT = path.resolve(
+  __dirname,
+  '../..'
+);
+// ============================================================
+// EXPRESS
+// ============================================================
+const app = express();
+// ============================================================
+// PROXY
+// ============================================================
+//
+// Render fonctionne derrière un proxy.
+// Cela permet notamment à Express de gérer correctement
+// les IP et les cookies sécurisés.
+//
+app.set('trust proxy', 1);
+// ============================================================
+// VIEWS
+// ============================================================
+app.set(
+  'view engine',
+  'ejs'
+);
+app.set(
+  'views',
+  path.join(
+    PROJECT_ROOT,
+    'src',
+    'dashboard',
+    'views'
+  )
+);
+// ============================================================
+// SECURITY
+// ============================================================
+app.disable('x-powered-by');
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  })
+);
+// ============================================================
+// BODY PARSER
+// ============================================================
+app.use(
+  express.json({
+    limit: '2mb',
+  })
+);
+app.use(
+  express.urlencoded({
+    extended: true,
+    limit: '2mb',
+  })
+);
+// ============================================================
+// CACHE HEADERS
+// ============================================================
+app.use(
+  (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    res.setHeader(
+      'Cache-Control',
+      'no-store'
+    );
+    next();
+  }
+);
+// ============================================================
+// RATE LIMIT
+// ============================================================
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'Trop de requêtes. Veuillez patienter.',
+  },
+});
+app.use(
+  '/api',
+  apiLimiter
+);
+// ============================================================
+// STATIC FILES
+// ============================================================
+const publicPath = path.join(
+  PROJECT_ROOT,
+  'src',
+  'dashboard',
+  'public'
+);
+app.use(
+  express.static(publicPath, {
+    maxAge:
+      process.env.NODE_ENV === 'production'
+        ? '1h'
+        : 0,
+  })
+);
+// ============================================================
+// HEALTH CHECK
+// ============================================================
+//
+// IMPORTANT POUR RENDER
+//
+// Cette route permet à Render et aux systèmes externes
+// de vérifier que le serveur HTTP répond correctement.
+//
+app.get(
+  '/health',
+  (_req: Request, res: Response) => {
+    res.status(200).json({
+      status: 'ok',
+      service: 'OMNIX',
+      timestamp: new Date().toISOString(),
+    });
+  }
+);
+// ============================================================
+// ROOT
+// ============================================================
+app.get(
+  '/',
+  (_req: Request, res: Response) => {
+    try {
+      return res.render('index');
+    } catch (error) {
       console.error(
-        '[Express]',
+        '[Web] Erreur affichage / :',
         error
       );
-
-      /**
-       * Si Express a déjà commencé à envoyer
-       * la réponse, on laisse Express continuer
-       * son traitement d'erreur.
-       */
-      if (res.headersSent) {
-        return next(error);
-      }
-
-      const message =
-        process.env.NODE_ENV ===
-        'production'
-          ? 'Une erreur interne est survenue.'
-          : (
-              error?.message ||
-              'Erreur interne.'
-            );
-
-      /* ---------------------------------------------------
-         ERREUR API
-      --------------------------------------------------- */
-
-      if (
-        req.path.startsWith('/api/')
-      ) {
-        return res.status(500).json({
-          success: false,
-
-          error: message,
-        });
-      }
-
-      /* ---------------------------------------------------
-         ERREUR PAGE
-      --------------------------------------------------- */
-
-      return res
-        .status(500)
-        .send(message);
+      return res.status(500).send(
+        'OMNIX est démarré, mais la page d’accueil est indisponible.'
+      );
     }
-  );
-
-  /* =======================================================
-     RETURN
-  ======================================================= */
-
-  return app;
-}
-
-/* =========================================================
-   DEFAULT EXPORT
-========================================================= */
-
-export default createApp;
+  }
+);
+// ============================================================
+// ROUTES API
+// ============================================================
+//
+// Les imports sont effectués ici pour conserver une architecture
+// claire et éviter de démarrer plusieurs serveurs HTTP.
+//
+import authRoutes from './routes/auth.routes.ts';
+import guildRoutes from './routes/guild.routes.ts';
+app.use(
+  '/api/auth',
+  authRoutes
+);
+app.use(
+  '/api/guilds',
+  guildRoutes
+);
+// ============================================================
+// 404 API
+// ============================================================
+app.use(
+  '/api',
+  (
+    req: Request,
+    res: Response
+  ) => {
+    return res.status(404).json({
+      error: 'Route API introuvable.',
+      path: req.path,
+    });
+  }
+);
+// ============================================================
+// 404 WEB
+// ============================================================
+app.use(
+  (
+    req: Request,
+    res: Response
+  ) => {
+    return res.status(404).send(
+      'Page introuvable.'
+    );
+  }
+);
+// ============================================================
+// ERROR HANDLER
+// ============================================================
+app.use(
+  (
+    error: any,
+    _req: Request,
+    res: Response,
+    _next: NextFunction
+  ) => {
+    console.error(
+      '[Web] Erreur Express :',
+      error
+    );
+    if (res.headersSent) {
+      return;
+    }
+    return res.status(500).json({
+      error:
+        'Une erreur interne est survenue.',
+    });
+  }
+);
+// ============================================================
+// EXPORT
+// ============================================================
+//
+// IMPORTANT :
+// Aucun app.listen() ici.
+//
+// Le serveur HTTP est lancé par src/index.ts avec :
+//
+// http.createServer(app).listen(PORT, '0.0.0.0')
+//
+// Cela permet à Render de détecter correctement le port.
+//
+export default app;
