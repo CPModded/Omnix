@@ -12,117 +12,109 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 
 import authRouter from './routes/auth.routes.ts';
-import guildRoutes from './routes/guild.routes.ts';
+import guildRouter from './routes/guild.routes.ts';
 import statsRouter from './routes/stats.routes.ts';
 import adminRouter from './routes/admin.routes.ts';
 
 import {
-  isAuthenticated,
+  requireWebAuthentication,
+  type AuthenticatedRequest,
 } from './middlewares/auth.ts';
 
 import {
   canManageGuild,
 } from './middlewares/guildAuth.ts';
 
-
 /* =========================================================
    PATHS
 ========================================================= */
 
-const PROJECT_ROOT = process.cwd();
+const ROOT =
+  process.cwd();
 
-const POSSIBLE_VIEWS = [
+const VIEWS = [
   path.join(
-    PROJECT_ROOT,
-    'views'
-  ),
-
-  path.join(
-    PROJECT_ROOT,
+    ROOT,
     'src',
     'dashboard',
-    'views'
+    'views',
   ),
 
   path.join(
-    PROJECT_ROOT,
+    ROOT,
+    'views',
+  ),
+
+  path.join(
+    ROOT,
     'dist',
     'dashboard',
-    'views'
+    'views',
   ),
 ];
 
-const POSSIBLE_PUBLIC = [
+const PUBLIC = [
   path.join(
-    PROJECT_ROOT,
-    'public'
-  ),
-
-  path.join(
-    PROJECT_ROOT,
+    ROOT,
     'src',
     'dashboard',
-    'public'
+    'public',
   ),
 
   path.join(
-    PROJECT_ROOT,
+    ROOT,
+    'public',
+  ),
+
+  path.join(
+    ROOT,
     'dist',
     'dashboard',
-    'public'
+    'public',
   ),
 ];
 
-
-/* =========================================================
-   FIND EXISTING DIRECTORY
-========================================================= */
-
-function findExistingDirectory(
-  directories: string[]
+function findDirectory(
+  directories: string[],
 ): string {
-
-  for (const directory of directories) {
-
+  for (
+    const directory of directories
+  ) {
     try {
-
       if (
         fs.existsSync(directory) &&
-        fs.statSync(directory).isDirectory()
+        fs.statSync(directory)
+          .isDirectory()
       ) {
         return directory;
       }
-
-    } catch {
-      // Ignore
-    }
-
+    } catch {}
   }
 
   return directories[0];
 }
 
+const viewsDirectory =
+  findDirectory(VIEWS);
+
+const publicDirectory =
+  findDirectory(PUBLIC);
 
 /* =========================================================
-   EXPRESS
+   APP
 ========================================================= */
 
-const app: Express = express();
-
-
-/* =========================================================
-   BASIC CONFIGURATION
-========================================================= */
+const app: Express =
+  express();
 
 app.set(
   'trust proxy',
-  1
+  1,
 );
 
 app.disable(
-  'x-powered-by'
+  'x-powered-by',
 );
-
 
 /* =========================================================
    SECURITY
@@ -130,126 +122,84 @@ app.disable(
 
 app.use(
   helmet({
-    contentSecurityPolicy: false,
-    crossOriginEmbedderPolicy: false,
-  })
+    contentSecurityPolicy:
+      false,
+
+    crossOriginEmbedderPolicy:
+      false,
+  }),
 );
 
-
 /* =========================================================
-   BODY PARSERS
+   BODY
 ========================================================= */
 
 app.use(
   express.json({
     limit: '10mb',
-  })
+  }),
 );
 
 app.use(
   express.urlencoded({
     extended: true,
     limit: '10mb',
-  })
+  }),
 );
-
-
-/* =========================================================
-   COOKIES
-========================================================= */
 
 app.use(
-  cookieParser()
+  cookieParser(),
 );
-
 
 /* =========================================================
    EJS
 ========================================================= */
 
-const viewsDirectory =
-  findExistingDirectory(
-    POSSIBLE_VIEWS
-  );
-
-console.log(
-  `[Web] Views : ${viewsDirectory}`
-);
-
 app.set(
   'view engine',
-  'ejs'
+  'ejs',
 );
 
 app.set(
   'views',
-  viewsDirectory
+  viewsDirectory,
 );
-
 
 /* =========================================================
-   STATIC FILES
+   STATIC
 ========================================================= */
 
-const publicDirectory =
-  findExistingDirectory(
-    POSSIBLE_PUBLIC
-  );
-
-console.log(
-  `[Web] Public : ${publicDirectory}`
-);
-
 if (
-  fs.existsSync(publicDirectory)
+  fs.existsSync(
+    publicDirectory,
+  )
 ) {
-
   app.use(
     express.static(
       publicDirectory,
-      {
-        maxAge:
-          process.env.NODE_ENV === 'production'
-            ? '1h'
-            : 0,
-      }
-    )
+    ),
   );
-
 }
 
-
 /* =========================================================
-   API CACHE CONTROL
+   API CACHE
 ========================================================= */
 
 app.use(
   '/api',
   (
-    req: Request,
-    res: Response,
-    next: NextFunction
+    req,
+    res,
+    next,
   ) => {
-
     res.setHeader(
       'Cache-Control',
-      'no-store, no-cache, must-revalidate, proxy-revalidate'
-    );
-
-    res.setHeader(
-      'Pragma',
-      'no-cache'
-    );
-
-    res.setHeader(
-      'Expires',
-      '0'
+      'no-store',
     );
 
     next();
-  }
+  },
 );
-
 
 /* =========================================================
    HEALTH
@@ -259,9 +209,8 @@ app.get(
   '/health',
   (
     req: Request,
-    res: Response
+    res: Response,
   ) => {
-
     return res.json({
       success: true,
       service: 'OMNIX',
@@ -269,439 +218,256 @@ app.get(
       timestamp:
         new Date().toISOString(),
     });
-
-  }
+  },
 );
 
-
 /* =========================================================
-   API ROUTES
+   API
 ========================================================= */
-
-
-/* ---------------------------------------------------------
-   AUTH
---------------------------------------------------------- */
 
 app.use(
   '/api/auth',
-  authRouter
+  authRouter,
 );
-
-
-/* ---------------------------------------------------------
-   GUILDS
---------------------------------------------------------- */
-
-app.use(
-  '/api/guilds',
-  guildRoutes
-);
-
-
-/* ---------------------------------------------------------
-   STATS
---------------------------------------------------------- */
 
 /*
  * IMPORTANT :
  *
- * stats.routes.ts contient déjà :
+ * stats.routes.ts contient :
+ *
+ * /stats
+ * /stats/health
+ *
+ * Donc on le monte sur /api.
+ *
+ * Résultat :
  *
  * /api/stats
  * /api/stats/health
- *
- * Donc le router doit être monté sur "/".
  */
-
 app.use(
   '/api',
-  statsRouter
+  statsRouter,
 );
 
-
-/* ---------------------------------------------------------
-   ADMIN
---------------------------------------------------------- */
+app.use(
+  '/api/guilds',
+  guildRouter,
+);
 
 app.use(
   '/api/admin',
-  adminRouter
+  adminRouter,
 );
 
-
 /* =========================================================
-   PUBLIC PAGES
-========================================================= */
-
-
-/* ---------------------------------------------------------
    HOME
---------------------------------------------------------- */
+========================================================= */
 
 app.get(
   '/',
   (
     req: Request,
-    res: Response
+    res: Response,
   ) => {
-
     try {
-
       return res.render(
-        'index'
+        'index',
       );
-
-    } catch (error) {
-
-      console.error(
-        '[Web] Erreur rendu / :',
-        error
+    } catch {
+      return res.redirect(
+        '/api/auth/login',
       );
-
-      return res.status(500).send(
-        'Erreur lors du chargement de la page.'
-      );
-
     }
-
-  }
+  },
 );
-
 
 /* =========================================================
    DASHBOARD
 ========================================================= */
 
-
-/* ---------------------------------------------------------
-   DASHBOARD PRINCIPAL
---------------------------------------------------------- */
-
+/*
+ * /dashboard
+ *
+ * Authentication WEB.
+ */
 app.get(
   '/dashboard',
-  isAuthenticated as any,
+  requireWebAuthentication,
   (
-    req: Request,
-    res: Response
+    req: AuthenticatedRequest,
+    res: Response,
   ) => {
+    console.log(
+      '[Web] GET /dashboard',
+    );
 
-    try {
-
-      const authenticatedRequest =
-        req as any;
-
-      console.log(
-        '[Web] GET /dashboard'
-      );
-
-      return res.render(
-        'dashboard',
-        {
-          user:
-            authenticatedRequest.user ?? null,
-
-          guilds:
-            authenticatedRequest.user?.guilds ?? [],
-
-          isOwner:
-            authenticatedRequest.user?.owner ?? false,
-        }
-      );
-
-    } catch (error) {
-
-      console.error(
-        '[Web] Erreur rendu /dashboard :',
-        error
-      );
-
-      return res.status(500).send(
-        'Erreur lors du chargement du Dashboard OMNIX.'
-      );
-
-    }
-
-  }
+    return res.render(
+      'dashboard',
+      {
+        user:
+          req.user,
+        guildId:
+          null,
+      },
+    );
+  },
 );
 
-
-/* ---------------------------------------------------------
-   DASHBOARD SERVEUR
---------------------------------------------------------- */
-
+/*
+ * /dashboard/:guildId
+ */
 app.get(
   '/dashboard/:guildId',
-  isAuthenticated as any,
-  canManageGuild as any,
+  requireWebAuthentication,
+  canManageGuild,
   (
-    req: Request,
-    res: Response
+    req: AuthenticatedRequest,
+    res: Response,
   ) => {
+    const guildId =
+      String(
+        req.params.guildId,
+      ).trim();
 
-    try {
+    console.log(
+      `[Web] GET /dashboard/${guildId}`,
+    );
 
-      const guildId =
-        String(
-          req.params.guildId ?? ''
-        ).trim();
+    return res.render(
+      'dashboard',
+      {
+        user:
+          req.user,
 
-      if (!guildId) {
-
-        return res.redirect(
-          '/dashboard'
-        );
-
-      }
-
-      const authenticatedRequest =
-        req as any;
-
-      console.log(
-        `[Web] GET /dashboard/${guildId}`
-      );
-
-      return res.render(
-        'dashboard',
-        {
-          user:
-            authenticatedRequest.user ?? null,
-
-          guilds:
-            authenticatedRequest.user?.guilds ?? [],
-
-          guildId,
-
-          isOwner:
-            authenticatedRequest.user?.owner ?? false,
-        }
-      );
-
-    } catch (error) {
-
-      console.error(
-        '[Web] Erreur rendu /dashboard/:guildId :',
-        error
-      );
-
-      return res.status(500).send(
-        'Erreur lors du chargement du Dashboard serveur.'
-      );
-
-    }
-
-  }
+        guildId,
+      },
+    );
+  },
 );
-
 
 /* =========================================================
-   OTHER PUBLIC PAGES
+   OTHER PAGES
 ========================================================= */
 
+function renderPage(
+  route: string,
+  view: string,
+) {
+  app.get(
+    route,
+    (
+      req: Request,
+      res: Response,
+    ) => {
+      try {
+        const file =
+          path.join(
+            viewsDirectory,
+            `${view}.ejs`,
+          );
 
-/* ---------------------------------------------------------
-   PREMIUM
---------------------------------------------------------- */
+        if (
+          !fs.existsSync(file)
+        ) {
+          return res.status(404).send(
+            `La page "${view}" est indisponible.`,
+          );
+        }
 
-app.get(
+        return res.render(view);
+      } catch (error) {
+        console.error(
+          `[Web] Erreur ${route}:`,
+          error,
+        );
+
+        return res.status(500).send(
+          'Erreur lors du chargement de la page.',
+        );
+      }
+    },
+  );
+}
+
+renderPage(
   '/premium',
-  (
-    req: Request,
-    res: Response
-  ) => {
-
-    try {
-
-      return res.render(
-        'premium'
-      );
-
-    } catch (error) {
-
-      console.error(
-        '[Web] Erreur /premium :',
-        error
-      );
-
-      return res.status(500).send(
-        'Page Premium indisponible.'
-      );
-
-    }
-
-  }
+  'premium',
 );
 
-
-/* ---------------------------------------------------------
-   PRICING
---------------------------------------------------------- */
-
-app.get(
+renderPage(
   '/pricing',
-  (
-    req: Request,
-    res: Response
-  ) => {
-
-    try {
-
-      return res.render(
-        'pricing'
-      );
-
-    } catch (error) {
-
-      console.error(
-        '[Web] Erreur /pricing :',
-        error
-      );
-
-      return res.status(500).send(
-        'Page Pricing indisponible.'
-      );
-
-    }
-
-  }
+  'pricing',
 );
 
-
-/* ---------------------------------------------------------
-   SUPPORT
---------------------------------------------------------- */
-
-app.get(
+renderPage(
   '/support',
-  (
-    req: Request,
-    res: Response
-  ) => {
-
-    try {
-
-      return res.render(
-        'support'
-      );
-
-    } catch (error) {
-
-      console.error(
-        '[Web] Erreur /support :',
-        error
-      );
-
-      return res.status(500).send(
-        'Page Support indisponible.'
-      );
-
-    }
-
-  }
+  'support',
 );
 
-
-/* ---------------------------------------------------------
-   FOUNDER
---------------------------------------------------------- */
-
-app.get(
+renderPage(
   '/founder',
-  (
-    req: Request,
-    res: Response
-  ) => {
-
-    try {
-
-      return res.render(
-        'founder'
-      );
-
-    } catch (error) {
-
-      console.error(
-        '[Web] Erreur /founder :',
-        error
-      );
-
-      return res.status(500).send(
-        'Page Founder indisponible.'
-      );
-
-    }
-
-  }
+  'founder',
 );
 
-
-/* ---------------------------------------------------------
-   LEARN MORE
---------------------------------------------------------- */
-
-app.get(
+renderPage(
   '/learn-more',
-  (
-    req: Request,
-    res: Response
-  ) => {
-
-    try {
-
-      return res.render(
-        'learn-more'
-      );
-
-    } catch (error) {
-
-      console.error(
-        '[Web] Erreur /learn-more :',
-        error
-      );
-
-      return res.status(500).send(
-        'Page indisponible.'
-      );
-
-    }
-
-  }
+  'learn-more',
 );
 
-
-/* ---------------------------------------------------------
-   AI DEV
---------------------------------------------------------- */
-
-app.get(
+renderPage(
   '/ai-dev',
-  (
-    req: Request,
-    res: Response
-  ) => {
-
-    try {
-
-      return res.render(
-        'ai-dev'
-      );
-
-    } catch (error) {
-
-      console.error(
-        '[Web] Erreur /ai-dev :',
-        error
-      );
-
-      return res.status(500).send(
-        'Page indisponible.'
-      );
-
-    }
-
-  }
+  'ai-dev',
 );
 
+/*
+ * /admin
+ *
+ * Si admin.ejs existe,
+ * elle s'affiche.
+ *
+ * Sinon on évite une erreur Express
+ * et on retourne au dashboard.
+ */
+app.get(
+  '/admin',
+  requireWebAuthentication,
+  (
+    req: AuthenticatedRequest,
+    res: Response,
+  ) => {
+    const file =
+      path.join(
+        viewsDirectory,
+        'admin.ejs',
+      );
+
+    if (
+      !fs.existsSync(file)
+    ) {
+      return res.redirect(
+        '/dashboard',
+      );
+    }
+
+    if (
+      !req.user?.isOwner &&
+      !req.user?.isAdmin
+    ) {
+      return res.status(403).send(
+        'Accès administrateur requis.',
+      );
+    }
+
+    return res.render(
+      'admin',
+      {
+        user:
+          req.user,
+      },
+    );
+  },
+);
 
 /* =========================================================
    API 404
@@ -711,26 +477,21 @@ app.use(
   '/api',
   (
     req: Request,
-    res: Response
+    res: Response,
   ) => {
-
     console.warn(
-      `[API] 404 : ${req.method} ${req.originalUrl}`
+      `[API] 404 : ${req.method} ${req.originalUrl}`,
     );
 
     return res.status(404).json({
       success: false,
-
       error:
         'Route API introuvable.',
-
       path:
         req.originalUrl,
     });
-
-  }
+  },
 );
-
 
 /* =========================================================
    WEB 404
@@ -739,53 +500,38 @@ app.use(
 app.use(
   (
     req: Request,
-    res: Response
+    res: Response,
   ) => {
-
     console.warn(
-      `[Web] 404 : ${req.method} ${req.originalUrl}`
+      `[Web] 404 : ${req.method} ${req.originalUrl}`,
     );
 
-    /*
-     * On vérifie que 404.ejs existe réellement
-     * avant de tenter de le rendre.
-     */
-
-    const notFoundView =
+    const file =
       path.join(
         viewsDirectory,
-        '404.ejs'
+        '404.ejs',
       );
 
     if (
-      fs.existsSync(
-        notFoundView
-      )
+      fs.existsSync(file)
     ) {
-
       return res.status(404).render(
-        '404'
+        '404',
+        {
+          path:
+            req.originalUrl,
+        },
       );
-
     }
 
-    /*
-     * Pas de 404.ejs :
-     * on évite l'erreur
-     *
-     * Failed to lookup view "404"
-     */
-
     return res.status(404).send(
-      'Page introuvable.'
+      'Page introuvable.',
     );
-
-  }
+  },
 );
 
-
 /* =========================================================
-   GLOBAL ERROR HANDLER
+   GLOBAL ERROR
 ========================================================= */
 
 app.use(
@@ -793,63 +539,28 @@ app.use(
     error: any,
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
-
     console.error(
-      '[Web] Erreur globale :',
-      error
+      '[Web] Erreur globale:',
+      error,
     );
 
     if (
       res.headersSent
     ) {
-
-      return next(
-        error
-      );
-
+      return next(error);
     }
 
-    /*
-     * API
-     */
-
-    if (
-      req.originalUrl.startsWith('/api/')
-    ) {
-
-      return res.status(500).json({
-        success: false,
-
-        error:
-          'Erreur interne du serveur.',
-      });
-
-    }
-
-    /*
-     * WEB
-     */
-
-    return res.status(500).send(
-      'Erreur interne du serveur.'
-    );
-
-  }
+    return res.status(500).json({
+      success: false,
+      error:
+        'Erreur interne du serveur.',
+    });
+  },
 );
 
-
-/* =========================================================
-   EXPORT
-========================================================= */
-
 export default app;
-
-
-/* =========================================================
-   FACTORY
-========================================================= */
 
 export function createApp(): Express {
   return app;
