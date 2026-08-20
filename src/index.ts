@@ -1,15 +1,15 @@
 import 'dotenv/config';
+import http from 'http';
 import {
   Client,
   GatewayIntentBits,
   Partials,
 } from 'discord.js';
 import mongoose from 'mongoose';
-import http from 'http';
 import { loadCommands } from './bot/handlers/commandHandler.ts';
 import { loadBotEvents } from './loaders/eventLoader.ts';
-import { CONFIG } from './config/index.ts';
 import app from './api/app.ts';
+import { CONFIG } from './config/index.ts';
 // ============================================================
 // CONFIGURATION
 // ============================================================
@@ -24,7 +24,7 @@ if (!TOKEN) {
 const PORT = Number(
   process.env.PORT ??
   CONFIG.PORT ??
-  3000
+  10000
 );
 const HOST = '0.0.0.0';
 // ============================================================
@@ -52,7 +52,56 @@ const client = new Client({
 // ============================================================
 // SERVEUR HTTP
 // ============================================================
-const httpServer = http.createServer(app);
+let httpServer: http.Server | null = null;
+function startHttpServer(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    try {
+      httpServer = http.createServer(app);
+      httpServer.once('error', (error) => {
+        console.error(
+          '[Web] ✗ Erreur serveur HTTP :',
+          error
+        );
+        reject(error);
+      });
+      httpServer.listen(
+        PORT,
+        HOST,
+        () => {
+          console.log('');
+          console.log(
+            '════════════════════════════════════'
+          );
+          console.log(
+            '             OMNIX WEB'
+          );
+          console.log(
+            '════════════════════════════════════'
+          );
+          console.log(
+            `[Web] ✓ Serveur HTTP démarré.`
+          );
+          console.log(
+            `[Web] ✓ Host : ${HOST}`
+          );
+          console.log(
+            `[Web] ✓ Port : ${PORT}`
+          );
+          console.log(
+            `[Web] ✓ Health : http://${HOST}:${PORT}/health`
+          );
+          console.log(
+            '════════════════════════════════════'
+          );
+          console.log('');
+          resolve();
+        }
+      );
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
 // ============================================================
 // MONGODB
 // ============================================================
@@ -80,31 +129,6 @@ async function connectDatabase(): Promise<void> {
   }
 }
 // ============================================================
-// SERVEUR WEB
-// ============================================================
-async function startHttpServer(): Promise<void> {
-  await new Promise<void>((resolve, reject) => {
-    httpServer.once('error', reject);
-    httpServer.listen(
-      PORT,
-      HOST,
-      () => {
-        httpServer.removeListener('error', reject);
-        console.log('');
-        console.log('════════════════════════════════════');
-        console.log('           OMNIX WEB SERVER');
-        console.log('════════════════════════════════════');
-        console.log(`[Web] ✓ Serveur HTTP démarré.`);
-        console.log(`[Web] ✓ Host : ${HOST}`);
-        console.log(`[Web] ✓ Port : ${PORT}`);
-        console.log('════════════════════════════════════');
-        console.log('');
-        resolve();
-      }
-    );
-  });
-}
-// ============================================================
 // COMMANDES
 // ============================================================
 async function loadBotCommands(): Promise<void> {
@@ -114,7 +138,9 @@ async function loadBotCommands(): Promise<void> {
   );
   await loadCommands(client);
   console.log(
-    `[Bot] ✓ ${client.commands?.size ?? 0} commandes chargées en mémoire.`
+    `[Bot] ✓ ${
+      client.commands?.size ?? 0
+    } commandes chargées en mémoire.`
   );
 }
 // ============================================================
@@ -131,7 +157,7 @@ async function loadEvents(): Promise<void> {
   );
 }
 // ============================================================
-// DISCORD LOGIN
+// DISCORD
 // ============================================================
 async function connectDiscord(): Promise<void> {
   console.log('');
@@ -141,13 +167,19 @@ async function connectDiscord(): Promise<void> {
   await client.login(TOKEN);
 }
 // ============================================================
-// INFORMATIONS BOT
+// INFORMATIONS
 // ============================================================
 function printStartupInfo(): void {
   console.log('');
-  console.log('════════════════════════════════════');
-  console.log('              OMNIX');
-  console.log('════════════════════════════════════');
+  console.log(
+    '════════════════════════════════════'
+  );
+  console.log(
+    '              OMNIX'
+  );
+  console.log(
+    '════════════════════════════════════'
+  );
   console.log(
     `[Bot] Environnement : ${
       process.env.NODE_ENV ?? 'development'
@@ -156,7 +188,12 @@ function printStartupInfo(): void {
   console.log(
     `[Bot] Port HTTP : ${PORT}`
   );
-  console.log('════════════════════════════════════');
+  console.log(
+    `[Bot] Host HTTP : ${HOST}`
+  );
+  console.log(
+    '════════════════════════════════════'
+  );
   console.log('');
 }
 // ============================================================
@@ -174,6 +211,29 @@ async function shutdown(
   console.log(
     `[Process] Signal ${signal} reçu. Arrêt d'OMNIX...`
   );
+  // ----------------------------------------------------------
+  // HTTP
+  // ----------------------------------------------------------
+  try {
+    if (httpServer) {
+      await new Promise<void>((resolve) => {
+        httpServer?.close(() => {
+          console.log(
+            '[Web] ✓ Serveur HTTP fermé.'
+          );
+          resolve();
+        });
+      });
+    }
+  } catch (error) {
+    console.error(
+      '[Web] Erreur pendant la fermeture :',
+      error
+    );
+  }
+  // ----------------------------------------------------------
+  // DISCORD
+  // ----------------------------------------------------------
   try {
     if (client.isReady()) {
       client.destroy();
@@ -187,25 +247,9 @@ async function shutdown(
       error
     );
   }
-  try {
-    await new Promise<void>((resolve) => {
-      if (!httpServer.listening) {
-        resolve();
-        return;
-      }
-      httpServer.close(() => {
-        console.log(
-          '[Web] ✓ Serveur HTTP fermé.'
-        );
-        resolve();
-      });
-    });
-  } catch (error) {
-    console.error(
-      '[Web] Erreur pendant la fermeture :',
-      error
-    );
-  }
+  // ----------------------------------------------------------
+  // MONGODB
+  // ----------------------------------------------------------
   try {
     if (
       mongoose.connection.readyState !== 0
@@ -227,7 +271,7 @@ async function shutdown(
   process.exit(0);
 }
 // ============================================================
-// ERREURS PROCESS
+// SIGNAUX
 // ============================================================
 process.on(
   'SIGINT',
@@ -241,6 +285,9 @@ process.on(
     void shutdown('SIGTERM');
   }
 );
+// ============================================================
+// ERREURS PROCESS
+// ============================================================
 process.on(
   'uncaughtException',
   (error) => {
@@ -264,29 +311,70 @@ process.on(
 // ============================================================
 async function start(): Promise<void> {
   try {
+    // --------------------------------------------------------
+    // 1. INFORMATIONS
+    // --------------------------------------------------------
     printStartupInfo();
-    /*
-     * 1. Base de données
-     */
-    await connectDatabase();
-    /*
-     * 2. Serveur HTTP
-     *
-     * Render exige qu'un port soit ouvert.
-     */
+    // --------------------------------------------------------
+    // 2. SERVEUR WEB
+    // --------------------------------------------------------
+    //
+    // On démarre Express AVANT Discord.
+    //
+    // Render pourra donc détecter immédiatement :
+    //
+    // 0.0.0.0:PORT
+    //
     await startHttpServer();
-    /*
-     * 3. Commandes Discord
-     */
+    // --------------------------------------------------------
+    // 3. MONGODB
+    // --------------------------------------------------------
+    await connectDatabase();
+    // --------------------------------------------------------
+    // 4. COMMANDES
+    // --------------------------------------------------------
     await loadBotCommands();
-    /*
-     * 4. Événements Discord
-     */
+    // --------------------------------------------------------
+    // 5. ÉVÉNEMENTS
+    // --------------------------------------------------------
     await loadEvents();
-    /*
-     * 5. Connexion Discord
-     */
+    // --------------------------------------------------------
+    // 6. DISCORD
+    // --------------------------------------------------------
     await connectDiscord();
+    // --------------------------------------------------------
+    // 7. ONLINE
+    // --------------------------------------------------------
+    console.log('');
+    console.log(
+      '════════════════════════════════════'
+    );
+    console.log(
+      '             OMNIX ONLINE'
+    );
+    console.log(
+      '════════════════════════════════════'
+    );
+    console.log(
+      `[Web] ✓ http://0.0.0.0:${PORT}`
+    );
+    console.log(
+      `[Discord] ✓ Bot connecté`
+    );
+    console.log(
+      `[Discord] ✓ Serveurs : ${
+        client.guilds.cache.size
+      }`
+    );
+    console.log(
+      `[Discord] ✓ Commandes : ${
+        client.commands?.size ?? 0
+      }`
+    );
+    console.log(
+      '════════════════════════════════════'
+    );
+    console.log('');
   } catch (error) {
     console.error('');
     console.error(
