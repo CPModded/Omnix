@@ -1,8 +1,12 @@
-import os from 'os';
-import { client as botClient } from '../bot/client.ts';
-import { User } from '../models/User.ts';
-import { GuildConfig } from '../models/GuildConfig.ts';
-
+import os from 'node:os';
+import {
+  client as botClient,
+} from '../bot/client.ts';
+import User from '../models/User.ts';
+import GuildConfig from '../models/GuildConfig.ts';
+/* =========================================================
+   TYPES
+========================================================= */
 export interface SystemStats {
   system: {
     cpuLoad: number[];
@@ -16,40 +20,100 @@ export interface SystemStats {
     guildsCount: number;
     usersCached: number;
     uptime: number;
+    ready: boolean;
   };
   database: {
     totalUsers: number;
     premiumGuilds: number;
+    connected: boolean;
   };
 }
-
+/* =========================================================
+   SYSTEM MONITOR
+========================================================= */
 export class SystemMonitor {
   static async getStats(): Promise<SystemStats> {
-    const totalMem = os.totalmem();
-    const freeMem = os.freemem();
-    const memUsagePercent = parseFloat((((totalMem - freeMem) / totalMem) * 100).toFixed(2));
-
-    const totalUsersInDb = await User.countDocuments();
-    const premiumGuildsCount = await GuildConfig.countDocuments({ 'premium.isPremium': true });
-
+    const totalMem =
+      os.totalmem();
+    const freeMem =
+      os.freemem();
+    const memUsagePercent =
+      Number(
+        (
+          ((totalMem - freeMem) /
+            totalMem) *
+          100
+        ).toFixed(2)
+      );
+    let totalUsers = 0;
+    let premiumGuilds = 0;
+    let databaseConnected = true;
+    /* =====================================================
+       DATABASE
+    ===================================================== */
+    try {
+      totalUsers =
+        await User.countDocuments();
+      premiumGuilds =
+        await GuildConfig.countDocuments({
+          'premium.isPremium': true,
+        });
+    } catch (error) {
+      databaseConnected = false;
+      console.error(
+        '[SystemMonitor] Erreur MongoDB :',
+        error
+      );
+    }
+    /* =====================================================
+       DISCORD
+    ===================================================== */
+    const ready =
+      botClient.isReady();
+    const ping =
+      ready
+        ? botClient.ws.ping
+        : -1;
+    /* =====================================================
+       RETURN
+    ===================================================== */
     return {
       system: {
-        cpuLoad: os.loadavg(), // Charge système 1, 5 et 15 min
-        totalMem: Math.round(totalMem / 1024 / 1024), // En Mo
-        freeMem: Math.round(freeMem / 1024 / 1024), // En Mo
+        cpuLoad:
+          os.loadavg(),
+        totalMem:
+          Math.round(
+            totalMem /
+              1024 /
+              1024
+          ),
+        freeMem:
+          Math.round(
+            freeMem /
+              1024 /
+              1024
+          ),
         memUsagePercent,
-        uptime: os.uptime()
+        uptime:
+          os.uptime(),
       },
       bot: {
-        ping: botClient.ws.ping,
-        guildsCount: botClient.guilds.cache.size,
-        usersCached: botClient.users.cache.size,
-        uptime: process.uptime()
+        ping,
+        guildsCount:
+          botClient.guilds.cache.size,
+        usersCached:
+          botClient.users.cache.size,
+        uptime:
+          process.uptime(),
+        ready,
       },
       database: {
-        totalUsers: totalUsersInDb,
-        premiumGuilds: premiumGuildsCount
-      }
+        totalUsers,
+        premiumGuilds,
+        connected:
+          databaseConnected,
+      },
     };
   }
 }
+export default SystemMonitor;
