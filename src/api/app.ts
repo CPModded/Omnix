@@ -18,17 +18,10 @@ const PROJECT_ROOT = path.resolve(
 // ============================================================
 const app = express();
 // ============================================================
-// PROXY
+// CONFIGURATION
 // ============================================================
-//
-// Render fonctionne derrière un proxy.
-// Cela permet notamment à Express de gérer correctement
-// les IP et les cookies sécurisés.
-//
 app.set('trust proxy', 1);
-// ============================================================
-// VIEWS
-// ============================================================
+app.disable('x-powered-by');
 app.set(
   'view engine',
   'ejs'
@@ -45,7 +38,6 @@ app.set(
 // ============================================================
 // SECURITY
 // ============================================================
-app.disable('x-powered-by');
 app.use(
   helmet({
     contentSecurityPolicy: false,
@@ -53,7 +45,7 @@ app.use(
   })
 );
 // ============================================================
-// BODY PARSER
+// BODY
 // ============================================================
 app.use(
   express.json({
@@ -67,11 +59,11 @@ app.use(
   })
 );
 // ============================================================
-// CACHE HEADERS
+// CACHE
 // ============================================================
 app.use(
   (
-    req: Request,
+    _req: Request,
     res: Response,
     next: NextFunction
   ) => {
@@ -99,7 +91,7 @@ app.use(
   apiLimiter
 );
 // ============================================================
-// STATIC FILES
+// STATIC
 // ============================================================
 const publicPath = path.join(
   PROJECT_ROOT,
@@ -118,16 +110,10 @@ app.use(
 // ============================================================
 // HEALTH CHECK
 // ============================================================
-//
-// IMPORTANT POUR RENDER
-//
-// Cette route permet à Render et aux systèmes externes
-// de vérifier que le serveur HTTP répond correctement.
-//
 app.get(
   '/health',
   (_req: Request, res: Response) => {
-    res.status(200).json({
+    return res.status(200).json({
       status: 'ok',
       service: 'OMNIX',
       timestamp: new Date().toISOString(),
@@ -135,43 +121,33 @@ app.get(
   }
 );
 // ============================================================
-// ROOT
-// ============================================================
-app.get(
-  '/',
-  (_req: Request, res: Response) => {
-    try {
-      return res.render('index');
-    } catch (error) {
-      console.error(
-        '[Web] Erreur affichage / :',
-        error
-      );
-      return res.status(500).send(
-        'OMNIX est démarré, mais la page d’accueil est indisponible.'
-      );
-    }
-  }
-);
-// ============================================================
-// ROUTES API
+// ROUTES
 // ============================================================
 //
-// Les imports sont effectués ici pour conserver une architecture
-// claire et éviter de démarrer plusieurs serveurs HTTP.
+// IMPORTANT
 //
+// Le dossier réel est :
+//
+// src/api/routes/
+//
+// Et le fichier réel est :
+//
+// guilds.routes.ts
+//
+// PAS guild.routes.ts
+// ============================================================
 import authRoutes from './routes/auth.routes.ts';
-import guildRoutes from './routes/guild.routes.ts';
+import guildsRoutes from './routes/guilds.routes.ts';
 app.use(
   '/api/auth',
   authRoutes
 );
 app.use(
   '/api/guilds',
-  guildRoutes
+  guildsRoutes
 );
 // ============================================================
-// 404 API
+// API 404
 // ============================================================
 app.use(
   '/api',
@@ -186,11 +162,11 @@ app.use(
   }
 );
 // ============================================================
-// 404 WEB
+// WEB 404
 // ============================================================
 app.use(
   (
-    req: Request,
+    _req: Request,
     res: Response
   ) => {
     return res.status(404).send(
@@ -228,10 +204,6 @@ app.use(
 // IMPORTANT :
 // Aucun app.listen() ici.
 //
-// Le serveur HTTP est lancé par src/index.ts avec :
-//
-// http.createServer(app).listen(PORT, '0.0.0.0')
-//
-// Cela permet à Render de détecter correctement le port.
-//
+// Le serveur HTTP doit être démarré depuis index.ts.
+// ============================================================
 export default app;
