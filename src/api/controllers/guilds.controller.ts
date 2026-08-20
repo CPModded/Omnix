@@ -1,121 +1,624 @@
-/**
- * ====================================================================
- * CONTRÔLEUR DES SERVEURS DISCORD (SALONS, RÔLES & CACHE PARTAGÉ)
- * ====================================================================
- */
-
 import type { Response } from 'express';
 import axios from 'axios';
-import { ChannelType } from 'discord.js';
-import type { AuthenticatedRequest } from '../middlewares/auth.ts';
-import type { adminAccessCache } from '../middlewares/guildAuth.ts';
-import { client as botClient } from '../../bot/client.ts';
+import {
+  ChannelType,
+} from 'discord.js';
 
-const userGuildsCache = new Map<string, { guilds: any[]; expiresAt: number }>();
+import type {
+  AuthenticatedRequest,
+} from '../middlewares/auth';
+
+import {
+  adminAccessCache,
+} from '../middlewares/guildAuth';
+
+import {
+  client as botClient,
+} from '../../bot/client';
+
+import {
+  User,
+} from '../../models/User';
+
+
+/* =========================================================
+   TYPES
+========================================================= */
+
+interface StoredGuild {
+  id: string;
+  name: string;
+  icon: string | null;
+  owner?: boolean;
+  permissions?: string;
+}
+
+interface GuildResponse extends StoredGuild {
+  botPresent: boolean;
+  manageable: boolean;
+  inviteUrl: string;
+}
+
+
+/* =========================================================
+   CACHE
+========================================================= */
+
+const userGuildsCache =
+  new Map<
+    string,
+    {
+      guilds: GuildResponse[];
+      expiresAt: number;
+    }
+  >();
+
+
+const CACHE_DURATION =
+  60 * 1000;
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function isAdministrator(
+  permissions: unknown,
+): boolean {
+
+  if (
+    typeof permissions !== 'string'
+  ) {
+    return false;
+  }
+
+  try {
+
+    const value =
+      BigInt(permissions);
+
+    const ADMINISTRATOR =
+      0x8n;
+
+    return (
+      (value & ADMINISTRATOR) ===
+      ADMINISTRATOR
+    );
+
+  } catch {
+
+    return false;
+
+  }
+}
+
+
+/* =========================================================
+   INVITE URL
+========================================================= */
+
+function createBotInviteUrl(
+  guildId: string,
+): string {
+
+  const clientId =
+    process.env.DISCORD_CLIENT_ID ||
+    process.env.DISCORD_APPLICATION_ID;
+
+  if (!clientId) {
+    return '#';
+  }
+
+  const params =
+    new URLSearchParams({
+      client_id:
+        clientId,
+
+      scope:
+        'bot applications.commands',
+
+      permissions:
+        '8',
+
+      guild_id:
+        guildId,
+    });
+
+  return (
+    `https://discord.com/oauth2/authorize?${params.toString()}`
+  );
+}
+
+
+/* =========================================================
+   CONTROLLER
+========================================================= */
 
 export class GuildsController {
-  // 1. Récupère la liste des serveurs administrés
-  static async getUserGuilds(req: AuthenticatedRequest, res: Response) {
-    const accessToken = req.user?.discordAccessToken;
-    const userId = req.user?.discordId;
-    const username = req.user?.username;
 
-    console.log(`[Guilds] 📥 Récupération des serveurs Discord pour : ${username}`);
 
-    if (!accessToken || !userId) {
-      return res.status(401).json({ error: 'Jeton d\'accès Discord requis.' });
+  /* =======================================================
+     GET USER GUILDS
+     
+     GET /api/guilds
+  ======================================================= */
+
+  static async getUserGuilds(
+    req: AuthenticatedRequest,
+    res: Response,
+  ) {
+
+    const userId =
+      req.user?.discordId;
+
+    const username =
+      req.user?.username ||
+      'unknown';
+
+    console.log(
+      `[Guilds] 📥 Récupération des serveurs Discord pour : ${username}`,
+    );
+
+
+    if (!userId) {
+
+      return res
+        .status(401)
+        .json({
+          success: false,
+          error:
+            'Authentification requise.',
+          code:
+            'AUTH_REQUIRED',
+        });
+
     }
 
-    const now = Date.now();
-    const cachedData = userGuildsCache.get(userId);
 
-    if (cachedData && cachedData.expiresAt > now) {
-      return res.json(cachedData.guilds);
+    /* =====================================================
+       CACHE
+    ===================================================== */
+
+    const cached =
+      userGuildsCache.get(
+        userId,
+      );
+
+    if (
+      cached &&
+      cached.expiresAt >
+        Date.now()
+    ) {
+
+      return res.json({
+        success: true,
+        guilds:
+          cached.guilds,
+      });
+
     }
+
 
     try {
-      const response = await axios.get('https://discord.com/api/users/@me/guilds', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        timeout: 5000 
-      });
 
-      const guilds = response.data;
+      /* ===================================================
+         GET USER FROM MONGODB
+      =================================================== */
 
-      const adminGuilds = guilds.filter((guild: any) => {
-        const permissions = BigInt(guild.permissions);
-        const ADMIN_PERMISSION = BigInt(0x8);
-        return (permissions & ADMIN_PERMISSION) === ADMIN_PERMISSION;
-      });
+      const user =
+        await User.findOne({
+          discordId:
+            userId,
+        }).lean();
 
-      const adminGuildIds = adminGuilds.map((g: any) => g.id);
-      adminAccessCache.set(userId, {
-        guilds: adminGuildIds,
-        expiresAt: now + 5 * 60 * 1000
-      });
 
-      userGuildsCache.set(userId, {
-        guilds: adminGuilds,
-        expiresAt: now + 120 * 1000
-      });
+      if (!user) {
 
-      return res.json(adminGuilds);
-    } catch (error: any) {
-      if (cachedData) return res.json(cachedData.guilds);
-      return res.status(500).json({ error: 'Impossible de récupérer vos serveurs.' });
-    }
-  }
+        return res
+          .status(404)
+          .json({
+            success: false,
+            error:
+              'Utilisateur OMNIX introuvable.',
+            code:
+              'USER_NOT_FOUND',
+          });
 
-  // 2. NOUVEAU : Récupère la liste des salons textuels et des catégories d'un serveur
-  static async getGuildChannels(req: AuthenticatedRequest, res: Response) {
-    const { guildId } = req.params;
-
-    try {
-      const guild = await botClient.guilds.fetch(guildId).catch(() => null);
-      if (!guild) {
-        return res.status(404).json({ error: 'Bot non présent sur ce serveur.' });
       }
 
-      const channels = await guild.channels.fetch();
-      
-      // On filtre pour ne garder que les salons textuels classiques et les catégories
-      const formattedChannels = channels
-        .filter(ch => ch !== null && (ch.type === ChannelType.GuildText || ch.type === ChannelType.GuildCategory))
-        .map(ch => ({
-          id: ch!.id,
-          name: ch!.name,
-          type: ch!.type === ChannelType.GuildCategory ? 'category' : 'text'
-        }));
 
-      return res.json(formattedChannels);
+      const storedGuilds =
+        Array.isArray(
+          (user as any).guilds,
+        )
+          ? (user as any).guilds
+          : [];
+
+
+      /* ===================================================
+         ONLY ADMINISTRABLE SERVERS
+      =================================================== */
+
+      const adminGuilds =
+        storedGuilds.filter(
+          (guild: StoredGuild) => {
+
+            if (
+              guild.owner === true
+            ) {
+              return true;
+            }
+
+            return isAdministrator(
+              guild.permissions,
+            );
+
+          },
+        );
+
+
+      /* ===================================================
+         BUILD DASHBOARD DATA
+      =================================================== */
+
+      const result: GuildResponse[] =
+        adminGuilds.map(
+          (
+            guild: StoredGuild,
+          ) => {
+
+            const botGuild =
+              botClient.guilds.cache.get(
+                guild.id,
+              );
+
+            const botPresent =
+              Boolean(
+                botGuild,
+              );
+
+            return {
+              id:
+                guild.id,
+
+              name:
+                guild.name,
+
+              icon:
+                guild.icon ||
+                null,
+
+              owner:
+                Boolean(
+                  guild.owner,
+                ),
+
+              permissions:
+                guild.permissions ||
+                '0',
+
+              manageable:
+                true,
+
+              botPresent,
+
+              inviteUrl:
+                createBotInviteUrl(
+                  guild.id,
+                ),
+            };
+
+          },
+        );
+
+
+      /* ===================================================
+         ACCESS CACHE
+      =================================================== */
+
+      adminAccessCache.set(
+        userId,
+        {
+          guilds:
+            result.map(
+              (guild) =>
+                guild.id,
+            ),
+
+          expiresAt:
+            Date.now() +
+            5 * 60 * 1000,
+        },
+      );
+
+
+      /* ===================================================
+         RESULT CACHE
+      =================================================== */
+
+      userGuildsCache.set(
+        userId,
+        {
+          guilds:
+            result,
+
+          expiresAt:
+            Date.now() +
+            CACHE_DURATION,
+        },
+      );
+
+
+      console.log(
+        `[Guilds] ✓ ${result.length} serveur(s) administrable(s) trouvé(s) pour ${username}`,
+      );
+
+
+      return res.json({
+        success: true,
+
+        guilds:
+          result,
+
+        total:
+          result.length,
+      });
+
+
     } catch (error) {
-      return res.status(500).json({ error: 'Échec de la récupération des salons.' });
-    }
-  }
 
-  // 3. NOUVEAU : Récupère la liste des rôles personnalisables d'un serveur
-  static async getGuildRoles(req: AuthenticatedRequest, res: Response) {
-    const { guildId } = req.params;
+      console.error(
+        '[Guilds] ❌ Erreur récupération serveurs :',
+        error,
+      );
 
-    try {
-      const guild = await botClient.guilds.fetch(guildId).catch(() => null);
-      if (!guild) {
-        return res.status(404).json({ error: 'Bot non présent.' });
+
+      if (cached) {
+
+        return res.json({
+          success: true,
+          guilds:
+            cached.guilds,
+          cached: true,
+        });
+
       }
 
-      const roles = await guild.roles.fetch();
 
-      // On filtre pour exclure le rôle universel @everyone et les rôles gérés par d'autres bots
-      const formattedRoles = roles
-        .filter(r => r.name !== '@everyone' && !r.managed)
-        .map(r => ({
-          id: r.id,
-          name: r.name,
-          color: r.hexColor
-        }));
+      return res
+        .status(500)
+        .json({
+          success: false,
 
-      return res.json(formattedRoles);
-    } catch (error) {
-      return res.status(500).json({ error: 'Échec de la récupération des rôles.' });
+          error:
+            'Impossible de récupérer vos serveurs Discord.',
+
+          code:
+            'GUILDS_FETCH_FAILED',
+        });
+
     }
+
   }
+
+
+  /* =======================================================
+     GET CHANNELS
+     
+     GET /api/guilds/:guildId/channels
+  ======================================================= */
+
+  static async getGuildChannels(
+    req: AuthenticatedRequest,
+    res: Response,
+  ) {
+
+    const {
+      guildId,
+    } = req.params;
+
+
+    try {
+
+      const guild =
+        await botClient.guilds.fetch(
+          guildId,
+        ).catch(
+          () => null,
+        );
+
+
+      if (!guild) {
+
+        return res
+          .status(404)
+          .json({
+            success: false,
+
+            error:
+              'OMNIX n’est pas présent sur ce serveur.',
+
+            code:
+              'BOT_NOT_IN_GUILD',
+          });
+
+      }
+
+
+      const channels =
+        await guild.channels.fetch();
+
+
+      const formatted =
+        channels
+          .filter(
+            (channel) =>
+              channel !== null &&
+              (
+                channel.type ===
+                  ChannelType.GuildText ||
+
+                channel.type ===
+                  ChannelType.GuildCategory ||
+
+                channel.type ===
+                  ChannelType.GuildAnnouncement
+              ),
+          )
+          .map(
+            (channel) => ({
+              id:
+                channel!.id,
+
+              name:
+                channel!.name,
+
+              type:
+                channel!.type,
+
+              parentId:
+                channel!.parentId ||
+                null,
+            }),
+          );
+
+
+      return res.json({
+        success: true,
+
+        guildId,
+
+        channels:
+          formatted,
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        `[Guilds] ❌ Channels ${guildId}:`,
+        error,
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+
+          error:
+            'Impossible de récupérer les salons.',
+        });
+
+    }
+
+  }
+
+
+  /* =======================================================
+     GET ROLES
+     
+     GET /api/guilds/:guildId/roles
+  ======================================================= */
+
+  static async getGuildRoles(
+    req: AuthenticatedRequest,
+    res: Response,
+  ) {
+
+    const {
+      guildId,
+    } = req.params;
+
+
+    try {
+
+      const guild =
+        await botClient.guilds.fetch(
+          guildId,
+        ).catch(
+          () => null,
+        );
+
+
+      if (!guild) {
+
+        return res
+          .status(404)
+          .json({
+            success: false,
+
+            error:
+              'OMNIX n’est pas présent sur ce serveur.',
+          });
+
+      }
+
+
+      const roles =
+        await guild.roles.fetch();
+
+
+      const formatted =
+        roles
+          .filter(
+            (role) =>
+              role !== null &&
+              role.id !==
+                guild.id,
+          )
+          .sort(
+            (a, b) =>
+              b!.position -
+              a!.position,
+          )
+          .map(
+            (role) => ({
+              id:
+                role!.id,
+
+              name:
+                role!.name,
+
+              color:
+                role!.hexColor,
+
+              position:
+                role!.position,
+
+              managed:
+                role!.managed,
+            }),
+          );
+
+
+      return res.json({
+        success: true,
+
+        guildId,
+
+        roles:
+          formatted,
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        `[Guilds] ❌ Roles ${guildId}:`,
+        error,
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+
+          error:
+            'Impossible de récupérer les rôles.',
+        });
+
+    }
+
+  }
+
 }
