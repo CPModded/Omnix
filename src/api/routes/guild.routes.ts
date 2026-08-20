@@ -8,9 +8,6 @@ const router = Router();
 
 /**
  * GET /api/guilds
- *
- * Récupère les serveurs Discord accessibles
- * par l'utilisateur connecté.
  */
 router.get(
   '/',
@@ -20,8 +17,6 @@ router.get(
 
 /**
  * GET /api/guilds/:guildId/channels
- *
- * Récupère les salons du serveur.
  */
 router.get(
   '/:guildId/channels',
@@ -32,8 +27,6 @@ router.get(
 
 /**
  * GET /api/guilds/:guildId/roles
- *
- * Récupère les rôles du serveur.
  */
 router.get(
   '/:guildId/roles',
