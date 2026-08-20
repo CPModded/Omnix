@@ -7,6 +7,7 @@ import express, {
 
 import path from 'path';
 import fs from 'fs';
+
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 
@@ -14,332 +15,297 @@ import authRouter from './routes/auth.routes.ts';
 import adminRouter from './routes/admin.routes.ts';
 import statsRouter from './routes/stats.routes.ts';
 
-/*
- * =========================================================
- * OMNIX — EXPRESS APPLICATION
- * =========================================================
- *
- * Ce fichier est responsable uniquement de :
- *
- * - configurer Express
- * - configurer la sécurité
- * - configurer les cookies
- * - configurer JSON / URL encoded
- * - configurer les views
- * - configurer les fichiers publics
- * - monter les routes API
- * - monter les pages principales
- *
- * L'authentification réelle se trouve dans :
- *
- * src/api/routes/auth.routes.ts
- *
- * L'administration se trouve dans :
- *
- * src/api/routes/admin.routes.ts
- *
- * Les statistiques publiques se trouvent dans :
- *
- * src/api/routes/stats.routes.ts
- *
- * =========================================================
- */
+/* =========================================================
+   CREATE APP
+========================================================= */
 
 export function createApp(): Express {
   const app = express();
 
-  /*
-   * =======================================================
-   * CONFIGURATION EXPRESS
-   * =======================================================
-   */
+  /* =======================================================
+     CONFIGURATION EXPRESS
+  ======================================================= */
 
-  /*
-   * Render fonctionne derrière un reverse proxy.
+  /**
+   * Render utilise un reverse proxy.
    *
-   * Cela permet notamment à Express de correctement
-   * gérer les cookies "secure".
+   * Cela permet notamment à Express de comprendre
+   * correctement que la connexion originale est HTTPS.
    */
   app.set('trust proxy', 1);
 
-  /*
-   * Ne pas exposer Express dans les headers.
+  /**
+   * Ne pas révéler Express dans les headers.
    */
   app.disable('x-powered-by');
 
-  /*
-   * =======================================================
-   * SÉCURITÉ
-   * =======================================================
-   */
+  /* =======================================================
+     SECURITY
+  ======================================================= */
 
   app.use(
     helmet({
-      /*
-       * Désactivé ici afin d'éviter de casser les
-       * ressources/scripts existants de ton dashboard.
+      /**
+       * La CSP est volontairement désactivée ici
+       * car ton frontend actuel peut utiliser :
+       *
+       * - scripts inline
+       * - ressources externes
+       * - SVG
+       * - éventuels scripts CDN
        *
        * On pourra mettre en place une CSP stricte
        * plus tard lorsque le frontend sera stabilisé.
        */
       contentSecurityPolicy: false,
-    }),
+    })
   );
 
-  /*
-   * =======================================================
-   * PARSING JSON
-   * =======================================================
-   */
+  /* =======================================================
+     BODY PARSER
+  ======================================================= */
 
   app.use(
     express.json({
+      /**
+       * Limite raisonnable pour les API OMNIX.
+       */
       limit: '10mb',
-    }),
+    })
   );
-
-  /*
-   * =======================================================
-   * PARSING FORMULAIRES
-   * =======================================================
-   */
 
   app.use(
     express.urlencoded({
       extended: true,
       limit: '10mb',
-    }),
+    })
   );
 
-  /*
-   * =======================================================
-   * COOKIES
-   * =======================================================
-   *
-   * Nécessaire pour :
+  /* =======================================================
+     COOKIES
+  ======================================================= */
+
+  /**
+   * Obligatoire pour :
    *
    * req.cookies.jwt_token
    *
+   * utilisé par auth.routes.ts et admin.routes.ts.
    */
-
   app.use(cookieParser());
 
-  /*
-   * =======================================================
-   * CACHE API
-   * =======================================================
-   *
-   * Les routes API ne doivent pas être mises en cache.
-   *
-   * Cela évite notamment qu'un navigateur ou un proxy
-   * conserve une ancienne réponse de session/statistiques.
-   */
+  /* =======================================================
+     CACHE
+  ======================================================= */
 
   app.use(
     (
       req: Request,
       res: Response,
-      next: NextFunction,
+      next: NextFunction
     ) => {
+      /**
+       * Les API d'OMNIX ne doivent pas être mises
+       * en cache par le navigateur ou un proxy.
+       *
+       * Cela évite notamment d'afficher d'anciennes
+       * statistiques ou une ancienne session.
+       */
       if (req.path.startsWith('/api/')) {
         res.setHeader(
           'Cache-Control',
-          'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'no-store, no-cache, must-revalidate, proxy-revalidate'
         );
 
         res.setHeader(
           'Pragma',
-          'no-cache',
+          'no-cache'
         );
 
         res.setHeader(
           'Expires',
-          '0',
+          '0'
+        );
+
+        res.setHeader(
+          'Surrogate-Control',
+          'no-store'
         );
       }
 
       next();
-    },
+    }
   );
 
-  /*
-   * =======================================================
-   * VIEWS EJS
-   * =======================================================
+  /* =======================================================
+     ROOT PATH
+  ======================================================= */
+
+  const root =
+    process.cwd();
+
+  /* =======================================================
+     VIEWS
+  ======================================================= */
+
+  /**
+   * Plusieurs chemins sont supportés afin que le projet
+   * fonctionne aussi bien en développement qu'après
+   * compilation.
    */
-
-  const root = process.cwd();
-
   const possibleViewsPaths = [
-    /*
-     * Projet compilé / production
-     */
     path.join(
       root,
-      'views',
+      'views'
     ),
 
-    /*
-     * Architecture source
-     */
     path.join(
       root,
       'src',
       'dashboard',
-      'views',
+      'views'
     ),
 
-    /*
-     * Architecture compilée alternative
-     */
     path.join(
       root,
       'dist',
       'dashboard',
-      'views',
+      'views'
     ),
   ];
 
   const viewsPath =
     possibleViewsPaths.find(
       (directory) =>
-        fs.existsSync(directory),
+        fs.existsSync(directory)
     ) ||
     possibleViewsPaths[0];
 
   app.set(
     'view engine',
-    'ejs',
+    'ejs'
   );
 
   app.set(
     'views',
-    viewsPath,
+    viewsPath
   );
 
-  /*
-   * =======================================================
-   * FICHIERS PUBLICS
-   * =======================================================
-   */
+  /* =======================================================
+     PUBLIC FILES
+  ======================================================= */
 
   const possiblePublicPaths = [
     path.join(
       root,
-      'public',
+      'public'
     ),
 
     path.join(
       root,
       'src',
       'dashboard',
-      'public',
+      'public'
     ),
 
     path.join(
       root,
       'dist',
       'dashboard',
-      'public',
+      'public'
     ),
   ];
 
   const publicPath =
     possiblePublicPaths.find(
       (directory) =>
-        fs.existsSync(directory),
+        fs.existsSync(directory)
     ) ||
     possiblePublicPaths[0];
 
+  /**
+   * Fichiers statiques :
+   *
+   * CSS
+   * JS
+   * images
+   * favicon
+   * etc.
+   */
   app.use(
     express.static(
       publicPath,
       {
-        /*
-         * Pas de cache agressif en développement.
-         *
-         * En production :
-         * 1 heure.
-         */
         maxAge:
           process.env.NODE_ENV ===
           'production'
             ? '1h'
             : 0,
-      },
-    ),
+      }
+    )
   );
 
-  /*
-   * =======================================================
-   * AUTHENTIFICATION
-   * =======================================================
-   *
-   * Routes :
-   *
-   * GET /api/auth/login
-   * GET /api/auth/callback
-   * GET /api/auth/me
-   * GET /api/auth/guilds
-   * GET /api/auth/logout
-   *
-   */
+  /* =======================================================
+     API AUTHENTIFICATION
+  ======================================================= */
 
+  /**
+   * Toutes les routes :
+   *
+   * /api/auth/*
+   *
+   * sont maintenant gérées par auth.routes.ts.
+   */
   app.use(
     '/api/auth',
-    authRouter,
+    authRouter
   );
 
-  /*
-   * =======================================================
-   * STATISTIQUES PUBLIQUES
-   * =======================================================
-   *
+  /* =======================================================
+     API STATISTIQUES
+  ======================================================= */
+
+  /**
    * IMPORTANT :
    *
-   * /api/stats reste PUBLIC.
+   * statsRouter est PUBLIC.
    *
-   * La page d'accueil doit pouvoir récupérer :
+   * Il ne faut surtout pas placer un middleware
+   * d'authentification global avant cette route.
    *
-   * - nombre de serveurs
-   * - nombre de membres
-   * - nombre de commandes
-   * - uptime
-   * - latence
+   * Sinon :
    *
-   * sans obliger l'utilisateur à se connecter.
+   * GET /api/stats
    *
+   * retournerait 401 pour les visiteurs.
    */
-
   app.use(
-    statsRouter,
+    statsRouter
   );
 
-  /*
-   * =======================================================
-   * ADMIN
-   * =======================================================
-   *
-   * Les routes admin possèdent leur propre middleware
-   * d'authentification et de vérification OWNER.
-   *
-   */
+  /* =======================================================
+     API ADMIN
+  ======================================================= */
 
+  /**
+   * Les routes admin possèdent leur propre protection :
+   *
+   * requireAuth
+   * requireOwner
+   */
   app.use(
-    adminRouter,
+    adminRouter
   );
 
-  /*
-   * =======================================================
-   * PAGE D'ACCUEIL
-   * =======================================================
-   */
+  /* =======================================================
+     PAGE D'ACCUEIL
+  ======================================================= */
 
   app.get(
     '/',
     (
       req: Request,
-      res: Response,
+      res: Response
     ) => {
       return res.render(
         'index',
@@ -351,22 +317,20 @@ export function createApp(): Express {
           redirectUri:
             process.env.DISCORD_REDIRECT_URI ||
             '',
-        },
+        }
       );
-    },
+    }
   );
 
-  /*
-   * =======================================================
-   * DASHBOARD
-   * =======================================================
-   */
+  /* =======================================================
+     DASHBOARD
+  ======================================================= */
 
   app.get(
     '/dashboard',
     (
       req: Request,
-      res: Response,
+      res: Response
     ) => {
       return res.render(
         'dashboard',
@@ -374,22 +338,20 @@ export function createApp(): Express {
           clientId:
             process.env.DISCORD_CLIENT_ID ||
             '',
-        },
+        }
       );
-    },
+    }
   );
 
-  /*
-   * =======================================================
-   * GESTION D'UN SERVEUR
-   * =======================================================
-   */
+  /* =======================================================
+     GESTION D'UN SERVEUR
+  ======================================================= */
 
   app.get(
     '/dashboard/:guildId',
     (
       req: Request,
-      res: Response,
+      res: Response
     ) => {
       return res.render(
         'manage',
@@ -400,28 +362,27 @@ export function createApp(): Express {
           clientId:
             process.env.DISCORD_CLIENT_ID ||
             '',
-        },
+        }
       );
-    },
+    }
   );
 
-  /*
-   * =======================================================
-   * FOUNDER
-   * =======================================================
-   */
+  /* =======================================================
+     FOUNDER
+  ======================================================= */
 
   app.get(
     '/founder',
     (
       req: Request,
-      res: Response,
+      res: Response
     ) => {
       return res.render(
         'founder',
         {
           founder: {
-            name: 'Weritale',
+            name:
+              'Weritale',
 
             description:
               'Créateur et développeur principal de la plateforme OMNIX.',
@@ -429,108 +390,99 @@ export function createApp(): Express {
             officialServer:
               'https://discord.gg/omnix',
           },
-        },
+        }
       );
-    },
+    }
   );
 
-  /*
-   * =======================================================
-   * TARIFS
-   * =======================================================
-   */
+  /* =======================================================
+     PRICING
+  ======================================================= */
 
   app.get(
     '/pricing',
     (
       req: Request,
-      res: Response,
+      res: Response
     ) => {
       return res.render(
-        'pricing',
+        'pricing'
       );
-    },
+    }
   );
 
-  /*
-   * =======================================================
-   * EN SAVOIR PLUS
-   * =======================================================
-   */
+  /* =======================================================
+     LEARN MORE
+  ======================================================= */
 
   app.get(
     '/learn-more',
     (
       req: Request,
-      res: Response,
+      res: Response
     ) => {
       return res.render(
-        'learn-more',
+        'learn-more'
       );
-    },
+    }
   );
 
-  /*
-   * =======================================================
-   * CONSOLE AI / OWNER
-   * =======================================================
-   *
-   * IMPORTANT :
-   *
-   * Cette route affiche simplement la page.
-   *
-   * Les API de cette console sont protégées dans
-   * admin.routes.ts.
-   *
-   */
+  /* =======================================================
+     AI DEV
+  ======================================================= */
 
+  /**
+   * La page elle-même est rendue ici.
+   *
+   * Les API privées de la console sont protégées
+   * dans admin.routes.ts.
+   *
+   * Le frontend de la page doit appeler :
+   *
+   * /api/admin/ai-dev/access
+   *
+   * pour vérifier l'accès.
+   */
   app.get(
     '/ai-dev',
     (
       req: Request,
-      res: Response,
+      res: Response
     ) => {
       return res.render(
-        'ai-dev',
+        'ai-dev'
       );
-    },
+    }
   );
 
-  /*
-   * =======================================================
-   * 404
-   * =======================================================
-   */
+  /* =======================================================
+     API 404
+  ======================================================= */
 
   app.use(
     (
       req: Request,
-      res: Response,
+      res: Response
     ) => {
-      /*
-       * Pour les API :
-       *
-       * on renvoie un JSON propre.
+      /**
+       * Si c'est une route API inexistante,
+       * on retourne du JSON.
        */
-
       if (
         req.path.startsWith('/api/')
       ) {
-        return res
-          .status(404)
-          .json({
-            success: false,
-            error:
-              'Route API introuvable.',
-          });
+        return res.status(404).json({
+          success: false,
+
+          error:
+            'Route API introuvable.',
+        });
       }
 
-      /*
-       * Pour les pages inexistantes :
-       *
-       * retour vers la page d'accueil.
+      /**
+       * Pour les pages inexistantes,
+       * on renvoie vers la page d'accueil.
        */
-
       return res
         .status(404)
         .render(
@@ -543,43 +495,35 @@ export function createApp(): Express {
             redirectUri:
               process.env.DISCORD_REDIRECT_URI ||
               '',
-          },
+          }
         );
-    },
+    }
   );
 
-  /*
-   * =======================================================
-   * GESTIONNAIRE D'ERREURS GLOBAL
-   * =======================================================
-   */
+  /* =======================================================
+     GLOBAL ERROR HANDLER
+  ======================================================= */
 
   app.use(
     (
       error: any,
       req: Request,
       res: Response,
-      next: NextFunction,
+      next: NextFunction
     ) => {
       console.error(
         '[Express]',
-        error,
+        error
       );
 
-      /*
+      /**
        * Si Express a déjà commencé à envoyer
-       * la réponse, on laisse Express gérer.
+       * la réponse, on laisse Express continuer
+       * son traitement d'erreur.
        */
-
       if (res.headersSent) {
         return next(error);
       }
-
-      /*
-       * En production :
-       *
-       * ne pas exposer le détail interne de l'erreur.
-       */
 
       const message =
         process.env.NODE_ENV ===
@@ -590,34 +534,39 @@ export function createApp(): Express {
               'Erreur interne.'
             );
 
-      /*
-       * API
-       */
+      /* ---------------------------------------------------
+         ERREUR API
+      --------------------------------------------------- */
 
       if (
         req.path.startsWith('/api/')
       ) {
-        return res
-          .status(500)
-          .json({
-            success: false,
-            error: message,
-          });
+        return res.status(500).json({
+          success: false,
+
+          error: message,
+        });
       }
 
-      /*
-       * Pages web
-       */
+      /* ---------------------------------------------------
+         ERREUR PAGE
+      --------------------------------------------------- */
 
       return res
         .status(500)
-        .send(
-          message,
-        );
-    },
+        .send(message);
+    }
   );
+
+  /* =======================================================
+     RETURN
+  ======================================================= */
 
   return app;
 }
+
+/* =========================================================
+   DEFAULT EXPORT
+========================================================= */
 
 export default createApp;
