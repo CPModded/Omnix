@@ -465,7 +465,7 @@ async function requireGuildAccess(
      */
     const { User } =
       await import(
-        '../../models/User.ts'
+        '../models/User.ts'
       );
     const dbUser =
       await User.findOne({
