@@ -1,50 +1,71 @@
-// Si vous utilisez Mongoose :
-import AuditLog from '../models/AuditLog';
-
-// Si vous utilisez le driver natif MongoDB (décommentez ci-dessous et commentez l'import Mongoose) :
-// import { db } from '../database'; // Importez votre instance de connexion MongoDB
-
-interface LogOptions {
+import AuditLog from '../models/AuditLog.ts';
+export type AuditSeverity =
+  | 'INFO'
+  | 'WARNING'
+  | 'ERROR'
+  | 'CRITICAL';
+export type AuditStatus =
+  | 'SUCCESS'
+  | 'FAILURE';
+export interface AuditLogOptions {
   actorId: string;
   actorTag?: string;
   ipAddress?: string;
   module: string;
   action: string;
-  severity?: 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL';
+  severity?: AuditSeverity;
   serverId?: string;
-  status: 'SUCCESS' | 'FAILURE';
+  status: AuditStatus;
   errorMessage?: string;
   details?: {
-    before?: any;
-    after?: any;
+    before?: unknown;
+    after?: unknown;
+    [key: string]: unknown;
   };
 }
-
-export async function logAuditEvent(options: LogOptions) {
+/**
+ * Enregistre une action dans l'Audit Center.
+ *
+ * Important :
+ * Une erreur de logging ne doit jamais empêcher
+ * l'exécution de l'action principale.
+ */
+export async function logAuditEvent(
+  options: AuditLogOptions
+) {
   try {
     const logData = {
       createdAt: new Date(),
       actorId: options.actorId,
-      actorTag: options.actorTag || null,
-      ipAddress: options.ipAddress || null,
-      module: options.module,
-      action: options.action,
-      severity: options.severity || 'INFO',
-      serverId: options.serverId || null,
-      status: options.status,
-      errorMessage: options.errorMessage || null,
-      details: options.details || null
+      actorTag:
+        options.actorTag ?? null,
+      ipAddress:
+        options.ipAddress ?? null,
+      module:
+        options.module,
+      action:
+        options.action,
+      severity:
+        options.severity ?? 'INFO',
+      serverId:
+        options.serverId ?? null,
+      status:
+        options.status,
+      errorMessage:
+        options.errorMessage ?? null,
+      details:
+        options.details ?? null,
     };
-
-    // VERSION MONGOOSE :
-    const log = new AuditLog(logData);
+    const log =
+      new AuditLog(logData);
     await log.save();
     return log;
-
-    // VERSION DRIVER NATIF (décommentez si nécessaire) :
-    // await db.collection('audit_logs').insertOne(logData);
-    
   } catch (error) {
-    console.error('[AuditLogger Error] Impossible de sauvegarder le log:', error);
+    console.error(
+      '[AuditLogger] Impossible de sauvegarder le log :',
+      error
+    );
+    return null;
   }
 }
+export default logAuditEvent;
