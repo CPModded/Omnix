@@ -1,362 +1,183 @@
 import 'dotenv/config';
 
-import http from 'http';
+import {
+  Client,
+  GatewayIntentBits,
+  Partials,
+} from 'discord.js';
+
 import mongoose from 'mongoose';
 
-import { Server as SocketIOServer } from 'socket.io';
+import { loadCommands } from './bot/handlers/commandHandler.ts';
+import { loadBotEvents } from './loaders/eventLoader.ts';
 
 import { CONFIG } from './config/index.ts';
 
-import createApp from './api/app.ts';
 
-import {
-  client as discordClient,
-} from './src/bot/client.ts';
+// ============================================================
+// CONFIGURATION
+// ============================================================
 
-import {
-  loadCommands,
-} from './bot/handlers/commandHandler.ts';
+const TOKEN =
+  process.env.DISCORD_TOKEN ??
+  CONFIG.DISCORD?.TOKEN;
 
-/*
- * Si ton loader d'événements existe sous un autre nom,
- * nous l'ajusterons ensuite.
- */
-import {
-  loadEvents,
-} from './loaders/eventLoader.ts';
-
-import {
-  registerDiscordClient,
-} from './api/routes/stats.routes.ts';
-
-/* =========================================================
-   CONFIGURATION
-========================================================= */
-
-const PORT = Number(
-  process.env.PORT ||
-  CONFIG.PORT ||
-  3000
-);
-
-/* =========================================================
-   EXPRESS
-========================================================= */
-
-const app =
-  createApp();
-
-/* =========================================================
-   HTTP SERVER
-========================================================= */
-
-const httpServer =
-  http.createServer(
-    app
+if (!TOKEN) {
+  throw new Error(
+    '[Discord] DISCORD_TOKEN est manquant.'
   );
+}
 
-/* =========================================================
-   SOCKET.IO
-========================================================= */
 
-const io =
-  new SocketIOServer(
-    httpServer,
-    {
-      cors: {
-        origin:
-          process.env.CLIENT_URL ||
-          true,
+// ============================================================
+// CLIENT DISCORD
+// ============================================================
 
-        credentials:
-          true,
-      },
-    }
-  );
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
 
-/* =========================================================
-   SOCKET.IO
-========================================================= */
+    GatewayIntentBits.GuildMembers,
 
-io.on(
-  'connection',
-  (socket) => {
-    console.log(
-      `[Socket.IO] Client connecté : ${socket.id}`
-    );
+    GatewayIntentBits.GuildMessages,
 
-    socket.on(
-      'disconnect',
-      (reason) => {
-        console.log(
-          `[Socket.IO] Client déconnecté : ${socket.id} | ${reason}`
-        );
-      }
-    );
-  }
-);
+    GatewayIntentBits.GuildMessageReactions,
 
-/* =========================================================
-   DISCORD CLIENT → STATS API
-========================================================= */
+    GatewayIntentBits.MessageContent,
 
-/**
- * On transmet l'instance Discord UNIQUE
- * à l'API statistiques.
- *
- * Cette instance est exactement la même
- * que celle utilisée par le bot.
- */
-registerDiscordClient(
-  discordClient
-);
+    GatewayIntentBits.GuildModeration,
 
-/* =========================================================
-   DISCORD READY
-========================================================= */
+    GatewayIntentBits.GuildPresences,
 
-discordClient.once(
-  'ready',
-  (readyClient) => {
-    console.log(
-      '================================================='
-    );
+    GatewayIntentBits.GuildVoiceStates,
+  ],
 
-    console.log(
-      '                 OMNIX ONLINE'
-    );
+  partials: [
+    Partials.Channel,
+    Partials.Message,
+    Partials.Reaction,
+    Partials.User,
+    Partials.GuildMember,
+  ],
+});
 
-    console.log(
-      '================================================='
-    );
 
-    console.log(
-      `[Discord] Connecté en tant que ${readyClient.user.tag}`
-    );
-
-    console.log(
-      `[Discord] ID : ${readyClient.user.id}`
-    );
-
-    console.log(
-      `[Discord] Serveurs : ${readyClient.guilds.cache.size}`
-    );
-
-    /* -----------------------------------------------------
-       MEMBRES
-    ----------------------------------------------------- */
-
-    let totalMembers = 0;
-
-    for (
-      const guild of
-      readyClient.guilds.cache.values()
-    ) {
-      totalMembers +=
-        guild.memberCount || 0;
-    }
-
-    console.log(
-      `[Discord] Membres : ${totalMembers}`
-    );
-
-    /* -----------------------------------------------------
-       PING
-    ----------------------------------------------------- */
-
-    console.log(
-      `[Discord] Ping : ${readyClient.ws.ping} ms`
-    );
-
-    /* -----------------------------------------------------
-       COMMANDES
-    ----------------------------------------------------- */
-
-    console.log(
-      `[Discord] Commandes chargées : ${readyClient.commands.size}`
-    );
-
-    console.log(
-      '================================================='
-    );
-  }
-);
-
-/* =========================================================
-   DISCORD ERROR
-========================================================= */
-
-discordClient.on(
-  'error',
-  (error) => {
-    console.error(
-      '[Discord] Client error:',
-      error
-    );
-  }
-);
-
-/* =========================================================
-   DISCORD WARN
-========================================================= */
-
-discordClient.on(
-  'warn',
-  (message) => {
-    console.warn(
-      '[Discord] Warning:',
-      message
-    );
-  }
-);
-
-/* =========================================================
-   DISCORD INVALIDATED
-========================================================= */
-
-discordClient.on(
-  'invalidated',
-  () => {
-    console.error(
-      '[Discord] Session Discord invalidée.'
-    );
-  }
-);
-
-/* =========================================================
-   MONGODB
-========================================================= */
+// ============================================================
+// MONGODB
+// ============================================================
 
 async function connectDatabase(): Promise<void> {
   const mongoUri =
-    process.env.MONGO_URI ||
-    (CONFIG as any).MONGO_URI;
+    process.env.MONGO_URI ??
+    CONFIG.MONGO_URI;
 
   if (!mongoUri) {
-    throw new Error(
-      'MONGO_URI est manquant.'
+    console.warn(
+      '[MongoDB] MONGO_URI absent. MongoDB désactivé.'
     );
+
+    return;
   }
 
-  console.log(
-    '[MongoDB] Connexion...'
-  );
+  try {
+    await mongoose.connect(mongoUri);
 
-  await mongoose.connect(
-    mongoUri,
-    {
-      serverSelectionTimeoutMS:
-        10000,
-
-      connectTimeoutMS:
-        10000,
-    }
-  );
-
-  console.log(
-    '[MongoDB] Connecté.'
-  );
-}
-
-/* =========================================================
-   LOAD COMMANDS
-========================================================= */
-
-async function loadBotCommands(): Promise<void> {
-  console.log(
-    '[Bot] Initialisation du chargeur de commandes...'
-  );
-
-  const count =
-    await loadCommands(
-      discordClient
+    console.log(
+      '[MongoDB] ✓ Connexion réussie.'
+    );
+  } catch (error) {
+    console.error(
+      '[MongoDB] ✗ Erreur de connexion :',
+      error
     );
 
+    throw error;
+  }
+}
+
+
+// ============================================================
+// COMMANDES
+// ============================================================
+
+async function loadBotCommands(): Promise<void> {
+  console.log('');
   console.log(
-    `[Bot] ${count} commandes slash chargées en mémoire.`
+    '[Bot] Chargement des commandes...'
+  );
+
+  await loadCommands(client);
+
+  console.log(
+    `[Bot] ✓ ${client.commands?.size ?? 0} commandes chargées en mémoire.`
   );
 }
 
-/* =========================================================
-  /* =========================================================
-   LOAD EVENTS
-========================================================= */
 
-async function loadBotEvents(): Promise<void> {
+// ============================================================
+// ÉVÉNEMENTS
+// ============================================================
+
+async function loadEvents(): Promise<void> {
+  console.log('');
   console.log(
     '[Bot] Initialisation du chargeur des événements...'
   );
 
-  await loadEvents(discordClient);
+  await loadBotEvents(client);
 
   console.log(
-    '[Bot] Événements Discord chargés.'
+    '[Bot] ✓ Événements Discord chargés.'
   );
 }
 
-/* =========================================================
-   DISCORD LOGIN
-========================================================= */
 
-async function loginDiscord(): Promise<void> {
-  const token =
-    process.env.DISCORD_TOKEN ||
-    (CONFIG as any).DISCORD?.TOKEN;
+// ============================================================
+// DISCORD LOGIN
+// ============================================================
 
-  if (!token) {
-    throw new Error(
-      'DISCORD_TOKEN est manquant.'
-    );
-  }
-
+async function connectDiscord(): Promise<void> {
+  console.log('');
   console.log(
     '[Discord] Connexion...'
   );
 
-  await discordClient.login(
-    token
-  );
+  await client.login(TOKEN);
 }
 
-/* =========================================================
-   HTTP START
-========================================================= */
 
-function startHttpServer(): Promise<void> {
-  return new Promise(
-    (resolve, reject) => {
-      httpServer.once(
-        'error',
-        reject
-      );
+// ============================================================
+// INFORMATIONS BOT
+// ============================================================
 
-      httpServer.listen(
-        PORT,
-        () => {
-          console.log(
-            `[HTTP] OMNIX écoute sur le port ${PORT}`
-          );
+function printStartupInfo(): void {
+  console.log('');
+  console.log('════════════════════════════════════');
+  console.log('              OMNIX');
+  console.log('════════════════════════════════════');
 
-          console.log(
-            `[HTTP] Environment : ${
-              process.env.NODE_ENV ||
-              'development'
-            }`
-          );
-
-          resolve();
-        }
-      );
-    }
+  console.log(
+    `[Bot] Environnement : ${
+      process.env.NODE_ENV ?? 'development'
+    }`
   );
+
+  console.log(
+    `[Bot] Port : ${
+      process.env.PORT ?? CONFIG.PORT ?? 'non défini'
+    }`
+  );
+
+  console.log('════════════════════════════════════');
+  console.log('');
 }
 
-/* =========================================================
-   GRACEFUL SHUTDOWN
-========================================================= */
 
-let shuttingDown =
-  false;
+// ============================================================
+// ARRÊT PROPRE
+// ============================================================
+
+let shuttingDown = false;
 
 async function shutdown(
   signal: string
@@ -365,229 +186,155 @@ async function shutdown(
     return;
   }
 
-  shuttingDown =
-    true;
+  shuttingDown = true;
 
+  console.log('');
   console.log(
-    `[SYSTEM] Arrêt demandé (${signal})...`
+    `[Process] Signal ${signal} reçu. Arrêt d'OMNIX...`
   );
 
   try {
-    /* -----------------------------------------------------
-       SOCKET.IO
-    ----------------------------------------------------- */
+    if (client.isReady()) {
+      client.destroy();
 
-    io.close();
-
-    /* -----------------------------------------------------
-       HTTP
-    ----------------------------------------------------- */
-
-    await new Promise<void>(
-      (resolve) => {
-        httpServer.close(
-          () => resolve()
-        );
-      }
-    );
-
-    /* -----------------------------------------------------
-       DISCORD
-    ----------------------------------------------------- */
-
-    if (
-      discordClient.isReady()
-    ) {
-      discordClient.destroy();
+      console.log(
+        '[Discord] ✓ Client Discord fermé.'
+      );
     }
-
-    /* -----------------------------------------------------
-       MONGODB
-    ----------------------------------------------------- */
-
-    if (
-      mongoose.connection
-        .readyState !== 0
-    ) {
-      await mongoose.connection.close();
-    }
-
-    console.log(
-      '[SYSTEM] OMNIX arrêté proprement.'
-    );
-
-    process.exit(0);
   } catch (error) {
     console.error(
-      '[SYSTEM] Erreur pendant l’arrêt :',
+      '[Discord] Erreur pendant la fermeture :',
       error
     );
-
-    process.exit(1);
   }
-}
 
-/* =========================================================
-   SIGNALS
-========================================================= */
+  try {
+    if (
+      mongoose.connection.readyState !== 0
+    ) {
+      await mongoose.connection.close();
 
-process.on(
-  'SIGTERM',
-  () => {
-    void shutdown(
-      'SIGTERM'
+      console.log(
+        '[MongoDB] ✓ Connexion fermée.'
+      );
+    }
+  } catch (error) {
+    console.error(
+      '[MongoDB] Erreur pendant la fermeture :',
+      error
     );
   }
-);
+
+  console.log(
+    '[Process] ✓ OMNIX arrêté proprement.'
+  );
+
+  process.exit(0);
+}
+
+
+// ============================================================
+// ERREURS PROCESS
+// ============================================================
 
 process.on(
   'SIGINT',
   () => {
-    void shutdown(
-      'SIGINT'
-    );
+    void shutdown('SIGINT');
   }
 );
-
-/* =========================================================
-   UNHANDLED REJECTION
-========================================================= */
 
 process.on(
-  'unhandledRejection',
-  (reason) => {
-    console.error(
-      '[SYSTEM] Unhandled Rejection:',
-      reason
-    );
+  'SIGTERM',
+  () => {
+    void shutdown('SIGTERM');
   }
 );
-
-/* =========================================================
-   UNCAUGHT EXCEPTION
-========================================================= */
 
 process.on(
   'uncaughtException',
   (error) => {
     console.error(
-      '[SYSTEM] Uncaught Exception:',
+      '[Process] Uncaught Exception :',
       error
-    );
-
-    void shutdown(
-      'uncaughtException'
     );
   }
 );
 
-/* =========================================================
-   START OMNIX
-========================================================= */
+process.on(
+  'unhandledRejection',
+  (reason) => {
+    console.error(
+      '[Process] Unhandled Rejection :',
+      reason
+    );
+  }
+);
+
+
+// ============================================================
+// DÉMARRAGE
+// ============================================================
 
 async function start(): Promise<void> {
   try {
-    console.log(
-      '================================================='
-    );
+    printStartupInfo();
 
-    console.log(
-      '              STARTING OMNIX'
-    );
-
-    console.log(
-      '================================================='
-    );
-
-    /* -----------------------------------------------------
-       DATABASE
-    ----------------------------------------------------- */
-
+    /*
+     * 1. Base de données
+     */
     await connectDatabase();
 
-    /* -----------------------------------------------------
-       COMMANDS
-    ----------------------------------------------------- */
-
+    /*
+     * 2. Commandes
+     *
+     * IMPORTANT :
+     * Les commandes doivent être chargées AVANT
+     * client.login(), car clientReady déclenche
+     * ensuite la synchronisation Discord.
+     */
     await loadBotCommands();
 
-    /* -----------------------------------------------------
-       EVENTS
-    ----------------------------------------------------- */
+    /*
+     * 3. Événements
+     *
+     * clientReady sera enregistré ici.
+     */
+    await loadEvents();
 
-    await loadBotEvents();
+    /*
+     * 4. Connexion Discord
+     *
+     * Une fois connecté :
+     *
+     * clientReady
+     *      ↓
+     * syncCommands()
+     *      ↓
+     * Discord reçoit les commandes actuelles
+     */
+    await connectDiscord();
 
-    /* -----------------------------------------------------
-       HTTP
-    ----------------------------------------------------- */
-
-    await startHttpServer();
-
-    /* -----------------------------------------------------
-       DISCORD
-    ----------------------------------------------------- */
-
-    await loginDiscord();
-
-    console.log(
-      '================================================='
-    );
-
-    console.log(
-      '                 OMNIX READY'
-    );
-
-    console.log(
-      '================================================='
-    );
   } catch (error) {
+    console.error('');
     console.error(
-      '================================================='
+      '════════════════════════════════════'
     );
-
     console.error(
-      '[SYSTEM] Impossible de démarrer OMNIX.'
+      '[FATAL] Impossible de démarrer OMNIX.'
     );
-
+    console.error(error);
     console.error(
-      error
+      '════════════════════════════════════'
     );
-
-    console.error(
-      '================================================='
-    );
-
-    try {
-      if (
-        discordClient.isReady()
-      ) {
-        discordClient.destroy();
-      }
-
-      if (
-        mongoose.connection
-          .readyState !== 0
-      ) {
-        await mongoose.connection.close();
-      }
-
-      io.close();
-
-      if (
-        httpServer.listening
-      ) {
-        httpServer.close();
-      }
-    } catch {
-      // Rien à faire.
-    }
 
     process.exit(1);
   }
 }
 
-/* =========================================================
-   BOOT
-========================================================= */
+
+// ============================================================
+// START
+// ============================================================
 
 void start();
