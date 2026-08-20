@@ -203,13 +203,13 @@ app.use(
 // GUILD ROUTES
 // ============================================================
 
-import guildsRoutes
-  from './routes/guild.routes.ts';
+// IMPORT
+import guildRoutes from './routes/guild.routes.ts';
 
-app.use(
-  '/api/guilds',
-  guildsRoutes
-);
+// ...
+
+// ROUTE
+app.use('/api/guilds', guildRoutes);
 
 // ============================================================
 // API STATS
