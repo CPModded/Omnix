@@ -1,25 +1,47 @@
 import { Router } from 'express';
+
 import { GuildsController } from '../controllers/guilds.controller.ts';
 import { isAuthenticated } from '../middlewares/auth.ts';
 import { canManageGuild } from '../middlewares/guildAuth.ts';
+
+/* =========================================================
+   ROUTER
+========================================================= */
+
 const router = Router();
+
+/* =========================================================
+   GLOBAL GUILDS
+========================================================= */
+
 /**
  * GET /api/guilds
  *
  * Retourne les serveurs Discord accessibles
- * par l'utilisateur actuellement connecté.
+ * par l'utilisateur connecté.
+ *
+ * Protection :
+ * - JWT / session
+ * - utilisateur authentifié
  */
 router.get(
   '/',
   isAuthenticated as any,
   GuildsController.getUserGuilds
 );
+
+/* =========================================================
+   GUILD CHANNELS
+========================================================= */
+
 /**
  * GET /api/guilds/:guildId/channels
  *
- * Récupère les salons d'un serveur.
+ * Retourne les salons du serveur.
  *
- * JWT + vérification des permissions.
+ * Protection :
+ * - utilisateur authentifié
+ * - vérification des permissions sur le serveur
  */
 router.get(
   '/:guildId/channels',
@@ -27,12 +49,19 @@ router.get(
   canManageGuild as any,
   GuildsController.getGuildChannels
 );
+
+/* =========================================================
+   GUILD ROLES
+========================================================= */
+
 /**
  * GET /api/guilds/:guildId/roles
  *
- * Récupère les rôles d'un serveur.
+ * Retourne les rôles du serveur.
  *
- * JWT + vérification des permissions.
+ * Protection :
+ * - utilisateur authentifié
+ * - vérification des permissions sur le serveur
  */
 router.get(
   '/:guildId/roles',
@@ -40,4 +69,9 @@ router.get(
   canManageGuild as any,
   GuildsController.getGuildRoles
 );
+
+/* =========================================================
+   EXPORT
+========================================================= */
+
 export default router;
