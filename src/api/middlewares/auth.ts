@@ -13,14 +13,19 @@ import jwt from 'jsonwebtoken';
 
 export interface AuthenticatedUser {
   id: string;
+
   username?: string;
-  global_name?: string;
-  avatar?: string;
-  avatarURL?: string;
-  email?: string;
+
+  globalName?: string | null;
+
+  avatar?: string | null;
+
+  discriminator?: string;
+
   owner?: boolean;
-  premium?: boolean;
-  plan?: string;
+
+  guilds?: unknown[];
+
   [key: string]: unknown;
 }
 
@@ -34,32 +39,51 @@ export interface AuthenticatedRequest
 
 
 /* =========================================================
-   JWT SECRET
+   CONFIG
 ========================================================= */
 
-function getJwtSecret(): string {
+const JWT_SECRET =
+  process.env.JWT_SECRET ||
+  process.env.DISCORD_JWT_SECRET ||
+  'omnix-development-secret';
 
-  const secret =
-    process.env.JWT_SECRET;
 
-  if (
-    !secret ||
-    secret.trim().length < 16
-  ) {
+const COOKIE_NAME =
+  process.env.AUTH_COOKIE_NAME ||
+  'omnix_auth';
 
-    throw new Error(
-      '[AUTH] JWT_SECRET est absent ou trop court.'
-    );
 
-  }
+/* =========================================================
+   JWT PAYLOAD
+========================================================= */
 
-  return secret;
+interface JWTPayload {
+  id?: string;
 
+  userId?: string;
+
+  username?: string;
+
+  globalName?: string | null;
+
+  avatar?: string | null;
+
+  discriminator?: string;
+
+  owner?: boolean;
+
+  guilds?: unknown[];
+
+  iat?: number;
+
+  exp?: number;
+
+  [key: string]: unknown;
 }
 
 
 /* =========================================================
-   GET TOKEN
+   TOKEN EXTRACTION
 ========================================================= */
 
 function getToken(
@@ -67,21 +91,54 @@ function getToken(
 ): string | null {
 
   /*
-   * 1. Cookie HTTP-only
+   * 1. Cookie principal
    */
 
-  const cookieToken =
-    (req as Request & {
-      cookies?: Record<string, string>;
-    }).cookies?.omnix_token;
+  const cookies =
+    (req as any).cookies;
 
-  if (cookieToken) {
-    return cookieToken;
+  if (
+    cookies &&
+    typeof cookies[COOKIE_NAME] === 'string' &&
+    cookies[COOKIE_NAME].trim()
+  ) {
+
+    return cookies[COOKIE_NAME].trim();
+
   }
 
 
   /*
-   * 2. Authorization Bearer
+   * 2. Compatibilité avec anciens cookies
+   */
+
+  const legacyCookies = [
+    'token',
+    'jwt',
+    'auth_token',
+    'access_token',
+    'omnix_token',
+  ];
+
+  for (
+    const name of legacyCookies
+  ) {
+
+    if (
+      cookies &&
+      typeof cookies[name] === 'string' &&
+      cookies[name].trim()
+    ) {
+
+      return cookies[name].trim();
+
+    }
+
+  }
+
+
+  /*
+   * 3. Authorization: Bearer
    */
 
   const authorization =
@@ -89,15 +146,15 @@ function getToken(
 
   if (
     authorization &&
-    authorization.startsWith(
-      'Bearer '
-    )
+    authorization
+      .toLowerCase()
+      .startsWith('bearer ')
   ) {
 
     const token =
-      authorization.slice(
-        7
-      ).trim();
+      authorization
+        .slice(7)
+        .trim();
 
     if (token) {
       return token;
@@ -106,27 +163,7 @@ function getToken(
   }
 
 
-  /*
-   * 3. Query token
-   *
-   * Utilisé uniquement pour permettre
-   * au callback OAuth de transmettre
-   * temporairement le token.
-   */
-
-  const queryToken =
-    typeof req.query.token ===
-    'string'
-      ? req.query.token
-      : null;
-
-  if (queryToken) {
-    return queryToken;
-  }
-
-
   return null;
-
 }
 
 
@@ -134,7 +171,7 @@ function getToken(
    VERIFY TOKEN
 ========================================================= */
 
-export function verifyToken(
+export function verifyAuthToken(
   token: string
 ): AuthenticatedUser | null {
 
@@ -143,44 +180,68 @@ export function verifyToken(
     const decoded =
       jwt.verify(
         token,
-        getJwtSecret()
-      );
+        JWT_SECRET
+      ) as JWTPayload;
 
-    if (
-      typeof decoded !==
-      'object' ||
-      decoded === null
-    ) {
 
-      return null;
-
-    }
-
-    const payload =
-      decoded as Record<
-        string,
-        unknown
-      >;
+    /*
+     * Discord ID.
+     *
+     * On accepte id ou userId
+     * pour rester compatible avec
+     * les anciens tokens OMNIX.
+     */
 
     const id =
-      payload.id ??
-      payload.userId ??
-      payload.sub;
+      String(
+        decoded.id ??
+        decoded.userId ??
+        ''
+      ).trim();
+
 
     if (!id) {
+
       return null;
+
     }
 
+
     return {
-      ...payload,
-      id: String(id),
-    } as AuthenticatedUser;
+      ...decoded,
+
+      id,
+
+      username:
+        typeof decoded.username === 'string'
+          ? decoded.username
+          : undefined,
+
+      globalName:
+        decoded.globalName ?? null,
+
+      avatar:
+        decoded.avatar ?? null,
+
+      discriminator:
+        typeof decoded.discriminator === 'string'
+          ? decoded.discriminator
+          : undefined,
+
+      owner:
+        Boolean(decoded.owner),
+
+      guilds:
+        Array.isArray(decoded.guilds)
+          ? decoded.guilds
+          : [],
+    };
 
   } catch (error) {
 
-    console.warn(
-      '[AUTH] JWT invalide ou expiré.'
-    );
+    /*
+     * Token expiré / invalide.
+     */
 
     return null;
 
@@ -190,110 +251,296 @@ export function verifyToken(
 
 
 /* =========================================================
-   AUTHENTICATED MIDDLEWARE
+   AUTHENTICATION MIDDLEWARE
 ========================================================= */
 
 export function isAuthenticated(
   req: Request,
   res: Response,
   next: NextFunction
-) {
+): void {
 
-  try {
+  const authenticatedRequest =
+    req as AuthenticatedRequest;
 
-    const token =
-      getToken(req);
 
-    if (!token) {
+  /*
+   * Cherche le JWT.
+   */
 
-      return res.status(
-        401
-      ).json({
-        success: false,
-        error: 'Authentification requise.',
-        code: 'AUTH_REQUIRED',
-      });
+  const token =
+    getToken(req);
 
-    }
 
-    const user =
-      verifyToken(token);
+  /*
+   * Aucun token.
+   */
 
-    if (!user) {
+  if (!token) {
 
-      return res.status(
-        401
-      ).json({
-        success: false,
-        error: 'Session expirée.',
-        code: 'SESSION_EXPIRED',
-      });
-
-    }
-
-    (
-      req as AuthenticatedRequest
-    ).user =
-      user;
-
-    return next();
-
-  } catch (error) {
-
-    console.error(
-      '[AUTH] Erreur middleware :',
-      error
+    console.warn(
+      `[Auth] Token absent : ${req.method} ${req.originalUrl}`
     );
 
-    return res.status(
-      401
-    ).json({
-      success: false,
-      error: 'Session invalide.',
-      code: 'INVALID_SESSION',
-    });
+
+    /*
+     * API
+     */
+
+    if (
+      req.originalUrl.startsWith('/api/')
+    ) {
+
+      res.status(401).json({
+        success: false,
+
+        error:
+          'Authentification requise.',
+
+        code:
+          'AUTH_REQUIRED',
+      });
+
+      return;
+
+    }
+
+
+    /*
+     * Page Web
+     *
+     * On renvoie vers OAuth.
+     */
+
+    res.redirect(
+      '/api/auth/discord'
+    );
+
+    return;
 
   }
+
+
+  /*
+   * Vérification JWT.
+   */
+
+  const user =
+    verifyAuthToken(token);
+
+
+  /*
+   * JWT invalide.
+   */
+
+  if (!user) {
+
+    console.warn(
+      `[Auth] Token invalide : ${req.method} ${req.originalUrl}`
+    );
+
+
+    /*
+     * Nettoyage du cookie.
+     */
+
+    clearAuthCookie(
+      res
+    );
+
+
+    /*
+     * API
+     */
+
+    if (
+      req.originalUrl.startsWith('/api/')
+    ) {
+
+      res.status(401).json({
+        success: false,
+
+        error:
+          'Session invalide ou expirée.',
+
+        code:
+          'AUTH_INVALID',
+      });
+
+      return;
+
+    }
+
+
+    /*
+     * Web
+     */
+
+    res.redirect(
+      '/api/auth/discord'
+    );
+
+    return;
+
+  }
+
+
+  /*
+   * Utilisateur authentifié.
+   */
+
+  authenticatedRequest.user =
+    user;
+
+
+  next();
 
 }
 
 
 /* =========================================================
-   OPTIONAL AUTH
+   OPTIONAL AUTHENTICATION
 ========================================================= */
 
 export function optionalAuthentication(
   req: Request,
   res: Response,
   next: NextFunction
-) {
+): void {
 
-  try {
+  const token =
+    getToken(req);
 
-    const token =
-      getToken(req);
-
-    if (!token) {
-      return next();
-    }
+  if (token) {
 
     const user =
-      verifyToken(token);
+      verifyAuthToken(token);
 
     if (user) {
 
       (
         req as AuthenticatedRequest
-      ).user =
-        user;
+      ).user = user;
 
     }
 
-    return next();
+  }
 
-  } catch {
+  next();
 
-    return next();
+}
+
+
+/* =========================================================
+   SET AUTH COOKIE
+========================================================= */
+
+export function setAuthCookie(
+  res: Response,
+  token: string
+): void {
+
+  /*
+   * Render fonctionne en HTTPS.
+   *
+   * secure=true en production.
+   */
+
+  const isProduction =
+    process.env.NODE_ENV ===
+    'production';
+
+
+  res.cookie(
+    COOKIE_NAME,
+    token,
+    {
+      httpOnly: true,
+
+      secure:
+        isProduction,
+
+      sameSite:
+        isProduction
+          ? 'lax'
+          : 'lax',
+
+      path: '/',
+
+      maxAge:
+        7 * 24 * 60 * 60 * 1000,
+    }
+  );
+
+}
+
+
+/* =========================================================
+   CLEAR AUTH COOKIE
+========================================================= */
+
+export function clearAuthCookie(
+  res: Response
+): void {
+
+  const isProduction =
+    process.env.NODE_ENV ===
+    'production';
+
+
+  res.clearCookie(
+    COOKIE_NAME,
+    {
+      httpOnly: true,
+
+      secure:
+        isProduction,
+
+      sameSite:
+        isProduction
+          ? 'lax'
+          : 'lax',
+
+      path: '/',
+    }
+  );
+
+
+  /*
+   * Nettoyage des anciens cookies
+   * éventuellement utilisés par une
+   * ancienne version d'OMNIX.
+   */
+
+  const legacyCookies = [
+    'token',
+    'jwt',
+    'auth_token',
+    'access_token',
+    'omnix_token',
+  ];
+
+
+  for (
+    const name of legacyCookies
+  ) {
+
+    res.clearCookie(
+      name,
+      {
+        httpOnly: true,
+
+        secure:
+          isProduction,
+
+        sameSite:
+          isProduction
+            ? 'lax'
+            : 'lax',
+
+        path: '/',
+      }
+    );
 
   }
 
@@ -301,7 +548,71 @@ export function optionalAuthentication(
 
 
 /* =========================================================
-   DEFAULT EXPORT
+   GET CURRENT USER
 ========================================================= */
 
-export default isAuthenticated;
+export function getAuthenticatedUser(
+  req: Request
+): AuthenticatedUser | null {
+
+  return (
+    (req as AuthenticatedRequest).user ??
+    null
+  );
+
+}
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+export function logout(
+  req: Request,
+  res: Response
+): void {
+
+  clearAuthCookie(
+    res
+  );
+
+
+  /*
+   * API
+   */
+
+  if (
+    req.originalUrl.startsWith('/api/')
+  ) {
+
+    res.json({
+      success: true,
+      message:
+        'Déconnexion réussie.',
+    });
+
+    return;
+
+  }
+
+
+  /*
+   * Web
+   */
+
+  res.redirect(
+    '/'
+  );
+
+}
+
+
+/* =========================================================
+   EXPORTS
+========================================================= */
+
+export {
+  COOKIE_NAME,
+  JWT_SECRET,
+  getToken,
+};
