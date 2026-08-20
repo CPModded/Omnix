@@ -397,6 +397,41 @@ app.get(
     res: Response
   ) => {
 
+      app.get(
+  '/dashboard',
+  isAuthenticated as any,
+  (
+    req: Request,
+    res: Response
+  ) => {
+    return res.render(
+      'dashboard',
+      {
+        user: (req as any).user,
+      }
+    );
+  }
+);
+
+app.get(
+  '/dashboard/:guildId',
+  isAuthenticated as any,
+  canManageGuild as any,
+  (
+    req: Request,
+    res: Response
+  ) => {
+    return res.render(
+      'dashboard',
+      {
+        user: (req as any).user,
+        guildId:
+          req.params.guildId,
+      }
+    );
+  }
+);
+      
     try {
 
       console.log(
