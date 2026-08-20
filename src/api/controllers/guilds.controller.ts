@@ -7,7 +7,7 @@
 import type { Response } from 'express';
 import axios from 'axios';
 import { ChannelType } from 'discord.js';
-import { AuthenticatedRequest } from '../middlewares/auth.ts';
+import type { AuthenticatedRequest } from '../middlewares/auth.ts';
 import { adminAccessCache } from '../middlewares/guildAuth.ts';
 import { client as botClient } from '../../bot/client.ts';
 
