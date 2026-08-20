@@ -1,278 +1,311 @@
-import express, {
-  type Request,
-  type Response,
+import {
+  Router,
 } from 'express';
 
-import type { Client } from 'discord.js';
+import {
+  client as botClient,
+} from '../../bot/client';
 
-import { User } from '../../models/User.ts';
+import {
+  User,
+} from '../../models/User';
+
 
 const router =
-  express.Router();
+  Router();
 
-let discordClient: Client | null =
-  null;
 
 const startedAt =
   Date.now();
 
-/**
- * Enregistre le client Discord.
- */
-export function registerDiscordClient(
-  client: Client,
-): void {
-  discordClient = client;
 
-  console.log(
-    '[Stats] Client Discord enregistré.',
-  );
-}
+/* =========================================================
+   COMMAND COUNT
+========================================================= */
 
-/**
- * Nombre de commandes.
- */
 function getCommandCount(): number {
-  const globalState =
-    globalThis as typeof globalThis & {
-      __OMNIX_COMMAND_COUNT?: number;
-    };
+
+  const client =
+    botClient as any;
+
+  if (
+    client.commands &&
+    typeof client.commands.size ===
+      'number'
+  ) {
+
+    return client.commands.size;
+
+  }
+
 
   const globalValue =
-    globalState.__OMNIX_COMMAND_COUNT;
+    (
+      globalThis as typeof globalThis & {
+        __OMNIX_COMMAND_COUNT?:
+          number;
+      }
+    ).__OMNIX_COMMAND_COUNT;
+
 
   if (
     typeof globalValue ===
       'number' &&
-    Number.isFinite(globalValue)
-  ) {
-    return Math.max(
-      0,
-      Math.floor(globalValue),
-    );
-  }
-
-  const envValue =
-    Number(
-      process.env
-        .OMNIX_COMMAND_COUNT ??
-        0,
-    );
-
-  if (
     Number.isFinite(
-      envValue,
+      globalValue,
     )
   ) {
+
     return Math.max(
       0,
-      Math.floor(envValue),
+      Math.floor(
+        globalValue,
+      ),
     );
+
   }
+
 
   return 0;
 }
 
-/**
- * Uptime en secondes.
- */
-function getUptime(): number {
-  return Math.floor(
-    (Date.now() - startedAt) /
-      1000,
-  );
-}
 
-/**
- * Stats Discord.
- */
-function getDiscordStats() {
-  if (!discordClient) {
-    return {
-      connected: false,
-      guildsCount: 0,
-      membersCount: 0,
-      ping: 0,
-    };
-  }
+/* =========================================================
+   GET /api/stats
+========================================================= */
 
-  let membersCount =
-    0;
-
-  for (
-    const guild of
-    discordClient.guilds.cache.values()
-  ) {
-    membersCount +=
-      Number(
-        guild.memberCount ?? 0,
-      );
-  }
-
-  const rawPing =
-    Number(
-      discordClient.ws.ping,
-    );
-
-  return {
-    connected:
-      discordClient.isReady(),
-
-    guildsCount:
-      discordClient.guilds.cache
-        .size,
-
-    membersCount,
-
-    ping:
-      Number.isFinite(
-        rawPing,
-      ) &&
-      rawPing >= 0
-        ? Math.round(rawPing)
-        : 0,
-  };
-}
-
-/**
- * GET /api/stats
- */
 router.get(
-  '/stats',
+  '/',
   async (
-    req: Request,
-    res: Response,
+    req,
+    res,
   ) => {
-    const started =
+
+    const requestStarted =
       Date.now();
 
+
     try {
-      const discord =
-        getDiscordStats();
+
+      const connected =
+        botClient.isReady();
+
+
+      const guildsCount =
+        connected
+          ? botClient.guilds.cache.size
+          : 0;
+
+
+      const membersCount =
+        connected
+          ? botClient.guilds.cache.reduce(
+              (
+                total,
+                guild,
+              ) =>
+                total +
+                (
+                  Number(
+                    guild.memberCount ||
+                    0,
+                  )
+                ),
+              0,
+            )
+          : 0;
+
+
+      const rawPing =
+        connected
+          ? Number(
+              botClient.ws.ping,
+            )
+          : 0;
+
+
+      const ping =
+        Number.isFinite(
+          rawPing,
+        ) &&
+        rawPing >= 0
+          ? Math.round(
+              rawPing,
+            )
+          : 0;
+
 
       let totalUsers =
         0;
 
+
       try {
+
         totalUsers =
           await User.countDocuments();
+
       } catch (error) {
+
         console.warn(
-          '[Stats] MongoDB indisponible:',
+          '[Stats] MongoDB indisponible.',
           error,
         );
+
       }
+
 
       const latency =
         Date.now() -
-        started;
+        requestStarted;
+
 
       return res.json({
-        success: true,
+
+        success:
+          true,
 
         bot: {
-          connected:
-            discord.connected,
 
-          guildsCount:
-            discord.guildsCount,
+          connected,
 
-          membersCount:
-            discord.membersCount,
+          guildsCount,
 
-          ping:
-            discord.ping,
+          membersCount,
+
+          ping,
 
           uptime:
-            getUptime(),
+            Math.floor(
+              (
+                Date.now() -
+                startedAt
+              ) / 1000,
+            ),
+
         },
 
         database: {
+
           totalUsers,
 
           latency,
+
         },
 
         commands:
           getCommandCount(),
 
         api: {
+
           latency,
+
         },
 
         timestamp:
           new Date().toISOString(),
+
       });
+
     } catch (error) {
+
       console.error(
-        '[Stats] Erreur:',
+        '[Stats] ❌',
         error,
       );
 
+
       return res.status(200).json({
-        success: false,
+
+        success:
+          false,
 
         bot: {
-          connected: false,
-          guildsCount: 0,
-          membersCount: 0,
-          ping: 0,
-          uptime: getUptime(),
+
+          connected:
+            false,
+
+          guildsCount:
+            0,
+
+          membersCount:
+            0,
+
+          ping:
+            0,
+
+          uptime:
+            0,
+
         },
 
         database: {
-          totalUsers: 0,
-          latency: 0,
+
+          totalUsers:
+            0,
+
+          latency:
+            0,
+
         },
 
-        commands: 0,
+        commands:
+          0,
 
         api: {
+
           latency:
             Date.now() -
-            started,
-        },
+            requestStarted,
 
-        error:
-          'Statistiques temporairement indisponibles.',
+        },
 
         timestamp:
           new Date().toISOString(),
+
       });
+
     }
+
   },
 );
 
-/**
- * GET /api/stats/health
- */
+
+/* =========================================================
+   GET /api/stats/health
+========================================================= */
+
 router.get(
-  '/stats/health',
+  '/health',
   (
-    req: Request,
-    res: Response,
+    req,
+    res,
   ) => {
-    const discord =
-      getDiscordStats();
 
     return res.json({
-      success: true,
+
+      success:
+        true,
 
       service:
         'OMNIX',
 
       status:
-        'online',
+        botClient.isReady()
+          ? 'online'
+          : 'degraded',
 
       discord:
-        discord.connected
+        botClient.isReady()
           ? 'connected'
           : 'disconnected',
 
       timestamp:
         new Date().toISOString(),
+
     });
+
   },
 );
+
 
 export default router;
