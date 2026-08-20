@@ -1,105 +1,224 @@
-/**
- * ====================================================================
- * MIDDLEWARE D'AUTHENTIFICATION JWT (AUDIT TRAÇAGE SERVEUR EXTRÊME)
- * ====================================================================
- */
-
-import type { Request, Response, NextFunction } from 'express';
+import type {
+  Request,
+  Response,
+  NextFunction,
+} from 'express';
 import jwt from 'jsonwebtoken';
 import { CONFIG } from '../../config/index.ts';
-
-export interface AuthenticatedRequest extends Request {
-  user?: {
-    discordId: string;
-    username: string;
-    isAdmin: boolean;
-    isPremium: boolean;
-    discordAccessToken: string;
-  };
+/* =========================================================
+   TYPES
+========================================================= */
+export interface AuthenticatedRequest
+  extends Request {
+  user?: any;
+  token?: string;
 }
-
-// Décodeur de cookie robuste prévenant le bug du signe "="
-function getCookie(req: Request, name: string): string | null {
-  const cookieHeader = req.headers.cookie;
-  if (!cookieHeader) return null;
-  
-  const cookies = cookieHeader.split(';');
-  for (let cookie of cookies) {
-    cookie = cookie.trim();
-    const eqIndex = cookie.indexOf('=');
-    if (eqIndex === -1) continue;
-    
-    const key = cookie.substring(0, eqIndex).trim();
-    const value = cookie.substring(eqIndex + 1).trim();
-    
-    if (key === name) return value;
+/* =========================================================
+   JWT SECRET
+========================================================= */
+function getJwtSecret(): string {
+  const secret =
+    CONFIG.JWT_SECRET ||
+    process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error(
+      '[Auth] JWT_SECRET / CONFIG.JWT_SECRET est manquant.'
+    );
+  }
+  return secret;
+}
+/* =========================================================
+   TOKEN EXTRACTION
+========================================================= */
+function extractToken(
+  req: Request
+): string | null {
+  /*
+   * Authorization: Bearer <token>
+   */
+  const authorization =
+    req.headers.authorization;
+  if (
+    authorization &&
+    authorization.startsWith('Bearer ')
+  ) {
+    return authorization
+      .slice(7)
+      .trim();
+  }
+  /*
+   * Cookie éventuel.
+   *
+   * Cela permet à OMNIX de fonctionner aussi
+   * avec une authentification par cookie.
+   */
+  const cookies =
+    (req as Request & {
+      cookies?: Record<string, string>;
+    }).cookies;
+  if (cookies) {
+    const cookieToken =
+      cookies.omnix_token ||
+      cookies.token ||
+      cookies.access_token;
+    if (cookieToken) {
+      return cookieToken;
+    }
+  }
+  /*
+   * Query token.
+   *
+   * Utile notamment pour certains retours OAuth.
+   */
+  const queryToken =
+    req.query?.token;
+  if (
+    typeof queryToken === 'string' &&
+    queryToken.trim()
+  ) {
+    return queryToken.trim();
   }
   return null;
 }
-
-export function isAuthenticated(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  const authHeader = req.headers.authorization;
-  const cookieToken = getCookie(req, 'jwt_token');
-  const queryToken = req.query.token as string | undefined;
-  const path = req.path;
-  const method = req.method;
-
-  // ==========================================
-  // BLOC D'AUDIT TECHNIQUE VISIBLE SUR RENDER/PTERODACTYL
-  // ==========================================
-  console.log('======================================================');
-  console.log(`[OMNIX AUTH MONITOR] 🛡️ TRAÇAGE D'ACCÈS REQUIS`);
-  console.log(`[OMNIX AUTH MONITOR] 📡 Chemin : ${method} ${path}`);
-  console.log(`[OMNIX AUTH MONITOR] 🔐 Authorization Header :`, authHeader || '❌ Aucun');
-  console.log(`[OMNIX AUTH MONITOR] 🍪 Cookie brut :`, req.headers.cookie || '❌ Aucun');
-  console.log(`[OMNIX AUTH MONITOR] 🍪 Cookie "jwt_token" extrait :`, cookieToken ? `${cookieToken.substring(0, 24)}...` : '❌ Aucun');
-  console.log(`[OMNIX AUTH MONITOR] 🔍 Query Token (?token=) :`, queryToken ? `${queryToken.substring(0, 24)}...` : '❌ Aucun');
-  console.log('[OMNIX AUTH MONITOR] 🗺️ Referer/Origin :', req.headers.referer || req.headers.origin || '❌ Aucun');
-
-  let token: string | null = null;
-
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    token = authHeader.split(' ')[1];
-    console.log(`[OMNIX AUTH MONITOR] ✅ Jeton extrait depuis l'en-tête Authorization.`);
-  } else if (queryToken) {
-    token = queryToken;
-    console.log(`[OMNIX AUTH MONITOR] ✅ Jeton extrait depuis les paramètres d'URL (Query).`);
-    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-    res.setHeader('Set-Cookie', `jwt_token=${token}; Path=/; Max-Age=604800; SameSite=Lax${isSecure ? '; Secure' : ''}`);
-    console.log(`[OMNIX AUTH MONITOR] ✍️ Enregistrement du cookie de session (Set-Cookie) envoyé au navigateur.`);
-  } else if (cookieToken) {
-    token = cookieToken;
-    console.log(`[OMNIX AUTH MONITOR] ✅ Jeton extrait depuis les Cookies.`);
-  }
-
-  const isApiRequest = req.path.startsWith('/api');
-
-  if (!token) {
-    console.warn(`[OMNIX AUTH MONITOR] ❌ Échec d'accès : Aucun jeton de session n'a pu être trouvé.`);
-    console.log('======================================================');
-    
-    if (isApiRequest) {
-      return res.status(401).json({ error: 'Accès non autorisé. Token manquant.' });
-    } else {
-      return res.redirect('/?error=unauthorized');
-    }
-  }
-
+/* =========================================================
+   VERIFY JWT
+========================================================= */
+export function verifyToken(
+  token: string
+): any | null {
   try {
-    const decoded = jwt.verify(token, CONFIG.JWT_SECRET) as AuthenticatedRequest['user'];
-    req.user = decoded;
-    
-    console.log(`[OMNIX AUTH MONITOR] 🎉 Session JWT validée avec succès pour : @${decoded.username} (${decoded.discordId})`);
-    console.log('======================================================');
-    next();
-  } catch (error: any) {
-    console.error(`[OMNIX AUTH MONITOR] ❌ Échec critique de décodage JWT : ${error.message}`);
-    console.log('======================================================');
-    
-    if (isApiRequest) {
-      return res.status(403).json({ error: 'Session invalide ou expirée.' });
-    } else {
-      return res.redirect('/?error=session_expired');
-    }
+    return jwt.verify(
+      token,
+      getJwtSecret()
+    );
+  } catch {
+    return null;
   }
 }
+/* =========================================================
+   AUTHENTICATION MIDDLEWARE
+========================================================= */
+export function isAuthenticated(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void {
+  try {
+    const token =
+      extractToken(req);
+    /*
+     * Aucun token.
+     */
+    if (!token) {
+      res.status(401).json({
+        success: false,
+        error: 'Authentification requise.',
+        code: 'AUTH_REQUIRED',
+      });
+      return;
+    }
+    /*
+     * Vérification JWT.
+     */
+    const payload =
+      verifyToken(token);
+    if (!payload) {
+      res.status(401).json({
+        success: false,
+        error: 'Session invalide ou expirée.',
+        code: 'INVALID_TOKEN',
+      });
+      return;
+    }
+    /*
+     * Stockage du token et de l'utilisateur
+     * dans la requête.
+     */
+    req.token =
+      token;
+    req.user =
+      payload;
+    next();
+  } catch (error) {
+    console.error(
+      '[Auth] Erreur middleware :',
+      error
+    );
+    res.status(401).json({
+      success: false,
+      error: 'Authentification invalide.',
+      code: 'AUTH_ERROR',
+    });
+  }
+}
+/* =========================================================
+   OPTIONAL AUTHENTICATION
+========================================================= */
+/**
+ * Même fonctionnement que isAuthenticated,
+ * mais ne bloque pas la requête si aucun token
+ * n'est présent.
+ *
+ * Utile pour les pages publiques pouvant afficher
+ * des informations différentes selon la connexion.
+ */
+export function optionalAuthentication(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void {
+  try {
+    const token =
+      extractToken(req);
+    if (!token) {
+      next();
+      return;
+    }
+    const payload =
+      verifyToken(token);
+    if (payload) {
+      req.token =
+        token;
+      req.user =
+        payload;
+    }
+    next();
+  } catch (error) {
+    console.warn(
+      '[Auth] Authentification optionnelle échouée :',
+      error
+    );
+    next();
+  }
+}
+/* =========================================================
+   REQUIRE USER
+========================================================= */
+/**
+ * Vérifie qu'un utilisateur authentifié existe
+ * réellement dans la requête.
+ */
+export function requireUser(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void {
+  if (!req.user) {
+    res.status(401).json({
+      success: false,
+      error: 'Utilisateur non authentifié.',
+      code: 'USER_REQUIRED',
+    });
+    return;
+  }
+  next();
+}
+/* =========================================================
+   EXPORT DEFAULT
+========================================================= */
+export default {
+  isAuthenticated,
+  optionalAuthentication,
+  requireUser,
+  verifyToken,
+};
