@@ -3,55 +3,108 @@ import express, {
   type Response,
 } from 'express';
 
-import type { Client } from 'discord.js';
+import axios from 'axios';
 
 import { User } from '../../models/User.ts';
+import { GuildConfig } from '../../models/GuildConfig.ts';
 
 import {
   getRequestToken,
   verifyJwt,
-  isOwner,
 } from './auth.routes.ts';
-
-
-/* =========================================================
-   OMNIX — GUILD ROUTES
-========================================================= */
 
 const router = express.Router();
 
+/*
+ * =========================================================
+ * OMNIX — GUILD ROUTES
+ * =========================================================
+ *
+ * Routes :
+ *
+ * GET /api/guilds
+ * GET /api/guilds/:guildId
+ * GET /api/guilds/:guildId/channels
+ * GET /api/guilds/:guildId/roles
+ * GET /api/guilds/:guildId/invite
+ *
+ * Auth :
+ *
+ * jwt_token cookie
+ * OU
+ * Authorization: Bearer ...
+ *
+ * =========================================================
+ */
+
 
 /* =========================================================
-   DISCORD CLIENT
+   CONFIGURATION
 ========================================================= */
 
-let discordClient: Client | null = null;
+const DISCORD_API =
+  'https://discord.com/api/v10';
+
+const DISCORD_BOT_TOKEN =
+  process.env.DISCORD_TOKEN ||
+  process.env.DISCORD_BOT_TOKEN ||
+  '';
+
+const DISCORD_CLIENT_ID =
+  process.env.DISCORD_CLIENT_ID ||
+  (process.env as any).CLIENT_ID ||
+  '';
+
+const DISCORD_REDIRECT_URI =
+  process.env.DISCORD_REDIRECT_URI ||
+  '';
 
 
-/**
- * Enregistre le client Discord principal.
- *
- * Cette fonction doit être appelée depuis index.ts
- * une fois que le bot Discord est créé.
- */
-export function registerDiscordClient(
-  client: Client,
-): void {
-  discordClient = client;
+/* =========================================================
+   TYPES
+========================================================= */
 
-  console.log(
-    '[Guilds] ✓ Client Discord enregistré.',
-  );
+interface OmnixGuild {
+  id: string;
+  name: string;
+  icon?: string | null;
+  owner?: boolean;
+  permissions?: string;
+  features?: string[];
+}
+
+interface DiscordChannel {
+  id: string;
+  name: string;
+  type: number;
+  parent_id?: string | null;
+  position?: number;
+}
+
+interface DiscordRole {
+  id: string;
+  name: string;
+  color?: number;
+  position?: number;
+  permissions?: string;
+  managed?: boolean;
+}
+
+interface DiscordGuild {
+  id: string;
+  name: string;
+  icon: string | null;
+  owner?: boolean;
+  permissions?: string;
 }
 
 
 /* =========================================================
-   AUTHENTICATION
+   HELPERS
 ========================================================= */
 
 /**
- * Récupère l'utilisateur connecté
- * à partir du JWT OMNIX.
+ * Récupère l'utilisateur connecté depuis le JWT.
  */
 async function getAuthenticatedUser(
   req: Request,
@@ -66,7 +119,9 @@ async function getAuthenticatedUser(
   const payload =
     verifyJwt(token);
 
-  if (!payload?.discordId) {
+  if (
+    !payload?.discordId
+  ) {
     return null;
   }
 
@@ -80,25 +135,87 @@ async function getAuthenticatedUser(
 }
 
 
-/* =========================================================
-   DISCORD PERMISSIONS
-========================================================= */
+/**
+ * Convertit un objet guild MongoDB
+ * vers un format propre pour le frontend.
+ */
+function normalizeGuild(
+  guild: any,
+): OmnixGuild {
+  return {
+    id:
+      String(
+        guild?.id ||
+        guild?.guildId ||
+        '',
+      ),
 
-const ADMINISTRATOR =
-  0x8n;
+    name:
+      String(
+        guild?.name ||
+        'Serveur Discord',
+      ),
+
+    icon:
+      guild?.icon ||
+      null,
+
+    owner:
+      Boolean(
+        guild?.owner,
+      ),
+
+    permissions:
+      String(
+        guild?.permissions ||
+        '0',
+      ),
+
+    features:
+      Array.isArray(
+        guild?.features,
+      )
+        ? guild.features
+        : [],
+  };
+}
 
 
 /**
- * Vérifie si l'utilisateur possède
- * les permissions nécessaires sur un serveur.
+ * Vérifie que l'utilisateur possède
+ * bien accès à la guild.
  */
-function canManageGuild(
-  guild: any,
+function userCanManageGuild(
+  user: any,
+  guildId: string,
 ): boolean {
+  if (!user) {
+    return false;
+  }
+
+  const guilds =
+    Array.isArray(user.guilds)
+      ? user.guilds
+      : [];
+
+  const guild =
+    guilds.find(
+      (item: any) =>
+        String(
+          item?.id ||
+          item?.guildId ||
+          '',
+        ) === guildId,
+    );
+
+  if (!guild) {
+    return false;
+  }
 
   /*
-   * Propriétaire du serveur.
+   * Owner.
    */
+
   if (
     guild.owner === true
   ) {
@@ -106,79 +223,82 @@ function canManageGuild(
   }
 
   /*
-   * Permissions Discord.
+   * Administrator.
    */
+
+  const permissions =
+    String(
+      guild.permissions ||
+      '0',
+    );
+
+  try {
+    const value =
+      BigInt(permissions);
+
+    const ADMINISTRATOR =
+      0x8n;
+
+    return (
+      (
+        value &
+        ADMINISTRATOR
+      ) ===
+      ADMINISTRATOR
+    );
+  } catch {
+    return false;
+  }
+}
+
+
+/**
+ * Vérifie si OMNIX est présent
+ * sur un serveur.
+ */
+async function isBotInGuild(
+  guildId: string,
+): Promise<boolean> {
   if (
-    typeof guild.permissions !==
-    'string'
+    !DISCORD_BOT_TOKEN
   ) {
     return false;
   }
 
   try {
+    await axios.get(
+      `${DISCORD_API}/guilds/${guildId}`,
+      {
+        headers: {
+          Authorization:
+            `Bot ${DISCORD_BOT_TOKEN}`,
+        },
 
-    const permissions =
-      BigInt(
-        guild.permissions,
-      );
-
-    return (
-      (
-        permissions &
-        ADMINISTRATOR
-      ) ===
-      ADMINISTRATOR
+        timeout: 8000,
+      },
     );
 
+    return true;
   } catch {
-
     return false;
-
   }
 }
 
-
-/* =========================================================
-   BOT PERMISSION CHECK
-========================================================= */
 
 /**
- * Vérifie si OMNIX est présent sur le serveur.
+ * URL d'invitation OMNIX.
  */
-function isBotInGuild(
-  guildId: string,
-): boolean {
-
-  if (!discordClient) {
-    return false;
-  }
-
-  return discordClient.guilds.cache.has(
-    guildId,
-  );
-}
-
-
-/* =========================================================
-   BOT INVITE URL
-========================================================= */
-
 function getBotInviteUrl(
   guildId?: string,
 ): string | null {
-
-  const clientId =
-    process.env.DISCORD_CLIENT_ID ||
-    process.env.DISCORD_BOT_CLIENT_ID;
-
-  if (!clientId) {
+  if (!DISCORD_CLIENT_ID) {
     return null;
   }
 
   const params =
     new URLSearchParams({
       client_id:
-        clientId,
+        DISCORD_CLIENT_ID,
 
       scope:
         'bot applications.commands',
@@ -187,19 +307,15 @@ function getBotInviteUrl(
         '8',
     });
 
+  /*
+   * Si Discord connaît déjà le serveur,
+   * on ouvre directement le sélecteur avec
+   * le serveur présélectionné.
+   */
   if (guildId) {
     params.set(
       'guild_id',
       guildId,
-    );
-
-    /*
-     * Empêche Discord de demander
-     * à l'utilisateur de choisir un serveur.
-     */
-    params.set(
-      'disable_guild_select',
-      'true',
     );
   }
 
@@ -209,24 +325,47 @@ function getBotInviteUrl(
 }
 
 
+/**
+ * Récupère une guild précise depuis
+ * la liste sauvegardée de l'utilisateur.
+ */
+function findUserGuild(
+  user: any,
+  guildId: string,
+): any | null {
+  const guilds =
+    Array.isArray(user?.guilds)
+      ? user.guilds
+      : [];
+
+  return (
+    guilds.find(
+      (guild: any) =>
+        String(
+          guild?.id ||
+          guild?.guildId ||
+          '',
+        ) === guildId,
+    ) ||
+    null
+  );
+}
+
+
 /* =========================================================
    GET /api/guilds
 ========================================================= */
 
-/**
- * Retourne les serveurs Discord accessibles
- * par l'utilisateur connecté.
- *
- * GET /api/guilds
- */
 router.get(
   '/',
   async (
     req: Request,
     res: Response,
   ) => {
-
     try {
+      console.log(
+        '[Guilds] 📥 Récupération des serveurs Discord',
+      );
 
       const user =
         await getAuthenticatedUser(
@@ -234,199 +373,110 @@ router.get(
         );
 
       if (!user) {
+        console.warn(
+          '[Guilds] ❌ Utilisateur non authentifié.',
+        );
 
-        return res
-          .status(401)
-          .json({
-            success:
-              false,
+        return res.status(401).json({
+          success:
+            false,
 
-            error:
-              'Authentification requise.',
+          error:
+            'Authentification requise.',
 
-            code:
-              'AUTH_REQUIRED',
-          });
+          code:
+            'AUTH_REQUIRED',
 
+          guilds:
+            [],
+        });
       }
 
-
-      console.log(
-        `[Guilds] 📥 Récupération des serveurs Discord pour : ${user.username}`,
-      );
-
-
-      const storedGuilds =
+      const rawGuilds =
         Array.isArray(
           (user as any).guilds,
         )
           ? (user as any).guilds
           : [];
 
+      const guilds =
+        rawGuilds
+          .map(normalizeGuild)
+          .filter(
+            (guild) =>
+              Boolean(
+                guild.id,
+              ),
+          );
+
+      console.log(
+        `[Guilds] ✓ ${guilds.length} serveur(s) pour : ${
+          (user as any).username
+        }`,
+      );
 
       /*
-       * Owner OMNIX :
+       * On vérifie uniquement les guilds
+       * si nécessaire.
        *
-       * L'owner peut voir tous les serveurs
-       * présents dans son compte.
+       * Ne pas appeler Discord pour chaque guild
+       * à chaque chargement du dashboard.
        */
-      const owner =
-        isOwner(
-          String(
-            (user as any).discordId,
+
+      const result =
+        await Promise.all(
+          guilds.map(
+            async (guild) => ({
+              ...guild,
+
+              inviteUrl:
+                getBotInviteUrl(
+                  guild.id,
+                ),
+
+              botInvite:
+                getBotInviteUrl(
+                  guild.id,
+                ),
+
+              botPresent:
+                false,
+            }),
           ),
         );
 
-
-      const guilds =
-        storedGuilds
-          .filter(
-            (guild: any) =>
-              owner ||
-              canManageGuild(guild),
-          )
-          .map(
-            (guild: any) => {
-
-              const id =
-                String(
-                  guild.id,
-                );
-
-              const installed =
-                isBotInGuild(
-                  id,
-                );
-
-              return {
-
-                id,
-
-                name:
-                  String(
-                    guild.name ||
-                    'Serveur sans nom',
-                  ),
-
-                icon:
-                  guild.icon ||
-                  null,
-
-                owner:
-                  Boolean(
-                    guild.owner,
-                  ),
-
-                permissions:
-                  String(
-                    guild.permissions ||
-                    '0',
-                  ),
-
-                manageable:
-                  true,
-
-                botInstalled:
-                  installed,
-
-                configured:
-                  installed,
-
-                dashboardUrl:
-                  `/dashboard/${encodeURIComponent(id)}`,
-
-                inviteUrl:
-                  installed
-                    ? null
-                    : getBotInviteUrl(id),
-              };
-            },
-          );
-
-
-      /*
-       * Tri :
-       *
-       * 1. Serveurs avec OMNIX
-       * 2. Serveurs sans OMNIX
-       * 3. Nom alphabétique
-       */
-      guilds.sort(
-        (
-          a: any,
-          b: any,
-        ) => {
-
-          if (
-            a.botInstalled !==
-            b.botInstalled
-          ) {
-            return a.botInstalled
-              ? -1
-              : 1;
-          }
-
-          return a.name.localeCompare(
-            b.name,
-            'fr',
-            {
-              sensitivity:
-                'base',
-            },
-          );
-        },
-      );
-
-
       return res.json({
-
         success:
           true,
 
-        guilds,
+        guilds:
+          result,
+
+        count:
+          result.length,
 
         total:
-          guilds.length,
-
-        installed:
-          guilds.filter(
-            (guild: any) =>
-              guild.botInstalled,
-          ).length,
-
-        notInstalled:
-          guilds.filter(
-            (guild: any) =>
-              !guild.botInstalled,
-          ).length,
-
-        timestamp:
-          new Date().toISOString(),
-
+          result.length,
       });
-
     } catch (error) {
-
       console.error(
         '[Guilds] ❌ Erreur /api/guilds :',
         error,
       );
 
-      return res
-        .status(500)
-        .json({
+      return res.status(500).json({
+        success:
+          false,
 
-          success:
-            false,
+        error:
+          'Impossible de récupérer vos serveurs Discord.',
 
-          error:
-            'Impossible de récupérer vos serveurs Discord.',
+        code:
+          'GUILDS_FETCH_ERROR',
 
-          code:
-            'GUILDS_FETCH_ERROR',
-
-        });
-
+        guilds:
+          [],
+      });
     }
   },
 );
@@ -436,262 +486,175 @@ router.get(
    GET /api/guilds/:guildId
 ========================================================= */
 
-/**
- * Retourne les informations détaillées
- * d'un serveur.
- */
 router.get(
   '/:guildId',
   async (
     req: Request,
     res: Response,
   ) => {
-
     try {
-
       const guildId =
         String(
           req.params.guildId ||
           '',
         ).trim();
 
+      if (
+        !/^\d{17,20}$/.test(
+          guildId,
+        )
+      ) {
+        return res.status(400).json({
+          success:
+            false,
 
-      if (!guildId) {
+          error:
+            'Identifiant de serveur Discord invalide.',
 
-        return res
-          .status(400)
-          .json({
-
-            success:
-              false,
-
-            error:
-              'Identifiant du serveur manquant.',
-
-            code:
-              'GUILD_ID_REQUIRED',
-
-          });
-
+          code:
+            'INVALID_GUILD_ID',
+        });
       }
-
 
       const user =
         await getAuthenticatedUser(
           req,
         );
 
-
       if (!user) {
+        return res.status(401).json({
+          success:
+            false,
 
-        return res
-          .status(401)
-          .json({
+          error:
+            'Authentification requise.',
 
-            success:
-              false,
-
-            error:
-              'Authentification requise.',
-
-            code:
-              'AUTH_REQUIRED',
-
-          });
-
+          code:
+            'AUTH_REQUIRED',
+        });
       }
 
-
-      const storedGuilds =
-        Array.isArray(
-          (user as any).guilds,
-        )
-          ? (user as any).guilds
-          : [];
-
-
-      const guild =
-        storedGuilds.find(
-          (item: any) =>
-            String(item.id) ===
-            guildId,
-        );
-
-
-      if (!guild) {
-
-        return res
-          .status(403)
-          .json({
-
-            success:
-              false,
-
-            error:
-              'Vous ne pouvez pas gérer ce serveur.',
-
-            code:
-              'GUILD_ACCESS_DENIED',
-
-          });
-
-      }
-
-
-      if (
-        !canManageGuild(guild) &&
-        !isOwner(
-          String(
-            (user as any).discordId,
-          ),
-        )
-      ) {
-
-        return res
-          .status(403)
-          .json({
-
-            success:
-              false,
-
-            error:
-              'Vous devez être propriétaire ou administrateur de ce serveur.',
-
-            code:
-              'GUILD_MANAGE_DENIED',
-
-          });
-
-      }
-
-
-      const installed =
-        isBotInGuild(
+      const userGuild =
+        findUserGuild(
+          user,
           guildId,
         );
 
+      if (!userGuild) {
+        return res.status(403).json({
+          success:
+            false,
 
-      let botGuild: any = null;
+          error:
+            'Vous ne pouvez pas gérer ce serveur.',
 
-
-      /*
-       * Si OMNIX est présent,
-       * on récupère les informations
-       * directement depuis Discord.
-       */
-      if (
-        installed &&
-        discordClient
-      ) {
-
-        const discordGuild =
-          discordClient.guilds.cache.get(
-            guildId,
-          );
-
-        if (discordGuild) {
-
-          botGuild = {
-
-            id:
-              discordGuild.id,
-
-            name:
-              discordGuild.name,
-
-            icon:
-              discordGuild.iconURL({
-                size: 256,
-              }),
-
-            memberCount:
-              discordGuild.memberCount,
-
-          };
-
-        }
-
+          code:
+            'GUILD_ACCESS_DENIED',
+        });
       }
 
+      const manageable =
+        userCanManageGuild(
+          user,
+          guildId,
+        );
+
+      if (!manageable) {
+        return res.status(403).json({
+          success:
+            false,
+
+          error:
+            'Vous devez être propriétaire ou administrateur du serveur.',
+
+          code:
+            'GUILD_PERMISSION_DENIED',
+        });
+      }
+
+      /*
+       * Configuration OMNIX.
+       */
+
+      let config: any = null;
+
+      try {
+        config =
+          await GuildConfig.findOne({
+            guildId,
+          }).lean();
+      } catch (error) {
+        console.warn(
+          `[Guilds] Configuration MongoDB indisponible pour ${guildId}:`,
+          error,
+        );
+      }
+
+      /*
+       * Vérification de présence du bot.
+       */
+
+      const botPresent =
+        await isBotInGuild(
+          guildId,
+        );
+
+      const guild =
+        normalizeGuild(
+          userGuild,
+        );
 
       return res.json({
-
         success:
           true,
 
         guild: {
+          ...guild,
 
-          id:
-            guildId,
-
-          name:
-            guild.name,
-
-          icon:
-            guild.icon ||
-            botGuild?.icon ||
-            null,
-
-          owner:
-            Boolean(
-              guild.owner,
-            ),
-
-          permissions:
-            String(
-              guild.permissions ||
-              '0',
-            ),
-
-          manageable:
-            true,
+          botPresent,
 
           botInstalled:
-            installed,
+            botPresent,
 
-          configured:
-            installed,
+          inviteUrl:
+            botPresent
+              ? null
+              : getBotInviteUrl(
+                  guildId,
+                ),
 
-          memberCount:
-            botGuild?.memberCount ??
-            null,
-
+          botInvite:
+            botPresent
+              ? null
+              : getBotInviteUrl(
+                  guildId,
+                ),
         },
 
-        inviteUrl:
-          installed
-            ? null
-            : getBotInviteUrl(
-                guildId,
-              ),
+        config:
+          config || {
+            guildId,
 
-        dashboardUrl:
-          `/dashboard/${encodeURIComponent(guildId)}`,
-
+            exists:
+              false,
+          },
       });
-
     } catch (error) {
-
       console.error(
         '[Guilds] ❌ Erreur /:guildId :',
         error,
       );
 
-      return res
-        .status(500)
-        .json({
+      return res.status(500).json({
+        success:
+          false,
 
-          success:
-            false,
+        error:
+          'Impossible de récupérer la configuration du serveur.',
 
-          error:
-            'Impossible de récupérer les informations du serveur.',
-
-          code:
-            'GUILD_FETCH_ERROR',
-
-        });
-
+        code:
+          'GUILD_FETCH_ERROR',
+      });
     }
   },
 );
@@ -701,200 +664,181 @@ router.get(
    GET /api/guilds/:guildId/channels
 ========================================================= */
 
-/**
- * Retourne les salons du serveur.
- */
 router.get(
   '/:guildId/channels',
   async (
     req: Request,
     res: Response,
   ) => {
-
     try {
-
       const guildId =
         String(
           req.params.guildId ||
           '',
         ).trim();
 
+      if (
+        !/^\d{17,20}$/.test(
+          guildId,
+        )
+      ) {
+        return res.status(400).json({
+          success:
+            false,
+
+          error:
+            'Identifiant de serveur invalide.',
+
+          channels:
+            [],
+        });
+      }
 
       const user =
         await getAuthenticatedUser(
           req,
         );
 
-
       if (!user) {
+        return res.status(401).json({
+          success:
+            false,
 
-        return res
-          .status(401)
-          .json({
+          error:
+            'Authentification requise.',
 
-            success:
-              false,
+          code:
+            'AUTH_REQUIRED',
 
-            error:
-              'Authentification requise.',
-
-            code:
-              'AUTH_REQUIRED',
-
-          });
-
+          channels:
+            [],
+        });
       }
-
-
-      const storedGuild =
-        (
-          (user as any).guilds ||
-          []
-        ).find(
-          (guild: any) =>
-            String(guild.id) ===
-            guildId,
-        );
-
 
       if (
-        !storedGuild ||
-        !canManageGuild(storedGuild)
-      ) {
-
-        return res
-          .status(403)
-          .json({
-
-            success:
-              false,
-
-            error:
-              'Accès refusé à ce serveur.',
-
-            code:
-              'GUILD_ACCESS_DENIED',
-
-          });
-
-      }
-
-
-      if (!discordClient) {
-
-        return res
-          .status(503)
-          .json({
-
-            success:
-              false,
-
-            error:
-              'Le client Discord n’est pas encore disponible.',
-
-            code:
-              'DISCORD_NOT_READY',
-
-          });
-
-      }
-
-
-      const discordGuild =
-        discordClient.guilds.cache.get(
+        !userCanManageGuild(
+          user,
           guildId,
+        )
+      ) {
+        return res.status(403).json({
+          success:
+            false,
+
+          error:
+            'Accès refusé à ce serveur.',
+
+          code:
+            'GUILD_ACCESS_DENIED',
+
+          channels:
+            [],
+        });
+      }
+
+      if (
+        !DISCORD_BOT_TOKEN
+      ) {
+        return res.status(503).json({
+          success:
+            false,
+
+          error:
+            'Token du bot Discord non configuré.',
+
+          code:
+            'BOT_TOKEN_MISSING',
+
+          channels:
+            [],
+        });
+      }
+
+      const response =
+        await axios.get<
+          DiscordChannel[]
+        >(
+          `${DISCORD_API}/guilds/${guildId}/channels`,
+          {
+            headers: {
+              Authorization:
+                `Bot ${DISCORD_BOT_TOKEN}`,
+            },
+
+            timeout:
+              10000,
+          },
         );
 
-
-      if (!discordGuild) {
-
-        return res
-          .status(404)
-          .json({
-
-            success:
-              false,
-
-            error:
-              'OMNIX n’est pas présent sur ce serveur.',
-
-            code:
-              'BOT_NOT_IN_GUILD',
-
-            inviteUrl:
-              getBotInviteUrl(
-                guildId,
-              ),
-
-          });
-
-      }
-
-
       const channels =
-        discordGuild.channels.cache
-          .map(
-            (channel: any) => ({
-
-              id:
-                channel.id,
-
-              name:
-                channel.name,
-
-              type:
-                channel.type,
-
-              parentId:
-                channel.parentId ||
-                null,
-
-              position:
-                channel.position ??
-                0,
-
-            }),
-          )
-          .sort(
-            (
-              a: any,
-              b: any,
-            ) =>
-              a.position -
-              b.position,
-          );
-
+        Array.isArray(
+          response.data,
+        )
+          ? response.data
+          : [];
 
       return res.json({
-
         success:
           true,
 
         guildId,
 
-        channels,
+        channels:
+          channels
+            .map(
+              (channel) => ({
+                id:
+                  channel.id,
 
+                name:
+                  channel.name,
+
+                type:
+                  channel.type,
+
+                parentId:
+                  channel.parent_id ||
+                  null,
+
+                position:
+                  Number(
+                    channel.position ??
+                    0,
+                  ),
+              }),
+            )
+            .sort(
+              (a, b) =>
+                a.position -
+                b.position,
+            ),
       });
-
-    } catch (error) {
-
+    } catch (error: any) {
       console.error(
-        '[Guilds] ❌ Erreur channels :',
-        error,
+        '[Guilds] ❌ Channels :',
+        error?.response?.data ||
+          error?.message ||
+          error,
       );
 
-      return res
-        .status(500)
-        .json({
+      return res.status(
+        error?.response?.status ===
+          404
+          ? 404
+          : 500,
+      ).json({
+        success:
+          false,
 
-          success:
-            false,
+        error:
+          'Impossible de récupérer les salons Discord.',
 
-          error:
-            'Impossible de récupérer les salons.',
+        code:
+          'CHANNELS_FETCH_ERROR',
 
-        });
-
+        channels:
+          [],
+      });
     }
   },
 );
@@ -904,201 +848,191 @@ router.get(
    GET /api/guilds/:guildId/roles
 ========================================================= */
 
-/**
- * Retourne les rôles du serveur.
- */
 router.get(
   '/:guildId/roles',
   async (
     req: Request,
     res: Response,
   ) => {
-
     try {
-
       const guildId =
         String(
           req.params.guildId ||
           '',
         ).trim();
 
+      if (
+        !/^\d{17,20}$/.test(
+          guildId,
+        )
+      ) {
+        return res.status(400).json({
+          success:
+            false,
+
+          error:
+            'Identifiant de serveur invalide.',
+
+          roles:
+            [],
+        });
+      }
 
       const user =
         await getAuthenticatedUser(
           req,
         );
 
-
       if (!user) {
+        return res.status(401).json({
+          success:
+            false,
 
-        return res
-          .status(401)
-          .json({
+          error:
+            'Authentification requise.',
 
-            success:
-              false,
+          code:
+            'AUTH_REQUIRED',
 
-            error:
-              'Authentification requise.',
-
-            code:
-              'AUTH_REQUIRED',
-
-          });
-
+          roles:
+            [],
+        });
       }
-
-
-      const storedGuild =
-        (
-          (user as any).guilds ||
-          []
-        ).find(
-          (guild: any) =>
-            String(guild.id) ===
-            guildId,
-        );
-
 
       if (
-        !storedGuild ||
-        !canManageGuild(storedGuild)
-      ) {
-
-        return res
-          .status(403)
-          .json({
-
-            success:
-              false,
-
-            error:
-              'Accès refusé à ce serveur.',
-
-            code:
-              'GUILD_ACCESS_DENIED',
-
-          });
-
-      }
-
-
-      if (!discordClient) {
-
-        return res
-          .status(503)
-          .json({
-
-            success:
-              false,
-
-            error:
-              'Le client Discord n’est pas encore disponible.',
-
-            code:
-              'DISCORD_NOT_READY',
-
-          });
-
-      }
-
-
-      const discordGuild =
-        discordClient.guilds.cache.get(
+        !userCanManageGuild(
+          user,
           guildId,
+        )
+      ) {
+        return res.status(403).json({
+          success:
+            false,
+
+          error:
+            'Accès refusé à ce serveur.',
+
+          code:
+            'GUILD_ACCESS_DENIED',
+
+          roles:
+            [],
+        });
+      }
+
+      if (
+        !DISCORD_BOT_TOKEN
+      ) {
+        return res.status(503).json({
+          success:
+            false,
+
+          error:
+            'Token du bot Discord non configuré.',
+
+          code:
+            'BOT_TOKEN_MISSING',
+
+          roles:
+            [],
+        });
+      }
+
+      const response =
+        await axios.get<
+          DiscordRole[]
+        >(
+          `${DISCORD_API}/guilds/${guildId}/roles`,
+          {
+            headers: {
+              Authorization:
+                `Bot ${DISCORD_BOT_TOKEN}`,
+            },
+
+            timeout:
+              10000,
+          },
         );
 
-
-      if (!discordGuild) {
-
-        return res
-          .status(404)
-          .json({
-
-            success:
-              false,
-
-            error:
-              'OMNIX n’est pas présent sur ce serveur.',
-
-            code:
-              'BOT_NOT_IN_GUILD',
-
-            inviteUrl:
-              getBotInviteUrl(
-                guildId,
-              ),
-
-          });
-
-      }
-
-
       const roles =
-        discordGuild.roles.cache
-          .map(
-            (role) => ({
-
-              id:
-                role.id,
-
-              name:
-                role.name,
-
-              color:
-                role.hexColor,
-
-              position:
-                role.position,
-
-              managed:
-                role.managed,
-
-              mentionable:
-                role.mentionable,
-
-            }),
-          )
-          .sort(
-            (
-              a,
-              b,
-            ) =>
-              b.position -
-              a.position,
-          );
-
+        Array.isArray(
+          response.data,
+        )
+          ? response.data
+          : [];
 
       return res.json({
-
         success:
           true,
 
         guildId,
 
-        roles,
+        roles:
+          roles
+            .map(
+              (role) => ({
+                id:
+                  role.id,
 
+                name:
+                  role.name,
+
+                color:
+                  Number(
+                    role.color ??
+                    0,
+                  ),
+
+                position:
+                  Number(
+                    role.position ??
+                    0,
+                  ),
+
+                permissions:
+                  String(
+                    role.permissions ||
+                    '0',
+                  ),
+
+                managed:
+                  Boolean(
+                    role.managed,
+                  ),
+              }),
+            )
+            .sort(
+              (a, b) =>
+                b.position -
+                a.position,
+            ),
       });
-
-    } catch (error) {
-
+    } catch (error: any) {
       console.error(
-        '[Guilds] ❌ Erreur roles :',
-        error,
+        '[Guilds] ❌ Roles :',
+        error?.response?.data ||
+          error?.message ||
+          error,
       );
 
-      return res
-        .status(500)
-        .json({
+      return res.status(
+        error?.response?.status ===
+          404
+          ? 404
+          : 500,
+      ).json({
+        success:
+          false,
 
-          success:
-            false,
+        error:
+          'Impossible de récupérer les rôles Discord.',
 
-          error:
-            'Impossible de récupérer les rôles.',
+        code:
+          'ROLES_FETCH_ERROR',
 
-        });
-
+        roles:
+          [],
+      });
     }
   },
 );
@@ -1108,183 +1042,117 @@ router.get(
    GET /api/guilds/:guildId/invite
 ========================================================= */
 
-/**
- * Génère l'URL d'invitation OMNIX.
- */
 router.get(
   '/:guildId/invite',
   async (
     req: Request,
     res: Response,
   ) => {
-
     try {
-
       const guildId =
         String(
           req.params.guildId ||
           '',
         ).trim();
 
+      if (
+        !/^\d{17,20}$/.test(
+          guildId,
+        )
+      ) {
+        return res.status(400).json({
+          success:
+            false,
 
-      if (!guildId) {
+          error:
+            'Identifiant de serveur invalide.',
 
-        return res
-          .status(400)
-          .json({
-
-            success:
-              false,
-
-            error:
-              'Identifiant du serveur manquant.',
-
-          });
-
+          code:
+            'INVALID_GUILD_ID',
+        });
       }
-
 
       const user =
         await getAuthenticatedUser(
           req,
         );
 
-
       if (!user) {
+        return res.status(401).json({
+          success:
+            false,
 
-        return res
-          .status(401)
-          .json({
+          error:
+            'Authentification requise.',
 
-            success:
-              false,
-
-            error:
-              'Authentification requise.',
-
-            code:
-              'AUTH_REQUIRED',
-
-          });
-
+          code:
+            'AUTH_REQUIRED',
+        });
       }
-
-
-      const guild =
-        (
-          (user as any).guilds ||
-          []
-        ).find(
-          (item: any) =>
-            String(item.id) ===
-            guildId,
-        );
-
-
-      if (!guild) {
-
-        return res
-          .status(403)
-          .json({
-
-            success:
-              false,
-
-            error:
-              'Vous ne pouvez pas inviter OMNIX sur ce serveur.',
-
-            code:
-              'GUILD_ACCESS_DENIED',
-
-          });
-
-      }
-
 
       if (
-        isBotInGuild(
+        !userCanManageGuild(
+          user,
           guildId,
         )
       ) {
-
-        return res.json({
-
+        return res.status(403).json({
           success:
-            true,
+            false,
 
-          installed:
-            true,
+          error:
+            'Vous ne pouvez pas inviter OMNIX sur ce serveur.',
 
-          inviteUrl:
-            null,
-
-          message:
-            'OMNIX est déjà présent sur ce serveur.',
-
+          code:
+            'GUILD_ACCESS_DENIED',
         });
-
       }
-
 
       const inviteUrl =
         getBotInviteUrl(
           guildId,
         );
 
-
       if (!inviteUrl) {
-
-        return res
-          .status(500)
-          .json({
-
-            success:
-              false,
-
-            error:
-              'DISCORD_CLIENT_ID est manquant.',
-
-            code:
-              'DISCORD_CLIENT_ID_MISSING',
-
-          });
-
-      }
-
-
-      return res.json({
-
-        success:
-          true,
-
-        installed:
-          false,
-
-        inviteUrl,
-
-        guildId,
-
-      });
-
-    } catch (error) {
-
-      console.error(
-        '[Guilds] ❌ Erreur invite :',
-        error,
-      );
-
-      return res
-        .status(500)
-        .json({
-
+        return res.status(500).json({
           success:
             false,
 
           error:
-            'Impossible de générer le lien d’invitation.',
+            'DISCORD_CLIENT_ID est manquant.',
 
+          code:
+            'DISCORD_CLIENT_ID_MISSING',
         });
+      }
 
+      return res.json({
+        success:
+          true,
+
+        guildId,
+
+        inviteUrl,
+
+        url:
+          inviteUrl,
+      });
+    } catch (error) {
+      console.error(
+        '[Guilds] ❌ Invite :',
+        error,
+      );
+
+      return res.status(500).json({
+        success:
+          false,
+
+        error:
+          'Impossible de générer le lien d’invitation OMNIX.',
+
+        code:
+          'INVITE_ERROR',
+      });
     }
   },
 );
