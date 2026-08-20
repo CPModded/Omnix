@@ -1,74 +1,864 @@
-<!-- side-drawer -->
-<div id="side-drawer" class="drawer">
-  <div class="drawer-header">
-    <span class="logo-text">Menu</span>
-    <button onclick="toggleDrawer(false)" class="btn-close-drawer">&times;</button>
+<!-- =========================================================
+     OMNIX SIDEBAR
+========================================================= -->
+
+<aside id="omnix-sidebar" class="omnix-sidebar">
+
+  <div class="sidebar-brand">
+
+    <a href="/" class="brand-link">
+
+      <div class="brand-logo">
+        <img
+          src="/logo.png"
+          alt="OMNIX"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+        >
+
+        <span class="brand-fallback">O</span>
+      </div>
+
+      <div class="brand-content">
+        <strong>OMNIX</strong>
+        <span>Control Center</span>
+      </div>
+
+    </a>
+
+    <button
+      type="button"
+      class="sidebar-close"
+      onclick="toggleOmnixSidebar(false)"
+      aria-label="Fermer"
+    >
+      ×
+    </button>
+
   </div>
-  <div class="drawer-links" id="drawer-nav">
-    <a href="/">Accueil</a>
-    <a href="/dashboard">Dashboard</a>
-    <a href="/pricing">Abonnements</a>
-    <a href="/learn-more">En savoir plus</a>
-    <a href="/founder">Découvrir OMNIX</a>
+
+
+  <!-- USER -->
+
+  <div id="sidebar-user" class="sidebar-user">
+
+    <div class="sidebar-avatar">
+      ?
+    </div>
+
+    <div class="sidebar-user-info">
+      <strong>Chargement...</strong>
+      <span>Connexion...</span>
+    </div>
+
+    <span class="online-dot"></span>
+
   </div>
-</div>
+
+
+  <!-- NAVIGATION -->
+
+  <nav class="sidebar-navigation">
+
+    <div class="nav-section">
+
+      <span class="nav-section-title">
+        Général
+      </span>
+
+      <a
+        href="/dashboard"
+        class="nav-link"
+        data-route="/dashboard"
+      >
+        <span class="nav-icon">⌂</span>
+        <span>Dashboard</span>
+      </a>
+
+      <a
+        href="/"
+        class="nav-link"
+        data-route="/"
+      >
+        <span class="nav-icon">◈</span>
+        <span>Accueil</span>
+      </a>
+
+    </div>
+
+
+    <div class="nav-section">
+
+      <span class="nav-section-title">
+        Mon espace
+      </span>
+
+      <a
+        href="/dashboard#servers"
+        class="nav-link"
+      >
+        <span class="nav-icon">▣</span>
+        <span>Mes serveurs</span>
+      </a>
+
+      <a
+        href="/dashboard#activity"
+        class="nav-link"
+      >
+        <span class="nav-icon">◷</span>
+        <span>Activité</span>
+      </a>
+
+      <a
+        href="/dashboard#statistics"
+        class="nav-link"
+      >
+        <span class="nav-icon">⌁</span>
+        <span>Statistiques</span>
+      </a>
+
+    </div>
+
+
+    <div class="nav-section">
+
+      <span class="nav-section-title">
+        OMNIX
+      </span>
+
+      <a
+        href="/pricing"
+        class="nav-link"
+        data-route="/pricing"
+      >
+        <span class="nav-icon">◇</span>
+        <span>Abonnement</span>
+        <span class="nav-badge">PRO</span>
+      </a>
+
+      <a
+        href="/learn-more"
+        class="nav-link"
+        data-route="/learn-more"
+      >
+        <span class="nav-icon">?</span>
+        <span>Découvrir OMNIX</span>
+      </a>
+
+      <a
+        href="/founder"
+        class="nav-link"
+        data-route="/founder"
+      >
+        <span class="nav-icon">♛</span>
+        <span>Founder</span>
+      </a>
+
+    </div>
+
+
+    <!-- ADMIN -->
+
+    <div
+      id="sidebar-admin-section"
+      class="nav-section admin-section"
+      style="display:none;"
+    >
+
+      <span class="nav-section-title">
+        Administration
+      </span>
+
+      <a
+        href="/admin"
+        class="nav-link admin-link"
+        data-route="/admin"
+      >
+        <span class="nav-icon">◆</span>
+        <span>Owner Center</span>
+        <span class="admin-pulse"></span>
+      </a>
+
+    </div>
+
+  </nav>
+
+
+  <!-- FOOTER -->
+
+  <div class="sidebar-footer">
+
+    <div class="sidebar-status">
+
+      <span class="status-light"></span>
+
+      <div>
+        <strong>OMNIX Online</strong>
+        <small id="sidebar-status-text">
+          Système opérationnel
+        </small>
+      </div>
+
+    </div>
+
+    <a
+      href="/api/auth/logout"
+      class="sidebar-logout"
+    >
+      <span>↪</span>
+      Déconnexion
+    </a>
+
+  </div>
+
+</aside>
+
+
+<div
+  id="sidebar-overlay"
+  class="sidebar-overlay"
+  onclick="toggleOmnixSidebar(false)"
+></div>
+
+
+<style>
+
+  .omnix-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+
+    width: 270px;
+
+    display: flex;
+    flex-direction: column;
+
+    background:
+      linear-gradient(
+        180deg,
+        rgba(8, 15, 30, .98),
+        rgba(3, 7, 18, .98)
+      );
+
+    border-right:
+      1px solid rgba(148, 163, 184, .08);
+
+    z-index: 900;
+
+    padding: 18px 14px;
+
+    overflow-y: auto;
+
+    box-shadow:
+      20px 0 60px rgba(0,0,0,.25);
+
+    transition:
+      transform .3s cubic-bezier(.4,0,.2,1);
+  }
+
+
+  .sidebar-brand {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    margin-bottom: 22px;
+  }
+
+
+  .brand-link {
+    display:flex;
+    align-items:center;
+    gap:11px;
+
+    color:white;
+    text-decoration:none;
+  }
+
+
+  .brand-logo {
+    width:40px;
+    height:40px;
+
+    border-radius:12px;
+
+    overflow:hidden;
+
+    background:
+      linear-gradient(
+        135deg,
+        #06b6d4,
+        #6366f1,
+        #8b5cf6
+      );
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    box-shadow:
+      0 8px 25px rgba(99,102,241,.25);
+  }
+
+
+  .brand-logo img {
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+
+
+  .brand-fallback {
+    display:none;
+
+    align-items:center;
+    justify-content:center;
+
+    width:100%;
+    height:100%;
+
+    font-size:20px;
+    font-weight:900;
+  }
+
+
+  .brand-content {
+    display:flex;
+    flex-direction:column;
+  }
+
+
+  .brand-content strong {
+    font-size:15px;
+    letter-spacing:1.5px;
+  }
+
+
+  .brand-content span {
+    font-size:9px;
+    color:#64748b;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin-top:2px;
+  }
+
+
+  .sidebar-close {
+    display:none;
+
+    border:0;
+    background:none;
+    color:#64748b;
+
+    font-size:25px;
+    cursor:pointer;
+  }
+
+
+  .sidebar-user {
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+    padding:10px;
+
+    border-radius:14px;
+
+    background:
+      rgba(255,255,255,.025);
+
+    border:
+      1px solid rgba(255,255,255,.045);
+
+    margin-bottom:22px;
+  }
+
+
+  .sidebar-avatar {
+    width:34px;
+    height:34px;
+
+    border-radius:50%;
+
+    background:
+      linear-gradient(
+        135deg,
+        #4f46e5,
+        #06b6d4
+      );
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:12px;
+    font-weight:800;
+  }
+
+
+  .sidebar-user-info {
+    min-width:0;
+    flex:1;
+
+    display:flex;
+    flex-direction:column;
+  }
+
+
+  .sidebar-user-info strong {
+    font-size:12px;
+    color:#e2e8f0;
+
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+
+  .sidebar-user-info span {
+    font-size:10px;
+    color:#64748b;
+
+    white-space:nowrap;
+  }
+
+
+  .online-dot {
+    width:7px;
+    height:7px;
+
+    border-radius:50%;
+
+    background:#10b981;
+
+    box-shadow:
+      0 0 10px rgba(16,185,129,.8);
+  }
+
+
+  .sidebar-navigation {
+    flex:1;
+  }
+
+
+  .nav-section {
+    margin-bottom:22px;
+  }
+
+
+  .nav-section-title {
+    display:block;
+
+    padding:
+      0 10px 8px;
+
+    color:#475569;
+
+    font-size:9px;
+    font-weight:800;
+
+    text-transform:uppercase;
+    letter-spacing:1.4px;
+  }
+
+
+  .nav-link {
+    position:relative;
+
+    display:flex;
+    align-items:center;
+    gap:11px;
+
+    min-height:40px;
+
+    padding:
+      9px 11px;
+
+    margin-bottom:3px;
+
+    border-radius:11px;
+
+    color:#64748b;
+
+    text-decoration:none;
+
+    font-size:12px;
+    font-weight:650;
+
+    transition:
+      color .18s,
+      background .18s,
+      transform .18s;
+  }
+
+
+  .nav-link:hover {
+    color:#e2e8f0;
+
+    background:
+      rgba(255,255,255,.035);
+
+    transform:translateX(2px);
+  }
+
+
+  .nav-link.active {
+    color:#fff;
+
+    background:
+      linear-gradient(
+        90deg,
+        rgba(79,70,229,.18),
+        rgba(6,182,212,.06)
+      );
+
+    box-shadow:
+      inset 2px 0 0 #6366f1;
+  }
+
+
+  .nav-icon {
+    width:20px;
+
+    text-align:center;
+
+    color:#64748b;
+
+    font-size:15px;
+  }
+
+
+  .nav-link.active .nav-icon {
+    color:#67e8f9;
+  }
+
+
+  .nav-badge {
+    margin-left:auto;
+
+    font-size:7px;
+    font-weight:900;
+
+    color:#a78bfa;
+
+    border:
+      1px solid rgba(167,139,250,.25);
+
+    background:
+      rgba(139,92,246,.08);
+
+    padding:3px 5px;
+    border-radius:5px;
+  }
+
+
+  .admin-link {
+    color:#c084fc;
+  }
+
+
+  .admin-link .nav-icon {
+    color:#c084fc;
+  }
+
+
+  .admin-pulse {
+    margin-left:auto;
+
+    width:6px;
+    height:6px;
+
+    border-radius:50%;
+
+    background:#a855f7;
+
+    box-shadow:
+      0 0 12px rgba(168,85,247,.8);
+  }
+
+
+  .sidebar-footer {
+    padding-top:12px;
+
+    border-top:
+      1px solid rgba(255,255,255,.05);
+  }
+
+
+  .sidebar-status {
+    display:flex;
+    align-items:center;
+    gap:9px;
+
+    padding:8px 10px 12px;
+  }
+
+
+  .status-light {
+    width:7px;
+    height:7px;
+
+    border-radius:50%;
+
+    background:#10b981;
+
+    box-shadow:
+      0 0 10px rgba(16,185,129,.7);
+  }
+
+
+  .sidebar-status div {
+    display:flex;
+    flex-direction:column;
+  }
+
+
+  .sidebar-status strong {
+    font-size:10px;
+    color:#94a3b8;
+  }
+
+
+  .sidebar-status small {
+    color:#475569;
+    font-size:9px;
+  }
+
+
+  .sidebar-logout {
+    display:flex;
+    align-items:center;
+    gap:9px;
+
+    padding:9px 10px;
+
+    color:#64748b;
+    text-decoration:none;
+
+    font-size:11px;
+    font-weight:600;
+
+    border-radius:10px;
+  }
+
+
+  .sidebar-logout:hover {
+    color:#f87171;
+    background:rgba(239,68,68,.05);
+  }
+
+
+  .sidebar-overlay {
+    display:none;
+  }
+
+
+  @media (max-width: 900px) {
+
+    .omnix-sidebar {
+      transform:translateX(-100%);
+    }
+
+    .omnix-sidebar.open {
+      transform:translateX(0);
+    }
+
+    .sidebar-close {
+      display:block;
+    }
+
+    .sidebar-overlay {
+      position:fixed;
+      inset:0;
+
+      background:rgba(0,0,0,.55);
+
+      backdrop-filter:blur(3px);
+
+      z-index:899;
+    }
+
+    .sidebar-overlay.open {
+      display:block;
+    }
+
+  }
+
+</style>
+
 
 <script>
-  (function() {
-    function parseJwt(token) {
-      if (!token || token === 'null' || token === 'undefined' || !token.includes('.')) return null;
-      try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const pad = base64.length % 4;
-        const paddedBase64 = pad ? base64 + '='.repeat(4 - pad) : base64;
-        const rawBinary = window.atob(paddedBase64);
-        const bytes = new Uint8Array(rawBinary.length);
-        for (let i = 0; i < rawBinary.length; i++) {
-          bytes[i] = rawBinary.charCodeAt(i);
-        }
-        const decoder = new TextDecoder('utf-8');
-        return JSON.parse(decoder.decode(bytes));
-      } catch (e) {
-        return null;
-      }
-    }
 
-    const jwtToken = localStorage.getItem('jwt_token');
-    if (jwtToken) {
-      const payload = parseJwt(jwtToken);
-      if (payload && payload.isAdmin) {
-        const nav = document.getElementById('drawer-nav');
-        if (nav && !document.getElementById('nav-admin-link')) {
-          const adminLink = document.createElement('a');
-          adminLink.href = '/admin';
-          adminLink.id = 'nav-admin-link';
-          adminLink.className = 'admin-nav-link';
-          adminLink.innerText = 'Staff Panel';
-          nav.appendChild(adminLink);
-        }
-      }
-    }
+  function toggleOmnixSidebar(open) {
 
-    // Gestion automatique de la classe Active sur les liens
-    const currentPath = window.location.pathname;
-    document.querySelectorAll('#side-drawer .drawer-links a').forEach(link => {
-      if (link.getAttribute('href') === currentPath) {
-        link.classList.add('active');
-      } else {
-        link.classList.remove('active');
-      }
-    });
-  })();
+    const sidebar =
+      document.getElementById('omnix-sidebar');
 
-  function toggleDrawer(open) {
-    const drawer = document.getElementById('side-drawer');
-    if (drawer) {
-      if (open) {
-        drawer.classList.add('open');
-      } else {
-        drawer.classList.remove('open');
-      }
-    }
+    const overlay =
+      document.getElementById('sidebar-overlay');
+
+    if (!sidebar || !overlay) return;
+
+    sidebar.classList.toggle('open', open);
+    overlay.classList.toggle('open', open);
   }
+
+
+  function markActiveSidebarLink() {
+
+    const currentPath =
+      window.location.pathname;
+
+    document
+      .querySelectorAll('.nav-link[data-route]')
+      .forEach(link => {
+
+        const route =
+          link.dataset.route;
+
+        if (
+          route === currentPath ||
+          (
+            route !== '/' &&
+            currentPath.startsWith(route)
+          )
+        ) {
+          link.classList.add('active');
+        }
+
+      });
+
+  }
+
+
+  async function initializeSidebar() {
+
+    try {
+
+      const response =
+        await fetch(
+          '/api/auth/me',
+          {
+            credentials:'include',
+            cache:'no-store',
+            headers:{
+              Accept:'application/json'
+            }
+          }
+        );
+
+      if (!response.ok) return;
+
+      const data =
+        await response.json();
+
+      if (!data?.user) return;
+
+      const user =
+        data.user;
+
+      const avatar =
+        document.querySelector(
+          '.sidebar-avatar'
+        );
+
+      const username =
+        document.querySelector(
+          '.sidebar-user-info strong'
+        );
+
+      const role =
+        document.querySelector(
+          '.sidebar-user-info span'
+        );
+
+      if (avatar) {
+
+        if (user.avatar) {
+
+          avatar.innerHTML = `
+            <img
+              src="${user.avatar}"
+              alt=""
+              style="
+                width:100%;
+                height:100%;
+                object-fit:cover;
+                border-radius:50%;
+              "
+            >
+          `;
+
+        } else {
+
+          avatar.textContent =
+            (
+              user.username ||
+              'O'
+            )
+            .charAt(0)
+            .toUpperCase();
+
+        }
+
+      }
+
+      if (username) {
+
+        username.textContent =
+          user.globalName ||
+          user.username ||
+          'Utilisateur';
+
+      }
+
+      if (role) {
+
+        role.textContent =
+          user.isOwner
+            ? 'Owner OMNIX'
+            : 'Utilisateur OMNIX';
+
+      }
+
+      if (user.isOwner) {
+
+        const admin =
+          document.getElementById(
+            'sidebar-admin-section'
+          );
+
+        if (admin) {
+          admin.style.display = '';
+        }
+
+      }
+
+    } catch (error) {
+
+      console.warn(
+        '[Sidebar] Session unavailable',
+        error
+      );
+
+    }
+
+    markActiveSidebarLink();
+
+  }
+
+
+  if (
+    document.readyState === 'loading'
+  ) {
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      initializeSidebar
+    );
+
+  } else {
+
+    initializeSidebar();
+
+  }
+
 </script>
