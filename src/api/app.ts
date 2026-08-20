@@ -315,7 +315,7 @@ app.use(
  */
 
 app.use(
-  '/',
+  '/api',
   statsRouter
 );
 
