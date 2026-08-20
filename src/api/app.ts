@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 
+import guildRoutes from './routes/guild.routes.ts';
 // ============================================================
 // PATHS
 // ============================================================
