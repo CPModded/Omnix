@@ -60,6 +60,7 @@ export async function loadEvents(
         `[Bot] Chargement de l'événement : ${file}`
       );
 
+        console.log(`[Bot] >>> Import : ${file}`);
       const eventModule = await import(
         filePath
       );

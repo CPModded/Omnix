@@ -1,89 +1,276 @@
-/**
- * ====================================================================
- * COMMANDE DE SÉCURITÉ HONEYPOT (OMNIX SECURITY CORE)
- * ====================================================================
- */
-
-import { SlashCommandBuilder, PermissionFlagsBits, ChannelType, PermissionFlagsBits as DiscordPermissions } from 'discord.js';
-import type { Command, CommandContext } from '../types.ts';
-import type { GuildConfig } from '../../models/GuildConfig.ts';
-
-const honeypotCommand: Command = {
+import {
+  SlashCommandBuilder,
+  ChatInputCommandInteraction,
+  PermissionFlagsBits,
+  EmbedBuilder,
+  ChannelType,
+} from 'discord.js';
+import { getGuildConfig } from '../utils/guildConfig.ts';
+export default {
   data: new SlashCommandBuilder()
     .setName('honeypot')
-    .setDescription('Gérer le système de sécurité anti-bots (Honeypot - Premium)')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-    .addSubcommand(sub =>
-      sub.setName('setup')
-        .setDescription('Créer et configurer automatiquement le salon piégé')
-        .addStringOption(opt => opt.setName('name').setDescription('Nom du salon (ex: verify-here)').setRequired(true))
+    .setDescription('Gérer le système Honeypot d’OMNIX')
+    .setDefaultMemberPermissions(
+      PermissionFlagsBits.ManageGuild.toString()
     )
-    .addSubcommand(sub =>
-      sub.setName('status')
-        .setDescription("Afficher l'état d'activité du Honeypot") // Correction des guillemets pour éviter le crash
-    ) as any,
-
-  async execute({ interaction, guildConfig }: CommandContext) {
-    const subcommand = interaction.options.getSubcommand();
-    const guild = interaction.guild!;
-
-    // Vérification de l'activation du module
-    if (!guildConfig.modules.honeypot?.enabled) {
-      return interaction.reply({
-        content: "❌ Le module Honeypot n'est pas activé sur ce serveur. Activez-le sur la console d'OMNIX.",
-        ephemeral: true
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('enable')
+        .setDescription('Activer le Honeypot')
+    )
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('disable')
+        .setDescription('Désactiver le Honeypot')
+    )
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('status')
+        .setDescription('Afficher le statut du Honeypot')
+    )
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName('setup')
+        .setDescription('Configurer le Honeypot')
+        .addChannelOption(option =>
+          option
+            .setName('channel')
+            .setDescription(
+              'Salon à utiliser comme Honeypot'
+            )
+            .addChannelTypes(
+              ChannelType.GuildText
+            )
+            .setRequired(true)
+        )
+    ),
+  async execute(
+    interaction: ChatInputCommandInteraction
+  ) {
+    if (!interaction.guild) {
+      await interaction.reply({
+        content:
+          '❌ Cette commande doit être utilisée dans un serveur.',
+        flags: 64,
       });
+      return;
     }
-
-    // 1. SOUS-COMMANDE : CONFIGURATION DU PIÈGE
-    if (subcommand === 'setup') {
-      await interaction.deferReply({ ephemeral: true });
-      const channelName = interaction.options.getString('name', true).toLowerCase().replace(/\s+/g, '-');
-
-      try {
-        const trapChannel = await guild.channels.create({
-          name: channelName,
-          type: ChannelType.GuildText,
-          permissionOverwrites: [
-            {
-              id: guild.roles.everyone.id,
-              allow: [DiscordPermissions.ViewChannel, DiscordPermissions.SendMessages, DiscordPermissions.ReadMessageHistory]
-            }
-          ]
+    /*
+     * =====================================================
+     * PERMISSIONS
+     * =====================================================
+     */
+    if (
+      !interaction.memberPermissions?.has(
+        PermissionFlagsBits.ManageGuild
+      )
+    ) {
+      await interaction.reply({
+        content:
+          '❌ Tu dois avoir la permission **Gérer le serveur** pour utiliser cette commande.',
+        flags: 64,
+      });
+      return;
+    }
+    /*
+     * =====================================================
+     * CONFIGURATION
+     * =====================================================
+     */
+    let config;
+    try {
+      config = await getGuildConfig(
+        interaction.guild.id
+      );
+    } catch (error) {
+      console.error(
+        '[Honeypot] Erreur récupération configuration :',
+        error
+      );
+      await interaction.reply({
+        content:
+          '❌ Impossible de récupérer la configuration du serveur.',
+        flags: 64,
+      });
+      return;
+    }
+    /*
+     * =====================================================
+     * GARDE-FOU MODULES
+     * =====================================================
+     *
+     * Certaines anciennes configurations MongoDB
+     * peuvent ne pas encore posséder honeypot.
+     */
+    if (!config.modules) {
+      await interaction.reply({
+        content:
+          '❌ La configuration des modules est indisponible. Redémarre le bot pour régénérer la configuration.',
+        flags: 64,
+      });
+      return;
+    }
+    const modules =
+      config.modules as Record<
+        string,
+        any
+      >;
+    /*
+     * =====================================================
+     * CRÉATION DU MODULE SI ABSENT
+     * =====================================================
+     */
+    if (!modules.honeypot) {
+      modules.honeypot = {
+        enabled: false,
+        channelId: undefined,
+      };
+    }
+    const honeypot =
+      modules.honeypot;
+    const subcommand =
+      interaction.options.getSubcommand();
+    /*
+     * =====================================================
+     * ENABLE
+     * =====================================================
+     */
+    if (subcommand === 'enable') {
+      if (!honeypot.channelId) {
+        await interaction.reply({
+          content:
+            '⚠️ Aucun salon Honeypot n’est configuré.\n\nUtilise d’abord `/honeypot setup`.',
+          flags: 64,
         });
-
-        guildConfig.modules.honeypot.channelId = trapChannel.id;
-        await guildConfig.save();
-
-        await trapChannel.send({
-          content: "⚠️ **SALON DE SÉCURITÉ OMNIX**\n*L'écriture ou l'interaction dans ce salon est interdite aux utilisateurs normaux sous peine de bannissement définitif.*"
-        });
-
-        return interaction.editReply({
-          content: `✅ **Honeypot activé et configuré !**\n• Salon piégé créé : ${trapChannel}\n• Tout robot de raid ou self-bot tentant d'y écrire sera **banni immédiatement**.`
-        });
-
-      } catch (error: any) {
-        console.error('[Honeypot Error] Setup failed :', error.message);
-        return interaction.editReply({
-          content: "❌ Impossible de créer le salon de sécurité. Vérifiez mes permissions d'administration."
-        });
+        return;
       }
-    }
-
-    // 2. SOUS-COMMANDE : ÉTAT DU MODULE
-    if (subcommand === 'status') {
-      const channelId = guildConfig.modules.honeypot.channelId;
-      const statusText = channelId 
-        ? `Actif (Salon piégé : <#${channelId}>)` 
-        : 'Inactif (En attente de configuration via `/honeypot setup`)';
-
-      return interaction.reply({
-        content: `🛡️ **Statut du système Honeypot OMNIX :**\n• État : \`${statusText}\``,
-        ephemeral: true
+      await config.updateOne({
+        $set: {
+          'modules.honeypot.enabled':
+            true,
+        },
       });
+      const embed =
+        new EmbedBuilder()
+          .setTitle('🪤 Honeypot activé')
+          .setDescription(
+            'Le système Honeypot est maintenant **actif**.'
+          )
+          .addFields({
+            name: 'Salon',
+            value: `<#${honeypot.channelId}>`,
+          })
+          .setTimestamp();
+      await interaction.reply({
+        embeds: [embed],
+      });
+      return;
     }
-  }
+    /*
+     * =====================================================
+     * DISABLE
+     * =====================================================
+     */
+    if (subcommand === 'disable') {
+      await config.updateOne({
+        $set: {
+          'modules.honeypot.enabled':
+            false,
+        },
+      });
+      const embed =
+        new EmbedBuilder()
+          .setTitle('🪤 Honeypot désactivé')
+          .setDescription(
+            'Le système Honeypot est maintenant **désactivé**.'
+          )
+          .setTimestamp();
+      await interaction.reply({
+        embeds: [embed],
+      });
+      return;
+    }
+    /*
+     * =====================================================
+     * STATUS
+     * =====================================================
+     */
+    if (subcommand === 'status') {
+      const enabled =
+        Boolean(honeypot.enabled);
+      const channelId =
+        honeypot.channelId;
+      const embed =
+        new EmbedBuilder()
+          .setTitle('🪤 Configuration Honeypot')
+          .addFields(
+            {
+              name: 'Statut',
+              value: enabled
+                ? '🟢 Activé'
+                : '🔴 Désactivé',
+              inline: true,
+            },
+            {
+              name: 'Salon',
+              value: channelId
+                ? `<#${channelId}>`
+                : '❌ Non configuré',
+              inline: true,
+            }
+          )
+          .setTimestamp();
+      await interaction.reply({
+        embeds: [embed],
+        flags: 64,
+      });
+      return;
+    }
+    /*
+     * =====================================================
+     * SETUP
+     * =====================================================
+     */
+    if (subcommand === 'setup') {
+      const channel =
+        interaction.options.getChannel(
+          'channel',
+          true
+        );
+      await config.updateOne({
+        $set: {
+          'modules.honeypot.enabled':
+            false,
+          'modules.honeypot.channelId':
+            channel.id,
+        },
+      });
+      const embed =
+        new EmbedBuilder()
+          .setTitle('🪤 Honeypot configuré')
+          .setDescription(
+            `Le salon Honeypot a été défini sur ${channel}.`
+          )
+          .addFields({
+            name: 'Prochaine étape',
+            value:
+              'Utilise `/honeypot enable` pour activer le système.',
+          })
+          .setTimestamp();
+      await interaction.reply({
+        embeds: [embed],
+      });
+      return;
+    }
+    /*
+     * =====================================================
+     * FALLBACK
+     * =====================================================
+     */
+    await interaction.reply({
+      content:
+        '❌ Sous-commande Honeypot inconnue.',
+      flags: 64,
+    });
+  },
 };
-
-export default honeypotCommand;

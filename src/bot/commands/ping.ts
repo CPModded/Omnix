@@ -1,24 +1,88 @@
-import { SlashCommandBuilder } from 'discord.js';
-import type { Command, CommandContext } from '../types.ts';
+import {
+  SlashCommandBuilder,
+  ChatInputCommandInteraction,
+  EmbedBuilder,
+} from 'discord.js';
 
-const pingCommand: Command = {
+export default {
   data: new SlashCommandBuilder()
     .setName('ping')
-    .setDescription('Répond par Pong et indique le statut de l\'offre premium locale'),
+    .setDescription('Affiche la latence d’OMNIX'),
 
-  async execute({ interaction, guildConfig }: CommandContext) {
-    const isPremium = guildConfig.premium.isPremium;
-    const tierName = guildConfig.premium.tier.toUpperCase();
+  async execute(
+    interaction: ChatInputCommandInteraction
+  ) {
+    try {
+      const client = interaction.client;
 
-    const text = isPremium 
-      ? `Ce serveur dispose de l'offre **${tierName}**.` 
-      : "Ce serveur utilise actuellement la version d'évaluation standard.";
+      // Latence WebSocket Discord
+      const wsPing = client.ws?.ping ?? -1;
 
-    await interaction.reply({
-      content: `🏓 Pong ! Latence API : ${interaction.client.ws.ping}ms.\nConfiguration : ${text}`,
-      ephemeral: true
-    });
-  }
+      // Temps aller-retour de l'interaction
+      const start = Date.now();
+
+      await interaction.reply({
+        content: '🏓 Calcul de la latence...',
+      });
+
+      const apiPing =
+        Date.now() - start;
+
+      const embed = new EmbedBuilder()
+        .setColor(0x5865f2)
+        .setTitle('🏓 OMNIX — Pong!')
+        .addFields(
+          {
+            name: '🌐 WebSocket',
+            value:
+              wsPing >= 0
+                ? `\`${wsPing} ms\``
+                : '`Indisponible`',
+            inline: true,
+          },
+          {
+            name: '⚡ API',
+            value: `\`${apiPing} ms\``,
+            inline: true,
+          },
+          {
+            name: '🤖 Statut',
+            value: '🟢 Opérationnel',
+            inline: true,
+          }
+        )
+        .setFooter({
+          text:
+            interaction.guild?.name ??
+            'OMNIX',
+        })
+        .setTimestamp();
+
+      return interaction.editReply({
+        content: '',
+        embeds: [embed],
+      });
+    } catch (error) {
+      console.error(
+        '[Ping] Exception :',
+        error
+      );
+
+      if (
+        interaction.replied ||
+        interaction.deferred
+      ) {
+        return interaction.editReply({
+          content:
+            '❌ Impossible de récupérer la latence d’OMNIX.',
+        });
+      }
+
+      return interaction.reply({
+        content:
+          '❌ Impossible de récupérer la latence d’OMNIX.',
+        ephemeral: true,
+      });
+    }
+  },
 };
-
-export default pingCommand;

@@ -1,252 +1,351 @@
 import {
   SlashCommandBuilder,
   ChatInputCommandInteraction,
-  EmbedBuilder
+  EmbedBuilder,
 } from 'discord.js';
-
-import { GuildConfig } from '../../models/GuildConfig.ts';
-import AiSession from '../../models/AiSession.ts';
 
 import { askOpenRouter } from '../../ai/openrouter.ts';
 
-interface MessagePayload {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-}
+/* =========================================================
+   OMNIX AI
+   /ai message:<texte>
 
-// Calcule le nombre de mots d'un texte ou d'une liste de messages
-function getWordCount(
-  textOrMessages: string | MessagePayload[]
-): number {
+   Compatible avec ancienne option :
+   /ai question:<texte>
+========================================================= */
 
-  if (typeof textOrMessages === 'string') {
-    return textOrMessages
-      .split(/\s+/)
-      .filter(Boolean)
-      .length;
-  }
+const command = {
+  data: new SlashCommandBuilder()
+    .setName('ai')
+    .setDescription(
+      'Discute avec l’intelligence artificielle OMNIX.'
+    )
+    .addStringOption(option =>
+      option
+        .setName('message')
+        .setDescription(
+          'Le message à envoyer à OMNIX.'
+        )
+        .setRequired(true)
+        .setMaxLength(4000)
+    ),
 
-  return textOrMessages.reduce(
-    (acc, msg) =>
-      acc +
-      msg.content
-        .split(/\s+/)
-        .filter(Boolean)
-        .length,
-    0
-  );
-}
+  async execute(
+    interaction: ChatInputCommandInteraction
+  ): Promise<void> {
 
-// Élague l'historique pour ne garder que les 500 mots les plus récents
-function pruneMessagesToLimit(
-  messages: MessagePayload[],
-  maxWords = 500
-): MessagePayload[] {
+    /* =====================================================
+       RÉCUPÉRATION BRUTE DES OPTIONS
+       
+       IMPORTANT :
+       On NE fait PAS :
+       getString('message', true)
 
-  let currentWords = 0;
-  const result: MessagePayload[] = [];
+       car Discord peut encore envoyer l'ancienne
+       définition "question".
+    ===================================================== */
 
-  for (let i = messages.length - 1; i >= 0; i--) {
+    const options =
+      interaction.options.data;
 
-    const words = getWordCount(messages[i].content);
-
-    if (currentWords + words > maxWords) {
-      break;
-    }
-
-    currentWords += words;
-    result.unshift(messages[i]);
-  }
-
-  return result;
-}
-
-export const data = new SlashCommandBuilder()
-  .setName('ai')
-  .setDescription(
-    'Démarre une conversation intelligente avec l\'IA d\'OMNIX'
-  )
-  .addStringOption(option =>
-    option
-      .setName('question')
-      .setDescription('Votre question pour l\'IA')
-      .setRequired(true)
-  );
-
-export async function execute({
-  interaction
-}: {
-  interaction: ChatInputCommandInteraction
-}) {
-
-  const { guildId, user } = interaction;
-
-  if (!guildId) {
-    return interaction.reply({
-      content:
-        'Cette commande s\'exécute uniquement sur serveur.',
-      ephemeral: true
-    });
-  }
-
-  await interaction.deferReply();
-
-  try {
-
-    // ==========================================
-    // 1. CONFIGURATION DU SERVEUR
-    // ==========================================
-
-    const config = await GuildConfig.findOne({
-      guildId
-    });
-
-    if (!config?.modules?.ai?.enabled) {
-      return interaction.editReply(
-        '❌ Le module IA est désactivé sur ce serveur.'
-      );
-    }
-
-    // ==========================================
-    // 2. QUESTION UTILISATEUR
-    // ==========================================
-
-    const question =
-      interaction.options.getString(
-        'question',
-        true
-      );
-
-    // ==========================================
-    // 3. SYSTEM PROMPT
-    // ==========================================
-
-    const systemPrompt =
-      config.modules.ai.systemPrompt ||
-      'Tu es un assistant utile sur ce serveur Discord.';
-
-    // ==========================================
-    // 4. SESSION ISOLÉE
-    // ==========================================
-
-    let session = await AiSession.findOne({
-      userId: user.id,
-      guildId
-    });
-
-    let history: MessagePayload[] =
-      session
-        ? (session.messages as MessagePayload[])
-        : [];
-
-    // ==========================================
-    // 5. AJOUT DE LA QUESTION
-    // ==========================================
-
-    history.push({
-      role: 'user',
-      content: question
-    });
-
-    // ==========================================
-    // 6. LIMITATION DE L'HISTORIQUE
-    // ==========================================
-
-    const prunedHistory =
-      pruneMessagesToLimit(
-        history,
-        500
-      );
-
-    // ==========================================
-    // 7. CONSTRUCTION DU PROMPT
-    // ==========================================
-
-    const messagesForAI = [
-      {
-        role: 'system' as const,
-        content: systemPrompt
-      },
-      ...prunedHistory
-    ];
-
-    const aiPrompt = messagesForAI
-      .map(message => {
-        return `${message.role.toUpperCase()}: ${message.content}`;
-      })
-      .join('\n\n');
-
-    // ==========================================
-    // 8. APPEL OPENROUTER
-    // ==========================================
-
-    const aiAnswer =
-      await askOpenRouter(aiPrompt);
-
-    // ==========================================
-    // 9. SAUVEGARDE DE LA RÉPONSE
-    // ==========================================
-
-    history.push({
-      role: 'assistant',
-      content: aiAnswer
-    });
-
-    await AiSession.findOneAndUpdate(
-      {
-        userId: user.id,
-        guildId
-      },
-      {
-        messages: history,
-        updatedAt: new Date()
-      },
-      {
-        upsert: true,
-        new: true
-      }
+    console.log(
+      '[AI] Options reçues :',
+      JSON.stringify(
+        options,
+        null,
+        2
+      )
     );
 
-    // ==========================================
-    // 10. MÉMOIRE
-    // ==========================================
+    /* =====================================================
+       RECHERCHE DE L'OPTION
+    ===================================================== */
 
-    const currentMemoryWords =
-      getWordCount(prunedHistory) +
-      getWordCount(aiAnswer);
+    let message: string | undefined;
 
-    // ==========================================
-    // 11. RÉPONSE DISCORD
-    // ==========================================
+    for (const option of options) {
+      if (
+        option.name === 'message' &&
+        typeof option.value === 'string'
+      ) {
+        message =
+          option.value;
 
-    const embed = new EmbedBuilder()
-      .setColor('#8B5CF6')
-      .setAuthor({
-        name: 'OMNIX Intelligence Artificielle',
-        iconURL:
-          interaction.client.user.displayAvatarURL()
-      })
-      .setDescription(
-        `**Question :** *${question}*\n\n${aiAnswer}`
-      )
-      .setFooter({
-        text:
-          `Mémoire active : ${currentMemoryWords}/500 mots • Session isolée`
+        break;
+      }
+
+      /*
+       * Compatibilité avec l'ancienne commande.
+       */
+
+      if (
+        option.name === 'question' &&
+        typeof option.value === 'string'
+      ) {
+        message =
+          option.value;
+      }
+    }
+
+    /* =====================================================
+       AUCUN MESSAGE
+    ===================================================== */
+
+    if (
+      !message ||
+      !message.trim()
+    ) {
+      console.error(
+        '[AI] Impossible de trouver une option message/question.'
+      );
+
+      console.error(
+        '[AI] Options Discord reçues :',
+        options
+      );
+
+      if (
+        interaction.replied ||
+        interaction.deferred
+      ) {
+        await interaction.editReply({
+          content:
+            '❌ Aucun message n’a été fourni à OMNIX.',
+          embeds: [],
+          components: [],
+        });
+      } else {
+        await interaction.reply({
+          content:
+            '❌ Aucun message n’a été fourni à OMNIX.',
+          flags: 64,
+        });
+      }
+
+      return;
+    }
+
+    message =
+      message.trim();
+
+    /* =====================================================
+       LIMITE
+    ===================================================== */
+
+    if (
+      message.length > 4000
+    ) {
+      await interaction.reply({
+        content:
+          '❌ Ton message est trop long. Maximum : 4000 caractères.',
+        flags: 64,
       });
 
-    await interaction.editReply({
-      embeds: [embed]
-    });
+      return;
+    }
 
-  } catch (error) {
+    /* =====================================================
+       DEFER
+    ===================================================== */
 
-    console.error(
-      'Erreur commande /ai :',
-      error
-    );
+    await interaction.deferReply();
 
-    await interaction.editReply(
-      '❌ Une erreur est survenue lors du traitement de l\'IA.'
-    );
-  }
-}
+    try {
+
+      /* ===================================================
+         OPENROUTER
+      =================================================== */
+
+      const result =
+        await askOpenRouter(
+          message
+        );
+
+      /* ===================================================
+         NORMALISATION
+      =================================================== */
+
+      let answer = '';
+
+      if (
+        typeof result === 'string'
+      ) {
+        answer = result;
+      } else if (
+        result &&
+        typeof result === 'object'
+      ) {
+        const response =
+          result as any;
+
+        answer =
+          response.answer ??
+          response.content ??
+          response.message ??
+          response.text ??
+          response.response ??
+          '';
+      }
+
+      answer =
+        String(answer ?? '').trim();
+
+      /* ===================================================
+         RÉPONSE VIDE
+      =================================================== */
+
+      if (!answer) {
+        console.error(
+          '[AI] Réponse IA vide :',
+          result
+        );
+
+        await interaction.editReply({
+          content:
+            '❌ OMNIX AI n’a reçu aucune réponse.',
+          embeds: [],
+          components: [],
+        });
+
+        return;
+      }
+
+      /* ===================================================
+         RÉPONSE NORMALE
+      =================================================== */
+
+      if (
+        answer.length <= 4096
+      ) {
+        const embed =
+          new EmbedBuilder()
+            .setColor(0x5865f2)
+            .setAuthor({
+              name:
+                'OMNIX AI',
+            })
+            .setDescription(
+              answer
+            )
+            .setFooter({
+              text:
+                `Demandé par ${interaction.user.tag}`,
+            })
+            .setTimestamp();
+
+        await interaction.editReply({
+          embeds: [embed],
+        });
+
+        return;
+      }
+
+      /* ===================================================
+         RÉPONSE LONGUE
+      =================================================== */
+
+      const chunks: string[] = [];
+
+      for (
+        let i = 0;
+        i < answer.length;
+        i += 3900
+      ) {
+        chunks.push(
+          answer.slice(
+            i,
+            i + 3900
+          )
+        );
+      }
+
+      /* ===================================================
+         PREMIER EMBED
+      =================================================== */
+
+      const firstEmbed =
+        new EmbedBuilder()
+          .setColor(0x5865f2)
+          .setAuthor({
+            name:
+              'OMNIX AI',
+          })
+          .setDescription(
+            chunks[0]
+          )
+          .setFooter({
+            text:
+              `Demandé par ${interaction.user.tag}`,
+          })
+          .setTimestamp();
+
+      await interaction.editReply({
+        embeds: [firstEmbed],
+      });
+
+      /* ===================================================
+         EMBEDS SUIVANTS
+      =================================================== */
+
+      for (
+        let i = 1;
+        i < chunks.length;
+        i++
+      ) {
+        await interaction.followUp({
+          embeds: [
+            new EmbedBuilder()
+              .setColor(0x5865f2)
+              .setDescription(
+                chunks[i]
+              ),
+          ],
+        });
+      }
+
+    } catch (error) {
+
+      /* ===================================================
+         ERREUR
+      =================================================== */
+
+      console.error(
+        '[AI] Erreur :',
+        error
+      );
+
+      const errorMessage =
+        '❌ Une erreur est survenue pendant la communication avec OMNIX AI.';
+
+      try {
+
+        if (
+          interaction.deferred ||
+          interaction.replied
+        ) {
+          await interaction.editReply({
+            content:
+              errorMessage,
+            embeds: [],
+            components: [],
+          });
+        } else {
+          await interaction.reply({
+            content:
+              errorMessage,
+            flags: 64,
+          });
+        }
+
+      } catch (replyError) {
+
+        console.error(
+          '[AI] Impossible de répondre à l’erreur :',
+          replyError
+        );
+      }
+    }
+  },
+};
+
+export default command;

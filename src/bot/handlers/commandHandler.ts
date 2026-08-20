@@ -1,360 +1,734 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
-import { ExtendedClient } from '../../client';
+import { Collection } from 'discord.js';
+import type {
+  Client,
+  ChatInputCommandInteraction,
+  AutocompleteInteraction,
+} from 'discord.js';
 
 /* =========================================================
    TYPES
 ========================================================= */
 
-interface OmnixCommand {
+export interface Command {
   data?: {
     name?: string;
+    description?: string;
+    toJSON?: () => unknown;
   };
 
-  execute?: (...args: any[]) => any;
+  command?: {
+    name?: string;
+    description?: string;
+    toJSON?: () => unknown;
+  };
+
+  name?: string;
+  description?: string;
+
+  execute?: (
+    interactionOrContext: any
+  ) => Promise<unknown> | unknown;
+
+  autocomplete?: (
+    interaction: AutocompleteInteraction
+  ) => Promise<unknown> | unknown;
 }
 
 /* =========================================================
-   COMMAND COUNT GLOBAL
+   CONTEXT OMNIX
 ========================================================= */
 
-/**
- * Rend le nombre réel de commandes accessible
- * à stats.routes.ts.
- *
- * stats.routes.ts lit :
- *
- * globalThis.__OMNIX_COMMAND_COUNT
- */
-function setGlobalCommandCount(
-  count: number
-): void {
-  (
-    globalThis as typeof globalThis & {
-      __OMNIX_COMMAND_COUNT?: number;
-    }
-  ).__OMNIX_COMMAND_COUNT = count;
+export interface CommandContext {
+  interaction: ChatInputCommandInteraction;
+
+  client: Client;
+
+  guild: any;
+
+  user: any;
+
+  member: any;
+
+  channel: any;
+
+  guildId: string | null;
+
+  userId: string;
+
+  commandName: string;
+
+  options: any;
 }
 
 /* =========================================================
-   COMMAND DIRECTORY
+   COMMAND COLLECTION
 ========================================================= */
 
-function getCommandsPath(): string {
-  /**
-   * __dirname fonctionne avec le projet compilé.
+export function getCommands(
+  client: Client
+): Collection<string, Command> {
+  const existing =
+    (client as any).commands;
+
+  if (
+    existing instanceof Collection
+  ) {
+    return existing;
+  }
+
+  const collection =
+    new Collection<
+      string,
+      Command
+    >();
+
+  (client as any).commands =
+    collection;
+
+  return collection;
+}
+
+/* =========================================================
+   COMMAND NAME
+========================================================= */
+
+function getCommandName(
+  command: Command
+): string | null {
+  const name =
+    command.data?.name ??
+    command.command?.name ??
+    command.name;
+
+  if (
+    typeof name !== 'string'
+  ) {
+    return null;
+  }
+
+  const clean =
+    name.trim();
+
+  return clean.length > 0
+    ? clean
+    : null;
+}
+
+/* =========================================================
+   NORMALIZE COMMAND
+========================================================= */
+
+function normalizeCommand(
+  module: any
+): Command | null {
+  /*
+   * Formats supportés :
    *
-   * Exemple :
+   * export default command
    *
-   * dist/commands
+   * export const command = ...
    *
-   * ou :
-   *
-   * src/commands
+   * module directement
    */
-  const possiblePaths = [
-    path.join(
-      __dirname,
-      '../commands'
-    ),
 
-    path.join(
-      process.cwd(),
-      'src',
-      'commands'
-    ),
-
-    path.join(
-      process.cwd(),
-      'dist',
-      'commands'
-    ),
+  const candidates = [
+    module?.default,
+    module?.command,
+    module,
   ];
 
-  const existingPath =
-    possiblePaths.find(
-      directory =>
-        fs.existsSync(
-          directory
-        )
-    );
+  for (const candidate of candidates) {
+    if (!candidate) {
+      continue;
+    }
 
-  return (
-    existingPath ||
-    possiblePaths[0]
-  );
+    if (
+      typeof candidate.execute ===
+      'function'
+    ) {
+      return candidate;
+    }
+  }
+
+  return null;
 }
 
 /* =========================================================
-   COMMAND FILE CHECK
+   FIND COMMAND
 ========================================================= */
 
-function isCommandFile(
-  file: string
+export function getCommand(
+  client: Client,
+  name: string
+): Command | undefined {
+  const commands =
+    getCommands(client);
+
+  return commands.get(name);
+}
+
+/* =========================================================
+   COMMAND CONTEXT
+========================================================= */
+
+function createCommandContext(
+  interaction: ChatInputCommandInteraction
+): CommandContext {
+  return {
+    interaction,
+
+    client:
+      interaction.client,
+
+    guild:
+      interaction.guild,
+
+    user:
+      interaction.user,
+
+    member:
+      interaction.member,
+
+    channel:
+      interaction.channel,
+
+    guildId:
+      interaction.guildId,
+
+    userId:
+      interaction.user.id,
+
+    commandName:
+      interaction.commandName,
+
+    options:
+      interaction.options,
+  };
+}
+
+/* =========================================================
+   DETECT CONTEXT FORMAT
+========================================================= */
+
+function expectsContextObject(
+  execute: Function
 ): boolean {
-  return (
-    file.endsWith('.ts') ||
-    file.endsWith('.js') ||
-    file.endsWith('.mjs')
+  const source =
+    Function.prototype.toString.call(
+      execute
+    );
+
+  /*
+   * On reconnaît uniquement les formes :
+   *
+   * execute({ interaction })
+   * execute({ interaction, ... })
+   * async execute({ interaction })
+   *
+   * On ne considère PAS les fonctions anonymes
+   * ou les paramètres génériques comme contexte.
+   */
+
+  return /execute\s*\(\s*\{\s*interaction\b/.test(
+    source
   );
 }
 
 /* =========================================================
-   COMMAND LOADER
+   EXECUTE COMMAND
+========================================================= */
+
+export async function executeCommand(
+  interaction: ChatInputCommandInteraction
+): Promise<void> {
+  if (
+    !interaction ||
+    !interaction.commandName
+  ) {
+    return;
+  }
+
+  const command =
+    getCommand(
+      interaction.client,
+      interaction.commandName
+    );
+
+  /* -------------------------------------------------------
+     COMMANDE INTROUVABLE
+  ------------------------------------------------------- */
+
+  if (!command) {
+    console.warn(
+      `[CommandHandler] Commande introuvable : /${interaction.commandName}`
+    );
+
+    if (
+      !interaction.replied &&
+      !interaction.deferred
+    ) {
+      try {
+        await interaction.reply({
+          content:
+            '❌ Cette commande n’est pas disponible actuellement.',
+          flags: 64,
+        });
+      } catch (error) {
+        console.error(
+          '[CommandHandler] Erreur réponse commande introuvable :',
+          error
+        );
+      }
+    }
+
+    return;
+  }
+
+  /* -------------------------------------------------------
+     EXECUTE MANQUANT
+  ------------------------------------------------------- */
+
+  if (
+    typeof command.execute !==
+    'function'
+  ) {
+    console.error(
+      `[CommandHandler] /${interaction.commandName} ne possède pas execute().`
+    );
+
+    if (
+      !interaction.replied &&
+      !interaction.deferred
+    ) {
+      try {
+        await interaction.reply({
+          content:
+            '❌ Cette commande est mal configurée.',
+          flags: 64,
+        });
+      } catch {
+        // Rien à faire.
+      }
+    }
+
+    return;
+  }
+
+  try {
+    const context =
+      createCommandContext(
+        interaction
+      );
+
+    /*
+     * =======================================================
+     * FORMAT 1
+     *
+     * execute({ interaction, ... })
+     * =======================================================
+     */
+
+    if (
+      expectsContextObject(
+        command.execute
+      )
+    ) {
+      await command.execute(
+        context
+      );
+
+      return;
+    }
+
+    /*
+     * =======================================================
+     * FORMAT 2
+     *
+     * execute(interaction)
+     * =======================================================
+     */
+
+    await command.execute(
+      interaction
+    );
+  } catch (error) {
+    console.error(
+      `[Bot Error] Exception sur la commande ${interaction.commandName}:`,
+      error
+    );
+
+    await safelyReplyError(
+      interaction
+    );
+  }
+}
+
+/* =========================================================
+   SAFE ERROR RESPONSE
+========================================================= */
+
+async function safelyReplyError(
+  interaction: ChatInputCommandInteraction
+): Promise<void> {
+  const message =
+    '❌ Une erreur est survenue lors de l’exécution de cette commande.';
+
+  try {
+    if (
+      interaction.replied ||
+      interaction.deferred
+    ) {
+      await interaction.editReply({
+        content: message,
+        embeds: [],
+        components: [],
+      });
+
+      return;
+    }
+
+    await interaction.reply({
+      content: message,
+      flags: 64,
+    });
+  } catch (error) {
+    console.error(
+      '[CommandHandler] Impossible de répondre à l’erreur :',
+      error
+    );
+  }
+}
+
+/* =========================================================
+   AUTOCOMPLETE
+========================================================= */
+
+export async function executeAutocomplete(
+  interaction: AutocompleteInteraction
+): Promise<void> {
+  if (
+    !interaction ||
+    !interaction.commandName
+  ) {
+    return;
+  }
+
+  const command =
+    getCommand(
+      interaction.client,
+      interaction.commandName
+    );
+
+  if (!command) {
+    try {
+      await interaction.respond([]);
+    } catch {
+      // Interaction déjà terminée.
+    }
+
+    return;
+  }
+
+  try {
+    if (
+      typeof command.autocomplete ===
+      'function'
+    ) {
+      await command.autocomplete(
+        interaction
+      );
+
+      return;
+    }
+
+    /*
+     * Pas d'autocomplete déclaré :
+     * on répond simplement avec une liste vide.
+     */
+
+    await interaction.respond([]);
+  } catch (error) {
+    console.error(
+      `[CommandHandler] Erreur autocomplete /${interaction.commandName}:`,
+      error
+    );
+
+    try {
+      if (
+        !interaction.responded
+      ) {
+        await interaction.respond(
+          []
+        );
+      }
+    } catch {
+      // Interaction déjà terminée.
+    }
+  }
+}
+
+/* =========================================================
+   RECURSIVE COMMAND SEARCH
+========================================================= */
+
+function getCommandFiles(
+  directory: string
+): string[] {
+  const result: string[] = [];
+
+  if (
+    !fs.existsSync(directory)
+  ) {
+    return result;
+  }
+
+  const entries =
+    fs.readdirSync(
+      directory,
+      {
+        withFileTypes: true,
+      }
+    );
+
+  for (const entry of entries) {
+    const fullPath =
+      path.join(
+        directory,
+        entry.name
+      );
+
+    if (
+      entry.isDirectory()
+    ) {
+      result.push(
+        ...getCommandFiles(
+          fullPath
+        )
+      );
+
+      continue;
+    }
+
+    if (
+      !entry.name.endsWith(
+        '.ts'
+      ) &&
+      !entry.name.endsWith(
+        '.js'
+      ) &&
+      !entry.name.endsWith(
+        '.mjs'
+      )
+    ) {
+      continue;
+    }
+
+    /*
+     * Fichiers à ignorer.
+     */
+
+    if (
+      entry.name.endsWith(
+        '.d.ts'
+      ) ||
+      entry.name.endsWith(
+        '.test.ts'
+      ) ||
+      entry.name.endsWith(
+        '.spec.ts'
+      )
+    ) {
+      continue;
+    }
+
+    result.push(
+      fullPath
+    );
+  }
+
+  return result;
+}
+
+/* =========================================================
+   LOAD COMMANDS
 ========================================================= */
 
 export async function loadCommands(
-  client: ExtendedClient
-): Promise<number> {
+  client: Client,
+  commandsPath?: string
+): Promise<
+  Collection<string, Command>
+> {
+  const commands =
+    new Collection<
+      string,
+      Command
+    >();
+
+  const directory =
+    commandsPath ??
+    path.join(
+      process.cwd(),
+      'src',
+      'bot',
+      'commands'
+    );
+
   console.log(
-    '[Bot] Chargement des commandes OMNIX...'
+    `[Commands] Recherche des commandes dans : ${directory}`
   );
 
-  const commandsPath =
-    getCommandsPath();
-
-  /* =======================================================
-     DIRECTORY CHECK
-  ======================================================= */
+  /* -------------------------------------------------------
+     DOSSIER ABSENT
+  ------------------------------------------------------- */
 
   if (
-    !fs.existsSync(
-      commandsPath
-    )
+    !fs.existsSync(directory)
   ) {
-    console.warn(
-      `[Bot] Dossier commandes introuvable : ${commandsPath}`
+    console.error(
+      `[Commands] ❌ Dossier introuvable : ${directory}`
     );
 
-    setGlobalCommandCount(
-      0
-    );
+    (client as any).commands =
+      commands;
 
-    return 0;
+    return commands;
   }
 
-  /* =======================================================
-     FILES
-  ======================================================= */
+  /* -------------------------------------------------------
+     FICHIERS
+  ------------------------------------------------------- */
 
-  const commandFiles =
-    fs
-      .readdirSync(
-        commandsPath
-      )
-      .filter(
-        isCommandFile
-      )
-      .filter(
-        file =>
-          !file.startsWith('_')
-      );
-
-  /* =======================================================
-     NO COMMANDS
-  ======================================================= */
-
-  if (
-    commandFiles.length ===
-    0
-  ) {
-    console.warn(
-      `[Bot] Aucune commande trouvée dans ${commandsPath}`
+  const files =
+    getCommandFiles(
+      directory
     );
 
-    setGlobalCommandCount(
-      0
-    );
+  console.log(
+    `[Commands] ${files.length} fichier(s) trouvé(s).`
+  );
 
-    return 0;
-  }
+  /* -------------------------------------------------------
+     CHARGEMENT
+  ------------------------------------------------------- */
 
-  /* =======================================================
-     LOAD
-  ======================================================= */
-
-  let loadedCount =
-    0;
-
-  let failedCount =
-    0;
-
-  for (
-    const file of commandFiles
-  ) {
-    const filePath =
-      path.join(
-        commandsPath,
-        file
-      );
-
+  for (const file of files) {
     try {
-      /* ===================================================
-         IMPORT
-      =================================================== */
+      const url =
+        pathToFileURL(
+          file
+        ).href;
 
-      const commandModule =
-        await import(
-          filePath
-        );
+      const module =
+        await import(url);
 
-      /**
-       * On accepte le default export.
-       */
       const command =
-        commandModule.default as
-          | OmnixCommand
-          | undefined;
+        normalizeCommand(
+          module
+        );
 
-      /* ===================================================
-         VALIDATION
-      =================================================== */
+      /* ---------------------------------------------------
+         EXPORT INVALID
+      --------------------------------------------------- */
 
-      if (
-        !command
-      ) {
+      if (!command) {
         console.warn(
-          `[Bot] Commande ignorée : ${file} ne possède pas de default export.`
+          `[Commands] ${path.basename(file)} ignorée : export de commande introuvable.`
         );
 
         continue;
       }
 
-      if (
-        !command.data
-      ) {
+      /* ---------------------------------------------------
+         NOM
+      --------------------------------------------------- */
+
+      const name =
+        getCommandName(
+          command
+        );
+
+      if (!name) {
         console.warn(
-          `[Bot] Commande ignorée : ${file} ne possède pas de propriété "data".`
+          `[Commands] ${path.basename(file)} ignorée : nom introuvable.`
         );
 
         continue;
       }
+
+      /* ---------------------------------------------------
+         EXECUTE
+      --------------------------------------------------- */
 
       if (
         typeof command.execute !==
         'function'
       ) {
         console.warn(
-          `[Bot] Commande ignorée : ${file} ne possède pas de fonction "execute".`
+          `[Commands] /${name} ignorée : execute() introuvable.`
         );
 
         continue;
       }
 
-      const commandName =
-        command.data.name;
-
-      /* ===================================================
-         NAME VALIDATION
-      =================================================== */
+      /* ---------------------------------------------------
+         DOUBLON
+      --------------------------------------------------- */
 
       if (
-        !commandName ||
-        typeof commandName !==
-          'string'
+        commands.has(name)
       ) {
         console.warn(
-          `[Bot] Commande ignorée : ${file} possède un nom invalide.`
+          `[Commands] ⚠️ Doublon détecté : /${name}`
+        );
+
+        console.warn(
+          `[Commands] Fichier ignoré : ${file}`
         );
 
         continue;
       }
 
-      const normalizedName =
-        commandName
-          .trim()
-          .toLowerCase();
+      /* ---------------------------------------------------
+         ENREGISTREMENT MÉMOIRE
+      --------------------------------------------------- */
 
-      if (
-        !normalizedName
-      ) {
-        console.warn(
-          `[Bot] Commande ignorée : ${file} possède un nom vide.`
-        );
-
-        continue;
-      }
-
-      /* ===================================================
-         DUPLICATE CHECK
-      =================================================== */
-
-      if (
-        client.commands.has(
-          normalizedName
-        )
-      ) {
-        console.warn(
-          `[Bot] Doublon détecté : /${normalizedName}`
-        );
-
-        continue;
-      }
-
-      /* ===================================================
-         REGISTER
-      =================================================== */
-
-      client.commands.set(
-        normalizedName,
+      commands.set(
+        name,
         command
       );
 
-      loadedCount++;
-
       console.log(
-        `[Bot] Commande chargée : /${normalizedName}`
+        `[Commands] ✓ /${name} chargée.`
       );
     } catch (error) {
-      failedCount++;
-
       console.error(
-        `[Bot] Impossible de charger ${file}:`,
+        `[Commands] ❌ Erreur lors du chargement de ${file}:`,
         error
       );
     }
   }
 
-  /* =======================================================
-     GLOBAL STATISTICS
-  ======================================================= */
+  /* -------------------------------------------------------
+     ATTACH CLIENT
+  ------------------------------------------------------- */
 
-  setGlobalCommandCount(
-    client.commands.size
-  );
-
-  /* =======================================================
-     SUMMARY
-  ======================================================= */
+  (client as any).commands =
+    commands;
 
   console.log(
-    '================================================='
+    `[Commands] ${commands.size} commande(s) chargée(s).`
   );
 
-  console.log(
-    `[Bot] Commandes trouvées : ${commandFiles.length}`
-  );
-
-  console.log(
-    `[Bot] Commandes chargées : ${loadedCount}`
-  );
-
-  console.log(
-    `[Bot] Commandes échouées : ${failedCount}`
-  );
-
-  console.log(
-    `[Bot] Commandes disponibles : ${client.commands.size}`
-  );
-
-  console.log(
-    '================================================='
-  );
-
-  /* =======================================================
-     RETURN
-  ======================================================= */
-
-  return client.commands.size;
+  return commands;
 }
+
+/* =========================================================
+   DEFAULT EXPORT
+========================================================= */
+
+export default loadCommands;

@@ -1,104 +1,295 @@
-import { Events, Message, EmbedBuilder } from 'discord.js';
-import { OpenAI } from 'openai';
-import { GuildConfig } from '../../models/GuildConfig.ts'; // Named import avec accolades
-import AiSession from '../../models/AiSession.ts';
+import {
+  Events,
+  type Message,
+} from 'discord.js';
 
-interface MessagePayload {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
+import GuildConfig from '../../models/GuildConfig.ts';
+import { askOpenRouter } from '../../ai/openrouter.ts';
+
+const AI_COOLDOWN_MS = 3000;
+
+const cooldowns =
+  new Map<string, number>();
+
+function isBotMessage(
+  message: Message
+): boolean {
+  return message.author.bot;
 }
 
-// Calcule le nombre de mots d'un texte ou d'une liste de messages
-function getWordCount(textOrMessages: string | MessagePayload[]): number {
-  if (typeof textOrMessages === 'string') {
-    return textOrMessages.split(/\s+/).filter(Boolean).length;
+function getMessageContent(
+  message: Message
+): string {
+  return message.content.trim();
+}
+
+function shouldAnswer(
+  message: Message
+): boolean {
+  if (!message.guild) {
+    return false;
   }
-  return textOrMessages.reduce((acc, msg) => acc + msg.content.split(/\s+/).filter(Boolean).length, 0);
+
+  if (isBotMessage(message)) {
+    return false;
+  }
+
+  /*
+   * L'IA intervient si :
+   *
+   * 1. Le bot est mentionné
+   * 2. Le message commence par "omnix"
+   *
+   * Cela évite que l'IA réponde à absolument
+   * tous les messages du serveur.
+   */
+
+  const mentioned =
+    message.mentions.has(
+      message.client.user
+    );
+
+  const startsWithOmnix =
+    /^omnix\b/i.test(
+      message.content.trim()
+    );
+
+  return mentioned || startsWithOmnix;
 }
 
-// Élague l'historique de fin vers le début pour ne garder que les 500 mots les plus récents
-function pruneMessagesToLimit(messages: MessagePayload[], maxWords = 500): MessagePayload[] {
-  let currentWords = 0;
-  const result: MessagePayload[] = [];
-  
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const words = getWordCount(messages[i].content);
-    if (currentWords + words > maxWords) {
-      break;
+function cleanPrompt(
+  message: Message
+): string {
+  let content =
+    getMessageContent(message);
+
+  /*
+   * Retire la mention du bot.
+   */
+  if (message.client.user) {
+    content =
+      content.replace(
+        new RegExp(
+          `<@!?${message.client.user.id}>`,
+          'g'
+        ),
+        ''
+      );
+  }
+
+  /*
+   * Retire "omnix" au début.
+   */
+  content =
+    content.replace(
+      /^omnix\b[:,]?\s*/i,
+      ''
+    );
+
+  return content.trim();
+}
+
+async function getGuildConfig(
+  guildId: string
+) {
+  try {
+    return await GuildConfig.findOne({
+      guildId,
+    }).lean();
+  } catch (error) {
+    console.error(
+      '[AI] Erreur GuildConfig :',
+      error
+    );
+
+    return null;
+  }
+}
+
+async function execute(
+  message: Message
+): Promise<void> {
+  if (!shouldAnswer(message)) {
+    return;
+  }
+
+  const prompt =
+    cleanPrompt(message);
+
+  if (!prompt) {
+    await message.reply(
+      '👋 Oui ? Pose-moi ta question.'
+    );
+
+    return;
+  }
+
+  /*
+   * Cooldown anti-spam.
+   */
+  const key =
+    `${message.guild?.id}:${message.author.id}`;
+
+  const now = Date.now();
+
+  const lastUse =
+    cooldowns.get(key) ?? 0;
+
+  if (
+    now - lastUse <
+    AI_COOLDOWN_MS
+  ) {
+    return;
+  }
+
+  cooldowns.set(
+    key,
+    now
+  );
+
+  /*
+   * Nettoyage du cooldown.
+   */
+  setTimeout(
+    () => {
+      cooldowns.delete(key);
+    },
+    AI_COOLDOWN_MS
+  );
+
+  try {
+    const config =
+      message.guild
+        ? await getGuildConfig(
+            message.guild.id
+          )
+        : null;
+
+    const aiModule =
+      config?.modules?.ai;
+
+    /*
+     * Si le module IA est explicitement
+     * désactivé, on ne répond pas.
+     */
+    if (
+      aiModule &&
+      aiModule.enabled === false
+    ) {
+      return;
     }
-    currentWords += words;
-    result.unshift(messages[i]);
-  }
-  return result;
-}
 
-export default {
-  name: Events.MessageCreate,
-  async execute(message: Message) {
-    if (message.author.bot || !message.guildId) return;
+    const systemPrompt =
+      aiModule?.systemPrompt ??
+      [
+        'Tu es OMNIX, un assistant intelligent pour Discord.',
+        'Réponds clairement et naturellement en français.',
+        'Sois utile, concis et respectueux.',
+        'Ne prétends jamais être humain.',
+        'N’invente pas des informations lorsque tu ne les connais pas.',
+      ].join(' ');
 
-    // Vérifier si le message est une réponse à un autre message
-    if (!message.reference || !message.reference.messageId) return;
+    await message.channel.sendTyping();
 
-    try {
-      const referencedMessage = await message.channel.messages.fetch(message.reference.messageId);
-      
-      // Si l'auteur du message d'origine n'est pas votre bot OMNIX, on ignore
-      if (referencedMessage.author.id !== message.client.user.id) return;
+    console.log(
+      `[AI] Message reçu de ${message.author.tag}: ${prompt}`
+    );
 
-      // S'il n'y a pas de clé API configurée localement, on ignore silencieusement
-      if (!process.env.OPENAI_API_KEY) return;
-
-      await message.channel.sendTyping();
-
-      // Charger la configuration et vérifier si l'IA est active
-      const config = await GuildConfig.findOne({ guildId: message.guildId });
-      if (!config?.modules?.ai?.enabled) return;
-
-      const systemPrompt = config.modules.ai.systemPrompt || "Tu es un assistant utile sur ce serveur Discord.";
-      const userQuestion = message.content;
-
-      // 🟢 INITIALISATION DYNAMIQUE (Évite le plantage au chargement global sur Render)
-      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-      // Récupérer la session isolée
-      let session = await AiSession.findOne({ userId: message.author.id, guildId: message.guildId });
-      let history: MessagePayload[] = session ? (session.messages as MessagePayload[]) : [];
-
-      history.push({ role: 'user', content: userQuestion });
-
-      // Élaguer pour ne pas dépasser 500 mots
-      let prunedHistory = pruneMessagesToLimit(history, 500);
-
-      // Appel de l'IA
-      const response = await openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages: [{ role: 'system', content: systemPrompt }, ...prunedHistory],
-        max_tokens: 400,
-      });
-
-      const aiAnswer = response.choices[0]?.message?.content || "Je n'ai pas pu formuler de réponse.";
-
-      history.push({ role: 'assistant', content: aiAnswer });
-
-      await AiSession.findOneAndUpdate(
-        { userId: message.author.id, guildId: message.guildId },
-        { messages: history, updatedAt: new Date() },
-        { upsert: true, new: true }
+    const response =
+      await askOpenRouter(
+        prompt,
+        {
+          systemPrompt,
+          temperature: 0.7,
+          maxTokens: 1000,
+        }
       );
 
-      const currentMemoryWords = getWordCount(prunedHistory) + getWordCount(aiAnswer);
+    /*
+     * Discord limite le contenu d'un message
+     * à 2000 caractères.
+     */
+    if (response.length <= 2000) {
+      await message.reply(response);
 
-      const embed = new EmbedBuilder()
-        .setColor('#8B5CF6')
-        .setAuthor({ name: 'OMNIX Intelligence Artificielle', iconURL: message.client.user.displayAvatarURL() })
-        .setDescription(aiAnswer)
-        .setFooter({ text: `Mémoire active : ${currentMemoryWords}/500 mots • Session isolée` });
+      return;
+    }
 
-      await message.reply({ embeds: [embed] });
+    /*
+     * Découpage propre pour les réponses longues.
+     */
+    const chunks: string[] = [];
 
-    } catch (error) {
-      console.error("Erreur dans l'intercepteur de réponses de l'IA :", error);
+    for (
+      let i = 0;
+      i < response.length;
+      i += 1900
+    ) {
+      chunks.push(
+        response.slice(
+          i,
+          i + 1900
+        )
+      );
+    }
+
+    await message.reply(
+      chunks.shift() ?? 'Réponse vide.'
+    );
+
+    for (const chunk of chunks) {
+      await message.channel.send(
+        chunk
+      );
+    }
+
+  } catch (error: any) {
+    console.error(
+      '[AI] Erreur dans l’intercepteur de réponses de l’IA :',
+      error
+    );
+
+    let errorMessage =
+      '❌ Impossible de contacter le service IA actuellement.';
+
+    if (
+      typeof error?.message === 'string' &&
+      error.message.includes('OPENROUTER_API_KEY')
+    ) {
+      errorMessage =
+        '❌ La clé API OpenRouter n’est pas configurée.';
+    }
+
+    if (
+      typeof error?.message === 'string' &&
+      error.message.includes('429')
+    ) {
+      errorMessage =
+        '⏳ Le service IA a atteint sa limite temporaire. Réessaie dans quelques instants.';
+    }
+
+    try {
+      await message.reply(
+        errorMessage
+      );
+    } catch (replyError) {
+      console.error(
+        '[AI] Impossible d’envoyer le message d’erreur :',
+        replyError
+      );
     }
   }
+}
+
+export const name =
+  Events.MessageCreate;
+
+export const once = false;
+
+export { execute };
+
+export default {
+  name,
+  once,
+  execute,
 };
