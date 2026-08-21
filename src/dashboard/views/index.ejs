@@ -10,29 +10,40 @@
 
   <meta
     name="description"
-    content="OMNIX - Plateforme intelligente de gestion et d'automatisation Discord."
+    content="OMNIX — Plateforme intelligente de gestion, sécurité et automatisation Discord."
   >
 
-  <title>OMNIX - Plateforme Officielle</title>
+  <meta
+    name="theme-color"
+    content="#030712"
+  >
+
+  <title>OMNIX — Plateforme Officielle</title>
 
   <style>
+
     /* =========================================================
        RESET
     ========================================================= */
 
-    * {
+    *,
+    *::before,
+    *::after {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
 
-    /* =========================================================
-       BODY
-    ========================================================= */
+    html {
+      scroll-behavior: smooth;
+    }
 
     body {
-      background-color: #030712;
-      color: #f1f5f9;
+      min-height: 100vh;
+
+      background: #030712;
+
+      color: #f8fafc;
 
       font-family:
         -apple-system,
@@ -43,59 +54,122 @@
         Arial,
         sans-serif;
 
-      min-height: 100vh;
-
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-
-      position: relative;
+      line-height: 1.5;
 
       overflow-x: hidden;
 
-      line-height: 1.5;
+      position: relative;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button,
+    a {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    a {
+      color: inherit;
     }
 
     /* =========================================================
        BACKGROUND
     ========================================================= */
 
-    .halo-top {
-      position: absolute;
+    .omnix-background {
+      position: fixed;
+      inset: 0;
 
-      top: -150px;
-      left: -150px;
+      z-index: -10;
 
-      width: 500px;
-      height: 500px;
+      overflow: hidden;
+
+      pointer-events: none;
 
       background:
-        rgba(124, 58, 237, 0.06);
+        radial-gradient(
+          circle at 50% -15%,
+          rgba(79, 70, 229, 0.14),
+          transparent 42%
+        ),
 
-      filter: blur(100px);
+        radial-gradient(
+          circle at 100% 50%,
+          rgba(6, 182, 212, 0.05),
+          transparent 35%
+        ),
+
+        #030712;
+    }
+
+    .omnix-background-grid {
+      position: absolute;
+      inset: 0;
+
+      opacity: 0.18;
+
+      background-image:
+        linear-gradient(
+          rgba(148, 163, 184, 0.045) 1px,
+          transparent 1px
+        ),
+        linear-gradient(
+          90deg,
+          rgba(148, 163, 184, 0.045) 1px,
+          transparent 1px
+        );
+
+      background-size: 48px 48px;
+
+      mask-image:
+        linear-gradient(
+          to bottom,
+          black 0%,
+          rgba(0,0,0,0.8) 45%,
+          transparent 90%
+        );
+    }
+
+    .omnix-halo {
+      position: absolute;
+
+      width: 520px;
+      height: 520px;
 
       border-radius: 50%;
+
+      filter: blur(110px);
 
       pointer-events: none;
     }
 
-    .halo-bottom {
-      position: absolute;
-
-      bottom: -150px;
-      right: -150px;
-
-      width: 500px;
-      height: 500px;
+    .omnix-halo-top {
+      top: -280px;
+      left: -180px;
 
       background:
-        rgba(6, 182, 212, 0.06);
+        rgba(79, 70, 229, 0.20);
+    }
 
-      filter: blur(100px);
+    .omnix-halo-right {
+      top: 30%;
+      right: -330px;
 
-      border-radius: 50%;
+      background:
+        rgba(6, 182, 212, 0.12);
+    }
 
-      pointer-events: none;
+    .omnix-halo-bottom {
+      bottom: -350px;
+      left: 20%;
+
+      background:
+        rgba(124, 58, 237, 0.10);
     }
 
     /* =========================================================
@@ -103,45 +177,39 @@
     ========================================================= */
 
     header {
-      border-bottom:
-        1px solid #1e293b;
-
-      background:
-        rgba(15, 23, 42, 0.7);
-
-      backdrop-filter:
-        blur(12px);
-
-      -webkit-backdrop-filter:
-        blur(12px);
-
-      padding:
-        12px 16px;
-
-      display:
-        flex;
-
-      justify-content:
-        space-between;
-
-      align-items:
-        center;
-
-      position:
-        sticky;
-
+      position: sticky;
       top: 0;
 
-      z-index: 50;
+      z-index: 100;
+
+      width: 100%;
+
+      border-bottom:
+        1px solid
+        rgba(148, 163, 184, 0.08);
+
+      background:
+        rgba(3, 7, 18, 0.76);
+
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
     }
 
-    @media (min-width: 768px) {
+    .omnix-header-inner {
+      width:
+        min(1180px, calc(100% - 32px));
 
-      header {
-        padding:
-          16px 24px;
-      }
+      min-height: 72px;
 
+      margin: 0 auto;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      gap: 20px;
     }
 
     /* =========================================================
@@ -149,539 +217,208 @@
     ========================================================= */
 
     .logo-area {
-      display:
-        flex;
+      display: inline-flex;
 
-      align-items:
-        center;
+      align-items: center;
 
-      gap:
-        12px;
+      gap: 12px;
 
-      text-decoration:
-        none;
+      text-decoration: none;
+
+      flex-shrink: 0;
+    }
+
+    .logo-wrapper {
+      width: 40px;
+      height: 40px;
+
+      position: relative;
+
+      overflow: hidden;
+
+      border-radius: 12px;
+
+      box-shadow:
+        0 8px 30px
+        rgba(79, 70, 229, 0.25);
     }
 
     .logo-img {
-      width:
-        38px;
+      display: block;
 
-      height:
-        38px;
+      width: 100%;
+      height: 100%;
 
-      border-radius:
-        10px;
+      object-fit: cover;
+    }
 
-      object-fit:
-        cover;
+    .logo-fallback {
+      position: absolute;
 
-      box-shadow:
-        0 4px 12px
-        rgba(79, 70, 229, 0.3);
+      inset: 0;
+
+      display: none;
+
+      align-items: center;
+      justify-content: center;
+
+      background:
+        linear-gradient(
+          135deg,
+          #06b6d4,
+          #4f46e5,
+          #7c3aed
+        );
+
+      color: white;
+
+      font-size: 19px;
+      font-weight: 900;
     }
 
     .logo-text {
-      font-weight:
-        800;
+      font-size: 18px;
 
-      letter-spacing:
-        1px;
+      font-weight: 900;
+
+      letter-spacing: 1.5px;
 
       background:
         linear-gradient(
-          to right,
+          90deg,
           #60a5fa,
           #22d3ee,
           #a78bfa
         );
 
-      -webkit-background-clip:
-        text;
+      -webkit-background-clip: text;
+      background-clip: text;
 
-      -webkit-text-fill-color:
-        transparent;
+      -webkit-text-fill-color: transparent;
+    }
 
-      font-size:
-        18px;
+    .brand-status {
+      display: none;
+
+      align-items: center;
+
+      gap: 7px;
+
+      padding:
+        5px 9px;
+
+      border:
+        1px solid
+        rgba(52, 211, 153, 0.14);
+
+      border-radius: 999px;
+
+      background:
+        rgba(52, 211, 153, 0.06);
+
+      color:
+        #6ee7b7;
+
+      font-size: 9px;
+
+      font-weight: 800;
+
+      letter-spacing: 0.6px;
+
+      text-transform: uppercase;
+    }
+
+    .brand-status-dot {
+      width: 6px;
+      height: 6px;
+
+      border-radius: 50%;
+
+      background: #34d399;
+
+      box-shadow:
+        0 0 10px
+        rgba(52, 211, 153, 0.8);
+    }
+
+    @media (min-width: 700px) {
+
+      .brand-status {
+        display: inline-flex;
+      }
+
     }
 
     /* =========================================================
-       HEADER BUTTONS
+       HEADER AUTH
     ========================================================= */
 
     .header-controls {
-      display:
-        flex;
+      display: flex;
 
-      align-items:
-        center;
+      align-items: center;
 
-      gap:
-        12px;
+      gap: 10px;
     }
 
-    .btn-burger {
-      background:
-        none;
+    #auth-buttons-header {
+      display: flex;
 
-      border:
-        none;
+      align-items: center;
 
-      color:
-        #94a3b8;
-
-      cursor:
-        pointer;
-
-      display:
-        flex;
-
-      align-items:
-        center;
+      gap: 10px;
     }
 
-    .btn-burger:hover {
-      color:
-        white;
-    }
+    .header-button {
+      min-height: 40px;
 
-    .burger-icon {
-      width:
-        24px;
+      display: inline-flex;
 
-      height:
-        24px;
-
-      fill:
-        currentColor;
-    }
-
-    .btn-nav-login {
-      padding:
-        10px 20px;
-
-      background-color:
-        #4f46e5;
-
-      color:
-        white;
-
-      text-decoration:
-        none;
-
-      font-size:
-        13px;
-
-      font-weight:
-        700;
-
-      border-radius:
-        10px;
-
-      transition:
-        background 0.15s;
-    }
-
-    .btn-nav-login:hover {
-      background-color:
-        #4338ca;
-    }
-
-    .btn-nav-logout {
-      background:
-        none;
-
-      border:
-        none;
-
-      color:
-        #94a3b8;
-
-      font-size:
-        13px;
-
-      font-weight:
-        600;
-
-      cursor:
-        pointer;
-
-      transition:
-        color 0.15s;
-    }
-
-    .btn-nav-logout:hover {
-      color:
-        white;
-    }
-
-    /* =========================================================
-       DRAWER
-    ========================================================= */
-
-    .drawer {
-      position:
-        fixed;
-
-      top:
-        0;
-
-      right:
-        -300px;
-
-      width:
-        280px;
-
-      height:
-        100vh;
-
-      background:
-        rgba(15, 23, 42, 0.85);
-
-      backdrop-filter:
-        blur(24px);
-
-      -webkit-backdrop-filter:
-        blur(24px);
-
-      border-left:
-        1px solid
-        rgba(255, 255, 255, 0.04);
-
-      z-index:
-        1000;
-
-      transition:
-        transform 0.3s
-        cubic-bezier(
-          0.4,
-          0,
-          0.2,
-          1
-        );
+      align-items: center;
+      justify-content: center;
 
       padding:
-        32px 24px;
-
-      display:
-        flex;
-
-      flex-direction:
-        column;
-
-      gap:
-        32px;
-    }
-
-    .drawer.open {
-      transform:
-        translateX(-300px);
-    }
-
-    .drawer-header {
-      display:
-        flex;
-
-      justify-content:
-        space-between;
-
-      align-items:
-        center;
-    }
-
-    .btn-close-drawer {
-      background:
-        none;
-
-      border:
-        none;
-
-      color:
-        #64748b;
-
-      font-size:
-        28px;
-
-      cursor:
-        pointer;
-    }
-
-    .drawer-links {
-      display:
-        flex;
-
-      flex-direction:
-        column;
-
-      gap:
-        16px;
-    }
-
-    .drawer-links a {
-      text-decoration:
-        none;
-
-      color:
-        #94a3b8;
-
-      font-size:
-        13px;
-
-      font-weight:
-        700;
-
-      text-transform:
-        uppercase;
-
-      padding:
-        12px 16px;
-
-      border-radius:
-        10px;
-
-      transition:
-        background 0.15s,
-        color 0.15s;
-    }
-
-    .drawer-links a:hover {
-      background:
-        rgba(255,255,255,0.02);
-
-      color:
-        white;
-    }
-
-    .drawer-links a.active {
-      color:
-        #38bdf8;
-
-      background:
-        rgba(56, 189, 248, 0.05);
-    }
-
-    .admin-nav-link {
-      color:
-        #c084fc !important;
-
-      text-shadow:
-        0 0 8px
-        rgba(192, 132, 252, 0.4);
-    }
-
-    /* =========================================================
-       MAIN
-    ========================================================= */
-
-    main {
-      flex:
-        1;
-
-      max-width:
-        1000px;
-
-      width:
-        100%;
-
-      margin:
-        0 auto;
-
-      padding:
-        40px 16px;
-
-      display:
-        flex;
-
-      flex-direction:
-        column;
-
-      align-items:
-        center;
-
-      text-align:
-        center;
-
-      z-index:
-        10;
-    }
-
-    @media (min-width: 768px) {
-
-      main {
-        padding:
-          80px 24px;
-      }
-
-    }
-
-    /* =========================================================
-       HERO
-    ========================================================= */
-
-    .tag {
-      font-size:
-        11px;
-
-      font-weight:
-        800;
-
-      color:
-        #a78bfa;
-
-      background:
-        rgba(124, 58, 237, 0.08);
+        0 15px;
 
       border:
         1px solid
-        rgba(124, 58, 237, 0.2);
+        rgba(148, 163, 184, 0.12);
 
-      padding:
-        6px 14px;
+      border-radius: 10px;
 
-      border-radius:
-        20px;
-
-      text-transform:
-        uppercase;
-
-      letter-spacing:
-        1px;
-
-      margin-bottom:
-        24px;
-
-      display:
-        inline-block;
-    }
-
-    h1 {
-      font-size:
-        30px;
-
-      font-weight:
-        900;
-
-      line-height:
-        1.2;
-
-      letter-spacing:
-        -1px;
-
-      color:
-        white;
-
-      margin-bottom:
-        20px;
-
-      max-width:
-        800px;
-    }
-
-    @media (min-width: 768px) {
-
-      h1 {
-        font-size:
-          44px;
-
-        line-height:
-          1.15;
-
-        margin-bottom:
-          24px;
-      }
-
-    }
-
-    h1 span {
       background:
-        linear-gradient(
-          to right,
-          #60a5fa,
-          #22d3ee,
-          #a78bfa
-        );
-
-      -webkit-background-clip:
-        text;
-
-      -webkit-text-fill-color:
-        transparent;
-    }
-
-    p.subtitle {
-      font-size:
-        14px;
+        rgba(15, 23, 42, 0.72);
 
       color:
-        #94a3b8;
+        #cbd5e1;
 
-      max-width:
-        700px;
+      text-decoration: none;
 
-      line-height:
-        1.6;
+      font-size: 12px;
 
-      margin-bottom:
-        32px;
+      font-weight: 800;
+
+      transition:
+        transform 0.2s ease,
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
     }
 
-    @media (min-width: 768px) {
+    .header-button:hover {
+      transform: translateY(-1px);
 
-      p.subtitle {
-        font-size:
-          16px;
+      border-color:
+        rgba(96, 165, 250, 0.30);
 
-        margin-bottom:
-          40px;
-      }
+      background:
+        rgba(30, 41, 59, 0.85);
 
+      color: white;
     }
 
-    /* =========================================================
-       CTA
-    ========================================================= */
-
-    .cta-area {
-      display:
-        flex;
-
-      flex-direction:
-        column;
-
-      gap:
-        16px;
-
-      width:
-        100%;
-
-      max-width:
-        400px;
-
-      margin-bottom:
-        48px;
-    }
-
-    @media (min-width: 600px) {
-
-      .cta-area {
-        flex-direction:
-          row;
-
-        max-width:
-          500px;
-
-        margin-bottom:
-          60px;
-      }
-
-    }
-
-    .btn-primary {
-      flex:
-        1;
-
-      padding:
-        14px 24px;
+    .header-button-primary {
+      border-color: transparent;
 
       background:
         linear-gradient(
@@ -690,340 +427,689 @@
           #06b6d4
         );
 
-      color:
-        white;
-
-      text-decoration:
-        none;
-
-      font-size:
-        14px;
-
-      font-weight:
-        700;
-
-      border-radius:
-        12px;
-
-      display:
-        flex;
-
-      align-items:
-        center;
-
-      justify-content:
-        center;
-
-      gap:
-        10px;
+      color: white;
 
       box-shadow:
-        0 4px 14px
-        rgba(79, 70, 229, 0.3);
+        0 8px 24px
+        rgba(79, 70, 229, 0.20);
     }
 
-    .btn-secondary {
-      flex:
-        1;
-
-      padding:
-        14px 24px;
+    .header-button-primary:hover {
+      border-color: transparent;
 
       background:
-        rgba(15, 23, 42, 0.4);
+        linear-gradient(
+          135deg,
+          #4338ca,
+          #0891b2
+        );
+    }
 
-      border:
-        1px solid #1e293b;
+    .header-button-admin {
+      border-color: transparent;
 
-      color:
-        #94a3b8;
+      background:
+        linear-gradient(
+          135deg,
+          #7c3aed,
+          #a855f7
+        );
 
-      text-decoration:
-        none;
+      color: white;
+    }
 
-      font-size:
-        14px;
+    .header-button-admin:hover {
+      border-color: transparent;
+    }
 
-      font-weight:
-        700;
+    .btn-nav-logout {
+      border: none;
 
-      border-radius:
-        12px;
+      background: transparent;
 
-      display:
-        flex;
+      color: #64748b;
 
-      align-items:
-        center;
+      cursor: pointer;
 
-      justify-content:
-        center;
+      padding: 8px;
+
+      font-size: 12px;
+
+      font-weight: 700;
 
       transition:
-        background 0.15s,
-        color 0.15s;
+        color 0.2s ease;
     }
 
-    .btn-secondary:hover {
-      background:
-        rgba(15, 23, 42, 0.7);
-
-      color:
-        white;
+    .btn-nav-logout:hover {
+      color: #f87171;
     }
 
     /* =========================================================
-       SAAS BANNER
+       BURGER
     ========================================================= */
 
-    .saas-banner {
-      width:
-        100%;
+    .btn-burger {
+      width: 42px;
+      height: 42px;
 
-      max-width:
-        850px;
+      display: inline-flex;
 
-      min-height:
-        280px;
-
-      background:
-        rgba(15, 23, 42, 0.4);
+      align-items: center;
+      justify-content: center;
 
       border:
         1px solid
-        rgba(255, 255, 255, 0.04);
+        rgba(148, 163, 184, 0.10);
 
-      border-radius:
-        24px;
+      border-radius: 11px;
 
-      box-shadow:
-        0 20px 50px
-        rgba(0, 0, 0, 0.4),
+      background:
+        rgba(15, 23, 42, 0.65);
 
-        0 0 40px
-        rgba(79, 70, 229, 0.1);
+      color: #94a3b8;
 
-      margin-bottom:
-        48px;
+      cursor: pointer;
 
-      backdrop-filter:
-        blur(12px);
+      transition:
+        0.2s ease;
+    }
 
-      -webkit-backdrop-filter:
-        blur(12px);
+    .btn-burger:hover {
+      border-color:
+        rgba(96, 165, 250, 0.25);
 
-      display:
-        flex;
+      background:
+        rgba(30, 41, 59, 0.80);
 
-      flex-direction:
-        column;
+      color: white;
+    }
 
-      justify-content:
-        space-between;
+    .burger-icon {
+      width: 20px;
+      height: 20px;
+
+      fill: currentColor;
+    }
+
+    /* =========================================================
+       MAIN
+    ========================================================= */
+
+    main {
+      width:
+        min(1120px, calc(100% - 32px));
+
+      margin: 0 auto;
 
       padding:
-        24px;
+        75px 0 100px;
 
-      text-align:
-        left;
+      position: relative;
 
-      position:
-        relative;
-
-      overflow:
-        hidden;
-
-      gap:
-        20px;
+      z-index: 5;
     }
 
     @media (min-width: 768px) {
 
-      .saas-banner {
+      main {
         padding:
-          30px;
-
-        margin-bottom:
-          60px;
+          110px 0 125px;
       }
 
     }
 
-    .banner-glow {
-      position:
-        absolute;
+    /* =========================================================
+       HERO
+    ========================================================= */
 
-      top:
-        -50px;
+    .hero {
+      max-width: 920px;
 
-      right:
-        -50px;
+      margin: 0 auto;
 
-      width:
-        250px;
-
-      height:
-        250px;
-
-      background:
-        rgba(6, 182, 212, 0.15);
-
-      filter:
-        blur(50px);
-
-      border-radius:
-        50%;
+      text-align: center;
     }
 
-    .banner-header {
-      display:
-        flex;
+    .tag {
+      display: inline-flex;
 
-      justify-content:
-        space-between;
+      align-items: center;
 
-      align-items:
-        center;
+      gap: 8px;
 
-      border-bottom:
-        1px solid
-        rgba(255,255,255,0.03);
+      padding:
+        7px 14px;
 
-      padding-bottom:
-        16px;
-    }
-
-    .banner-tab {
-      font-size:
-        10px;
-
-      font-weight:
-        800;
-
-      text-transform:
-        uppercase;
-
-      color:
-        #38bdf8;
-
-      letter-spacing:
-        1px;
-    }
-
-    .banner-badge {
-      font-size:
-        10px;
-
-      font-weight:
-        700;
-
-      color:
-        #34d399;
-
-      background:
-        rgba(52, 211, 153, 0.1);
+      margin-bottom: 25px;
 
       border:
         1px solid
-        rgba(52, 211, 153, 0.2);
+        rgba(129, 140, 248, 0.20);
 
-      padding:
-        4px 12px;
+      border-radius: 999px;
 
-      border-radius:
-        20px;
-    }
-
-    .banner-body {
-      flex:
-        1;
-
-      display:
-        flex;
-
-      flex-direction:
-        column;
-
-      justify-content:
-        center;
-
-      gap:
-        8px;
-
-      margin-top:
-        16px;
-    }
-
-    .banner-title {
-      font-size:
-        18px;
-
-      font-weight:
-        800;
+      background:
+        rgba(99, 102, 241, 0.07);
 
       color:
-        white;
+        #a5b4fc;
+
+      font-size: 10px;
+
+      font-weight: 900;
+
+      letter-spacing: 1.1px;
+
+      text-transform: uppercase;
     }
 
-    .banner-desc {
+    .tag::before {
+      content: "";
+
+      width: 6px;
+      height: 6px;
+
+      border-radius: 50%;
+
+      background: #818cf8;
+
+      box-shadow:
+        0 0 10px
+        rgba(129, 140, 248, 0.85);
+    }
+
+    h1 {
+      max-width: 920px;
+
+      margin:
+        0 auto 25px;
+
+      color: white;
+
       font-size:
-        13px;
+        clamp(38px, 7vw, 76px);
 
-      color:
-        #64748b;
+      font-weight: 950;
 
-      max-width:
-        500px;
+      line-height: 1.02;
+
+      letter-spacing: -3px;
+    }
+
+    h1 span {
+      background:
+        linear-gradient(
+          90deg,
+          #60a5fa,
+          #22d3ee 42%,
+          #a78bfa 85%
+        );
+
+      -webkit-background-clip: text;
+      background-clip: text;
+
+      -webkit-text-fill-color: transparent;
+
+      filter:
+        drop-shadow(
+          0 0 28px
+          rgba(56, 189, 248, 0.12)
+        );
+    }
+
+    p.subtitle {
+      max-width: 760px;
+
+      margin:
+        0 auto 40px;
+
+      color: #94a3b8;
+
+      font-size:
+        clamp(14px, 2vw, 17px);
+
+      line-height: 1.75;
     }
 
     /* =========================================================
-       STATISTIQUES
+       CTA
     ========================================================= */
 
-    .stats-grid {
-      display:
-        grid;
-
-      grid-template-columns:
-        1fr;
-
-      gap:
-        16px;
-
+    .cta-area {
       width:
-        100%;
+        min(100%, 570px);
 
-      max-width:
-        800px;
+      margin:
+        0 auto 75px;
 
-      background:
-        rgba(15, 23, 42, 0.45);
+      display: grid;
 
-      border:
-        1px solid
-        rgba(255, 255, 255, 0.03);
+      grid-template-columns: 1fr;
 
-      padding:
-        24px;
-
-      border-radius:
-        20px;
-
-      box-shadow:
-        0 10px 30px
-        rgba(0, 0, 0, 0.2);
+      gap: 12px;
     }
 
-    @media (min-width: 480px) {
+    @media (min-width: 620px) {
 
-      .stats-grid {
+      .cta-area {
         grid-template-columns:
           repeat(2, 1fr);
       }
 
     }
 
-    @media (min-width: 768px) {
+    .cta-button {
+      min-height: 56px;
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      gap: 10px;
+
+      padding:
+        0 20px;
+
+      border-radius: 14px;
+
+      text-decoration: none;
+
+      font-size: 13px;
+
+      font-weight: 850;
+
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease,
+        border-color 0.2s ease;
+    }
+
+    .cta-button:hover {
+      transform:
+        translateY(-3px);
+    }
+
+    .cta-primary {
+      color: white;
+
+      background:
+        linear-gradient(
+          135deg,
+          #4f46e5,
+          #06b6d4
+        );
+
+      box-shadow:
+        0 14px 35px
+        rgba(79, 70, 229, 0.24);
+    }
+
+    .cta-primary:hover {
+      box-shadow:
+        0 18px 45px
+        rgba(6, 182, 212, 0.25);
+    }
+
+    .cta-secondary {
+      color: #e2e8f0;
+
+      border:
+        1px solid
+        rgba(148, 163, 184, 0.12);
+
+      background:
+        rgba(15, 23, 42, 0.72);
+
+      box-shadow:
+        0 10px 30px
+        rgba(0, 0, 0, 0.16);
+    }
+
+    .cta-secondary:hover {
+      border-color:
+        rgba(96, 165, 250, 0.25);
+
+      background:
+        rgba(30, 41, 59, 0.80);
+    }
+
+    .discord-svg {
+      width: 19px;
+      height: 19px;
+
+      fill: currentColor;
+    }
+
+    /* =========================================================
+       PRODUCT PREVIEW
+    ========================================================= */
+
+    .product-preview {
+      width: 100%;
+
+      position: relative;
+
+      margin-bottom: 75px;
+
+      padding: 1px;
+
+      border-radius: 25px;
+
+      background:
+        linear-gradient(
+          135deg,
+          rgba(96, 165, 250, 0.20),
+          rgba(34, 211, 238, 0.06),
+          rgba(167, 139, 250, 0.18)
+        );
+
+      box-shadow:
+        0 35px 100px
+        rgba(0, 0, 0, 0.35);
+    }
+
+    .product-preview-inner {
+      min-height: 340px;
+
+      position: relative;
+
+      overflow: hidden;
+
+      border-radius: 24px;
+
+      background:
+        linear-gradient(
+          145deg,
+          rgba(15, 23, 42, 0.96),
+          rgba(3, 7, 18, 0.98)
+        );
+    }
+
+    .preview-glow {
+      position: absolute;
+
+      width: 380px;
+      height: 380px;
+
+      top: -230px;
+      right: -100px;
+
+      border-radius: 50%;
+
+      background:
+        rgba(6, 182, 212, 0.12);
+
+      filter: blur(80px);
+
+      pointer-events: none;
+    }
+
+    .preview-header {
+      height: 60px;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      padding:
+        0 20px;
+
+      border-bottom:
+        1px solid
+        rgba(148, 163, 184, 0.08);
+
+      background:
+        rgba(15, 23, 42, 0.65);
+    }
+
+    .preview-brand {
+      display: flex;
+
+      align-items: center;
+
+      gap: 9px;
+
+      color: #cbd5e1;
+
+      font-size: 11px;
+
+      font-weight: 800;
+
+      letter-spacing: 0.8px;
+
+      text-transform: uppercase;
+    }
+
+    .preview-brand-icon {
+      width: 25px;
+      height: 25px;
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 7px;
+
+      background:
+        linear-gradient(
+          135deg,
+          #4f46e5,
+          #06b6d4
+        );
+
+      color: white;
+
+      font-size: 11px;
+
+      font-weight: 900;
+    }
+
+    .preview-status {
+      display: flex;
+
+      align-items: center;
+
+      gap: 7px;
+
+      color: #6ee7b7;
+
+      font-size: 9px;
+
+      font-weight: 800;
+
+      letter-spacing: 0.7px;
+
+      text-transform: uppercase;
+    }
+
+    .preview-status::before {
+      content: "";
+
+      width: 6px;
+      height: 6px;
+
+      border-radius: 50%;
+
+      background: #34d399;
+
+      box-shadow:
+        0 0 10px
+        rgba(52, 211, 153, 0.8);
+    }
+
+    .preview-content {
+      padding: 24px;
+
+      display: grid;
+
+      grid-template-columns: 1fr;
+
+      gap: 14px;
+    }
+
+    @media (min-width: 700px) {
+
+      .preview-content {
+        grid-template-columns:
+          1.3fr 0.7fr;
+      }
+
+    }
+
+    .preview-main-card,
+    .preview-small-card {
+      border:
+        1px solid
+        rgba(148, 163, 184, 0.08);
+
+      background:
+        rgba(15, 23, 42, 0.55);
+
+      border-radius: 17px;
+
+      padding: 20px;
+
+      text-align: left;
+    }
+
+    .preview-main-card {
+      min-height: 220px;
+    }
+
+    .preview-small-stack {
+      display: grid;
+
+      gap: 14px;
+    }
+
+    .preview-small-card {
+      min-height: 103px;
+    }
+
+    .preview-label {
+      margin-bottom: 9px;
+
+      color: #64748b;
+
+      font-size: 9px;
+
+      font-weight: 800;
+
+      letter-spacing: 0.9px;
+
+      text-transform: uppercase;
+    }
+
+    .preview-title {
+      margin-bottom: 8px;
+
+      color: white;
+
+      font-size: 19px;
+
+      font-weight: 850;
+    }
+
+    .preview-description {
+      color: #64748b;
+
+      font-size: 11px;
+
+      line-height: 1.65;
+    }
+
+    .preview-value {
+      color: white;
+
+      font-size: 24px;
+
+      font-weight: 900;
+    }
+
+    .preview-value span {
+      color: #22d3ee;
+
+      font-size: 10px;
+
+      font-weight: 800;
+    }
+
+    /* =========================================================
+       SECTION HEADINGS
+    ========================================================= */
+
+    .section-heading {
+      margin-bottom: 26px;
+
+      text-align: center;
+    }
+
+    .section-kicker {
+      display: block;
+
+      margin-bottom: 8px;
+
+      color: #818cf8;
+
+      font-size: 10px;
+
+      font-weight: 900;
+
+      letter-spacing: 1.5px;
+
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      color: white;
+
+      font-size:
+        clamp(22px, 4vw, 30px);
+
+      font-weight: 900;
+
+      letter-spacing: -0.8px;
+    }
+
+    /* =========================================================
+       STATS
+    ========================================================= */
+
+    .stats-grid {
+      width: 100%;
+
+      display: grid;
+
+      grid-template-columns:
+        repeat(2, 1fr);
+
+      gap: 10px;
+
+      margin-bottom: 60px;
+
+      padding: 10px;
+
+      border:
+        1px solid
+        rgba(148, 163, 184, 0.07);
+
+      border-radius: 22px;
+
+      background:
+        rgba(15, 23, 42, 0.52);
+
+      box-shadow:
+        0 25px 70px
+        rgba(0, 0, 0, 0.20);
+    }
+
+    @media (min-width: 600px) {
 
       .stats-grid {
         grid-template-columns:
@@ -1033,197 +1119,219 @@
     }
 
     .stat-item {
-      display:
-        flex;
+      min-height: 105px;
 
-      flex-direction:
-        column;
+      display: flex;
 
-      align-items:
-        center;
+      flex-direction: column;
+
+      align-items: center;
+      justify-content: center;
+
+      padding: 15px 8px;
+
+      border-radius: 15px;
+
+      transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+    }
+
+    .stat-item:hover {
+      background:
+        rgba(30, 41, 59, 0.50);
+
+      transform:
+        translateY(-2px);
     }
 
     .stat-num {
-      font-size:
-        28px;
+      min-height: 40px;
 
-      font-weight:
-        800;
+      display: flex;
+
+      align-items: center;
+
+      color: white;
+
+      font-size:
+        clamp(22px, 4vw, 30px);
+
+      font-weight: 900;
+
+      letter-spacing: -1px;
 
       background:
         linear-gradient(
-          to right,
+          90deg,
           #38bdf8,
           #818cf8
         );
 
-      -webkit-background-clip:
-        text;
+      -webkit-background-clip: text;
+      background-clip: text;
 
-      -webkit-text-fill-color:
-        transparent;
-
-      min-height:
-        42px;
-
-      display:
-        flex;
-
-      align-items:
-        center;
+      -webkit-text-fill-color: transparent;
     }
 
     .stat-label {
-      font-size:
-        10px;
+      margin-top: 5px;
 
-      font-weight:
-        700;
+      color: #64748b;
 
-      color:
-        #64748b;
+      font-size: 8px;
 
-      text-transform:
-        uppercase;
+      font-weight: 800;
 
-      letter-spacing:
-        1px;
+      letter-spacing: 1px;
 
-      margin-top:
-        4px;
+      text-transform: uppercase;
+
+      text-align: center;
     }
 
     /* =========================================================
        TERMINAL
     ========================================================= */
 
+    .terminal-wrapper {
+      width: 100%;
+
+      max-width: 950px;
+
+      margin: 0 auto;
+    }
+
     .terminal {
-      width:
-        100%;
+      width: 100%;
 
-      max-width:
-        800px;
-
-      margin:
-        16px auto 0;
-
-      background:
-        #020617;
+      overflow: hidden;
 
       border:
-        1px solid #1e293b;
+        1px solid
+        rgba(148, 163, 184, 0.11);
 
-      border-radius:
-        12px;
+      border-radius: 18px;
+
+      background: #020617;
 
       box-shadow:
-        0 10px 40px
-        rgba(0,0,0,0.8);
-
-      overflow:
-        hidden;
-
-      text-align:
-        left;
+        0 30px 80px
+        rgba(0, 0, 0, 0.45);
     }
 
     .terminal-header {
-      background:
-        #0f172a;
+      min-height: 52px;
 
-      border-bottom:
-        1px solid #1e293b;
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
 
       padding:
-        10px 16px;
+        0 16px;
 
-      display:
-        flex;
+      background: #0f172a;
 
-      justify-content:
-        space-between;
+      border-bottom:
+        1px solid
+        rgba(148, 163, 184, 0.08);
+    }
 
-      align-items:
-        center;
+    .terminal-left {
+      display: flex;
+
+      align-items: center;
+
+      gap: 10px;
     }
 
     .terminal-dots {
-      display:
-        flex;
+      display: flex;
 
-      align-items:
-        center;
-
-      gap:
-        8px;
+      gap: 6px;
     }
 
     .terminal-dot {
-      width:
-        10px;
+      width: 9px;
+      height: 9px;
 
-      height:
-        10px;
-
-      border-radius:
-        50%;
-
-      display:
-        inline-block;
+      border-radius: 50%;
     }
 
     .terminal-title {
-      color:
-        #64748b;
+      color: #64748b;
 
-      font-size:
-        11px;
+      font-size: 10px;
 
-      font-weight:
-        bold;
+      font-weight: 800;
 
-      margin-left:
-        8px;
+      letter-spacing: 0.8px;
 
-      letter-spacing:
-        1px;
+      text-transform: uppercase;
     }
 
     .terminal-live {
-      color:
-        #38bdf8;
+      display: inline-flex;
 
-      font-size:
-        10px;
+      align-items: center;
 
-      font-weight:
-        bold;
+      gap: 6px;
+
+      color: #38bdf8;
+
+      font-size: 9px;
+
+      font-weight: 900;
+
+      letter-spacing: 0.8px;
+    }
+
+    .terminal-live::before {
+      content: "";
+
+      width: 5px;
+      height: 5px;
+
+      border-radius: 50%;
+
+      background: #38bdf8;
+
+      box-shadow:
+        0 0 9px
+        rgba(56, 189, 248, 0.9);
+
+      animation:
+        omnixPulse 1.8s infinite;
     }
 
     .terminal-screen {
-      padding:
-        16px;
+      height: 215px;
 
-      height:
-        180px;
+      padding: 17px;
 
-      overflow-y:
-        auto;
+      overflow-y: auto;
 
-      font-size:
-        12px;
+      background: #030712;
 
-      color:
-        #a3e635;
-
-      line-height:
-        1.5;
+      color: #a3e635;
 
       font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
         monospace;
 
-      background:
-        #030712;
+      font-size: 11px;
+
+      line-height: 1.7;
+
+      scrollbar-width: thin;
+
+      scrollbar-color:
+        #334155
+        transparent;
     }
 
     /* =========================================================
@@ -1231,36 +1339,224 @@
     ========================================================= */
 
     footer {
+      width: 100%;
+
       border-top:
-        1px solid #0f172a;
+        1px solid
+        rgba(148, 163, 184, 0.06);
 
-      padding:
-        24px;
+      background:
+        rgba(3, 7, 18, 0.70);
 
-      text-align:
-        center;
+      padding: 25px 16px;
 
-      font-size:
-        12px;
+      text-align: center;
+    }
 
-      color:
-        #475569;
+    footer p {
+      color: #475569;
+
+      font-size: 11px;
     }
 
     /* =========================================================
-       DISCORD SVG
+       DRAWER OVERLAY
     ========================================================= */
 
-    .discord-svg {
-      width:
-        18px;
+    .drawer-overlay {
+      position: fixed;
 
-      height:
-        18px;
+      inset: 0;
 
-      fill:
-        currentColor;
+      z-index: 900;
+
+      background:
+        rgba(0, 0, 0, 0.55);
+
+      backdrop-filter: blur(3px);
+
+      opacity: 0;
+
+      visibility: hidden;
+
+      transition:
+        opacity 0.25s ease,
+        visibility 0.25s ease;
     }
+
+    .drawer-overlay.open {
+      opacity: 1;
+
+      visibility: visible;
+    }
+
+    /* =========================================================
+       ACCESSIBILITY
+    ========================================================= */
+
+    :focus-visible {
+      outline:
+        2px solid
+        #38bdf8;
+
+      outline-offset: 3px;
+    }
+
+    /* =========================================================
+       ANIMATIONS
+    ========================================================= */
+
+    @keyframes omnixPulse {
+
+      0%,
+      100% {
+        opacity: 0.45;
+        transform: scale(0.85);
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.15);
+      }
+
+    }
+
+    @keyframes omnixAppear {
+
+      from {
+        opacity: 0;
+
+        transform:
+          translateY(15px);
+      }
+
+      to {
+        opacity: 1;
+
+        transform:
+          translateY(0);
+      }
+
+    }
+
+    .hero,
+    .product-preview,
+    .stats-grid,
+    .terminal-wrapper {
+      animation:
+        omnixAppear
+        0.7s
+        ease
+        both;
+    }
+
+    .product-preview {
+      animation-delay: 0.08s;
+    }
+
+    .stats-grid {
+      animation-delay: 0.15s;
+    }
+
+    .terminal-wrapper {
+      animation-delay: 0.22s;
+    }
+
+    /* =========================================================
+       MOBILE
+    ========================================================= */
+
+    @media (max-width: 599px) {
+
+      .omnix-header-inner {
+        width:
+          min(
+            100% - 20px,
+            1180px
+          );
+
+        min-height: 64px;
+      }
+
+      .logo-text {
+        font-size: 16px;
+      }
+
+      #auth-buttons-header
+      .btn-nav-logout {
+        display: none;
+      }
+
+      #auth-buttons-header
+      .header-button {
+        min-height: 36px;
+
+        padding:
+          0 10px;
+
+        font-size: 10px;
+      }
+
+      main {
+        width:
+          min(
+            100% - 20px,
+            1120px
+          );
+
+        padding-top: 55px;
+      }
+
+      h1 {
+        letter-spacing: -2px;
+      }
+
+      .product-preview-inner {
+        min-height: 0;
+      }
+
+      .preview-header {
+        padding:
+          0 14px;
+      }
+
+      .preview-content {
+        padding: 14px;
+      }
+
+      .preview-main-card {
+        min-height: 170px;
+      }
+
+      .terminal-screen {
+        height: 180px;
+      }
+
+    }
+
+    /* =========================================================
+       REDUCED MOTION
+    ========================================================= */
+
+    @media (prefers-reduced-motion: reduce) {
+
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+
+        animation-duration:
+          0.01ms !important;
+
+        animation-iteration-count:
+          1 !important;
+
+        transition-duration:
+          0.01ms !important;
+      }
+
+    }
+
   </style>
 </head>
 
@@ -1270,8 +1566,27 @@
        BACKGROUND
   ======================================================== -->
 
-  <div class="halo-top"></div>
-  <div class="halo-bottom"></div>
+  <div
+    class="omnix-background"
+    aria-hidden="true"
+  >
+
+    <div class="omnix-background-grid"></div>
+
+    <div
+      class="omnix-halo omnix-halo-top"
+    ></div>
+
+    <div
+      class="omnix-halo omnix-halo-right"
+    ></div>
+
+    <div
+      class="omnix-halo omnix-halo-bottom"
+    ></div>
+
+  </div>
+
 
   <!-- =======================================================
        HEADER
@@ -1279,91 +1594,104 @@
 
   <header>
 
-    <a
-      href="/"
-      class="logo-area"
-    >
+    <div class="omnix-header-inner">
 
-      <img
-        src="/logo.png"
-        id="logo-main-img"
-        class="logo-img"
-        alt="OMNIX Logo"
-        onerror="
-          this.style.display='none';
-          document.getElementById('logo-fallback-box').style.display='flex';
-        "
+      <a
+        href="/"
+        class="logo-area"
+        aria-label="OMNIX — Accueil"
       >
 
-      <div
-        id="logo-fallback-box"
-        style="
-          display:none;
-          width:38px;
-          height:38px;
-          border-radius:10px;
-          background:linear-gradient(
-            135deg,
-            #06b6d4,
-            #7c3aed
-          );
-          align-items:center;
-          justify-content:center;
-          font-weight:900;
-          color:white;
-          font-size:18px;
-          box-shadow:
-            0 4px 12px
-            rgba(6,182,212,0.2);
-        "
-      >
-        O
-      </div>
+        <div class="logo-wrapper">
 
-      <span class="logo-text">
-        OMNIX
-      </span>
+          <img
+            src="/logo.png"
+            id="logo-main-img"
+            class="logo-img"
+            alt="OMNIX"
+          >
 
-    </a>
+          <div
+            id="logo-fallback-box"
+            class="logo-fallback"
+          >
+            O
+          </div>
 
-    <div class="header-controls">
+        </div>
 
-      <div
-        id="auth-buttons-header"
-        style="
-          display:flex;
-          align-items:center;
-          gap:16px;
-        "
-      ></div>
+        <span class="logo-text">
+          OMNIX
+        </span>
 
-      <button
-        type="button"
-        onclick="toggleDrawer(true)"
-        class="btn-burger"
-        aria-label="Ouvrir le menu"
-      >
-        <svg
-          class="burger-icon"
-          viewBox="0 0 24 24"
+        <span class="brand-status">
+
+          <span
+            class="brand-status-dot"
+          ></span>
+
+          Operational
+
+        </span>
+
+      </a>
+
+
+      <div class="header-controls">
+
+        <div
+          id="auth-buttons-header"
+        ></div>
+
+        <button
+          type="button"
+          onclick="toggleDrawer(true)"
+          class="btn-burger"
+          aria-label="Ouvrir le menu"
+          aria-controls="omnix-sidebar"
         >
-          <path
-            d="
-              M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z
-            "
-          />
-        </svg>
-      </button>
+
+          <svg
+            class="burger-icon"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+
+            <path
+              d="
+                M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z
+              "
+            />
+
+          </svg>
+
+        </button>
+
+      </div>
 
     </div>
 
   </header>
 
+
   <!-- =======================================================
-       SIDEBAR
+       SIDEBAR EXISTANTE
   ======================================================== -->
 
   <%- include('partials/sidebar') %>
+
+
+  <!-- =======================================================
+       DRAWER OVERLAY
+  ======================================================== -->
+
+  <div
+    id="drawer-overlay"
+    class="drawer-overlay"
+    onclick="toggleDrawer(false)"
+    aria-hidden="true"
+  ></div>
+
 
   <!-- =======================================================
        MAIN
@@ -1371,219 +1699,329 @@
 
   <main>
 
-    <span class="tag">
-      Plateforme Intégrée SaaS
-    </span>
-
-    <h1>
-      Gérez votre communauté avec
-      <span>OMNIX</span>
-    </h1>
-
-    <p class="subtitle">
-      OMNIX n’est pas un simple bot Discord.
-      C’est une plateforme intelligente conçue
-      pour automatiser, protéger et développer
-      votre communauté. Gérez l’intégralité de
-      votre serveur depuis une interface moderne,
-      profitez d’outils avancés de modération,
-      d’une économie complète, d’une IA intégrée
-      et d’un tableau de bord puissant.
-    </p>
-
     <!-- =====================================================
-         CTA DYNAMIQUE
+         HERO
     ====================================================== -->
 
-    <div
-      class="cta-area"
-      id="cta-action-area"
-    ></div>
+    <section class="hero">
 
-    <!-- =====================================================
-         BANNIÈRE
-    ====================================================== -->
+      <span class="tag">
+        Plateforme intégrée SaaS
+      </span>
 
-    <div class="saas-banner">
+      <h1>
+        Gérez votre communauté avec
+        <span>OMNIX</span>
+      </h1>
 
-      <div class="banner-glow"></div>
+      <p class="subtitle">
+        OMNIX n'est pas un simple bot Discord.
+        C'est une plateforme intelligente conçue
+        pour automatiser, protéger et développer
+        votre communauté.
+        Modération, sécurité, économie, IA,
+        statistiques et gestion réunis dans
+        une seule expérience.
+      </p>
 
-      <div class="banner-header">
 
-        <span class="banner-tab">
-          OMNIX Console — Aperçu de l'interface
-        </span>
-
-        <span class="banner-badge">
-          SaaS PRO
-        </span>
-
-      </div>
-
-      <div class="banner-body">
-
-        <h4 class="banner-title">
-          Double Sécurité & Intelligence
-        </h4>
-
-        <p class="banner-desc">
-          Activez l'AutoMod, configurez vos
-          salons d'assistance privés par tickets
-          et configurez les filtres de sécurité
-          en 1 clic.
-        </p>
-
-      </div>
+      <!-- =================================================
+           CTA DYNAMIQUE
+      ================================================== -->
 
       <div
-        style="
-          font-size:11px;
-          color:#475569;
-          font-weight:700;
-          text-transform:uppercase;
-        "
-      >
-        Mise à jour v2.4
+        class="cta-area"
+        id="cta-action-area"
+      ></div>
+
+    </section>
+
+
+    <!-- =====================================================
+         PRODUCT PREVIEW
+    ====================================================== -->
+
+    <section class="product-preview">
+
+      <div class="product-preview-inner">
+
+        <div
+          class="preview-glow"
+          aria-hidden="true"
+        ></div>
+
+
+        <div class="preview-header">
+
+          <div class="preview-brand">
+
+            <span class="preview-brand-icon">
+              O
+            </span>
+
+            OMNIX Console
+
+          </div>
+
+          <div class="preview-status">
+            System Online
+          </div>
+
+        </div>
+
+
+        <div class="preview-content">
+
+          <div class="preview-main-card">
+
+            <div class="preview-label">
+              Administration intelligente
+            </div>
+
+            <h2 class="preview-title">
+              Contrôlez votre serveur.
+              Automatisez le reste.
+            </h2>
+
+            <p class="preview-description">
+              Configurez la sécurité, les tickets,
+              la modération, l'économie, l'IA et
+              les statistiques depuis votre
+              environnement OMNIX.
+            </p>
+
+          </div>
+
+
+          <div class="preview-small-stack">
+
+            <div class="preview-small-card">
+
+              <div class="preview-label">
+                Sécurité
+              </div>
+
+              <div class="preview-value">
+                AutoMod
+              </div>
+
+              <p class="preview-description">
+                Protection automatisée.
+              </p>
+
+            </div>
+
+
+            <div class="preview-small-card">
+
+              <div class="preview-label">
+                Intelligence
+              </div>
+
+              <div class="preview-value">
+                IA
+                <span>INTEGRATED</span>
+              </div>
+
+              <p class="preview-description">
+                Assistance et automatisation.
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
       </div>
 
-    </div>
+    </section>
+
 
     <!-- =====================================================
          STATISTIQUES
     ====================================================== -->
 
-    <div
-      class="stats-grid"
-      style="margin-bottom:32px;"
-    >
+    <section>
 
-      <div class="stat-item">
+      <div class="section-heading">
 
-        <span
-          class="stat-num"
-          id="s-servers"
-        >
-          ...
+        <span class="section-kicker">
+          Infrastructure
         </span>
 
-        <span class="stat-label">
-          Serveurs
-        </span>
+        <h2 class="section-title">
+          OMNIX en temps réel
+        </h2>
 
       </div>
 
-      <div class="stat-item">
 
-        <span
-          class="stat-num"
-          id="s-users"
-        >
-          ...
-        </span>
+      <div
+        class="stats-grid"
+        aria-label="Statistiques OMNIX"
+      >
 
-        <span class="stat-label">
-          Membres
-        </span>
-
-      </div>
-
-      <div class="stat-item">
-
-        <span
-          class="stat-num"
-          id="s-commands"
-        >
-          ...
-        </span>
-
-        <span class="stat-label">
-          Commandes
-        </span>
-
-      </div>
-
-      <div class="stat-item">
-
-        <span
-          class="stat-num"
-          id="s-uptime"
-        >
-          ...
-        </span>
-
-        <span class="stat-label">
-          Uptime
-        </span>
-
-      </div>
-
-      <div class="stat-item">
-
-        <span
-          class="stat-num"
-          id="s-latency"
-        >
-          ...
-        </span>
-
-        <span class="stat-label">
-          Latence
-        </span>
-
-      </div>
-
-    </div>
-
-    <!-- =====================================================
-         TERMINAL DIAGNOSTIC
-    ====================================================== -->
-
-    <div
-      id="index-terminal"
-      class="terminal"
-    >
-
-      <div class="terminal-header">
-
-        <div class="terminal-dots">
+        <div class="stat-item">
 
           <span
-            class="terminal-dot"
-            style="background:#ef4444;"
-          ></span>
+            class="stat-num"
+            id="s-servers"
+          >
+            ...
+          </span>
 
-          <span
-            class="terminal-dot"
-            style="background:#f59e0b;"
-          ></span>
-
-          <span
-            class="terminal-dot"
-            style="background:#10b981;"
-          ></span>
-
-          <span class="terminal-title">
-            ⚙️ CONSOLE DE DIAGNOSTIC OMNIX (INDEX)
+          <span class="stat-label">
+            Serveurs
           </span>
 
         </div>
 
-        <span class="terminal-live">
-          LIVE LOGS
+
+        <div class="stat-item">
+
+          <span
+            class="stat-num"
+            id="s-users"
+          >
+            ...
+          </span>
+
+          <span class="stat-label">
+            Membres
+          </span>
+
+        </div>
+
+
+        <div class="stat-item">
+
+          <span
+            class="stat-num"
+            id="s-commands"
+          >
+            ...
+          </span>
+
+          <span class="stat-label">
+            Commandes
+          </span>
+
+        </div>
+
+
+        <div class="stat-item">
+
+          <span
+            class="stat-num"
+            id="s-uptime"
+          >
+            ...
+          </span>
+
+          <span class="stat-label">
+            Uptime
+          </span>
+
+        </div>
+
+
+        <div class="stat-item">
+
+          <span
+            class="stat-num"
+            id="s-latency"
+          >
+            ...
+          </span>
+
+          <span class="stat-label">
+            Latence
+          </span>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         TERMINAL
+    ====================================================== -->
+
+    <section class="terminal-wrapper">
+
+      <div class="section-heading">
+
+        <span class="section-kicker">
+          Live System
         </span>
 
+        <h2 class="section-title">
+          Console de diagnostic
+        </h2>
+
       </div>
+
 
       <div
-        id="index-terminal-screen"
-        class="terminal-screen"
+        id="index-terminal"
+        class="terminal"
       >
-        [SYSTEM] Console de diagnostic prête.
+
+        <div class="terminal-header">
+
+          <div class="terminal-left">
+
+            <div class="terminal-dots">
+
+              <span
+                class="terminal-dot"
+                style="background:#ef4444;"
+              ></span>
+
+              <span
+                class="terminal-dot"
+                style="background:#f59e0b;"
+              ></span>
+
+              <span
+                class="terminal-dot"
+                style="background:#10b981;"
+              ></span>
+
+            </div>
+
+            <span class="terminal-title">
+              OMNIX / index
+            </span>
+
+          </div>
+
+          <span class="terminal-live">
+            LIVE LOGS
+          </span>
+
+        </div>
+
+
+        <div
+          id="index-terminal-screen"
+          class="terminal-screen"
+          aria-live="polite"
+        >
+
+          [SYSTEM] Console de diagnostic prête.
+
+        </div>
+
       </div>
 
-    </div>
+    </section>
 
   </main>
+
 
   <!-- =======================================================
        FOOTER
@@ -1598,16 +2036,16 @@
 
   </footer>
 
+
   <!-- =======================================================
-       JAVASCRIPT
-       NOUVEAU SYSTÈME D'AUTHENTIFICATION
+       JAVASCRIPT — PARTIE 1
   ======================================================== -->
 
   <script>
 
     /* =======================================================
-       LOGS
-    ======================================================== */
+       LOG SYSTEM
+    ======================================================= */
 
     function addLaunchLog(
       type,
@@ -1634,43 +2072,38 @@
       let label =
         'INFO';
 
-      if (type === 'warn') {
+      switch (type) {
 
-        color =
-          '#f59e0b';
+        case 'warn':
 
-        label =
-          'WARN';
+          color = '#f59e0b';
+          label = 'WARN';
 
-      } else if (
-        type === 'error'
-      ) {
+          break;
 
-        color =
-          '#ef4444';
+        case 'error':
 
-        label =
-          'ERROR';
+          color = '#ef4444';
+          label = 'ERROR';
 
-      } else if (
-        type === 'debug'
-      ) {
+          break;
 
-        color =
-          '#38bdf8';
+        case 'debug':
 
-        label =
-          'DEBUG';
+          color = '#38bdf8';
+          label = 'DEBUG';
 
-      } else if (
-        type === 'success'
-      ) {
+          break;
 
-        color =
-          '#10b981';
+        case 'success':
 
-        label =
-          'SUCCESS';
+          color = '#10b981';
+          label = 'SUCCESS';
+
+          break;
+
+        default:
+          break;
 
       }
 
@@ -1688,10 +2121,8 @@
       /*
        * IMPORTANT :
        *
-       * textContent au lieu de innerHTML.
-       *
-       * Cela empêche un message externe
-       * de pouvoir injecter du HTML.
+       * textContent est utilisé afin
+       * d'empêcher l'injection HTML.
        */
 
       line.textContent =
@@ -1705,9 +2136,10 @@
         screen.scrollHeight;
     }
 
+
     /* =======================================================
        ERREURS JAVASCRIPT
-    ======================================================== */
+    ======================================================= */
 
     window.onerror =
       function (
@@ -1732,22 +2164,125 @@
         return false;
       };
 
+
+    /* =======================================================
+       LOGO FALLBACK
+    ======================================================= */
+
+    function setupLogoFallback() {
+
+      const image =
+        document.getElementById(
+          'logo-main-img'
+        );
+
+      const fallback =
+        document.getElementById(
+          'logo-fallback-box'
+        );
+
+      if (
+        !image ||
+        !fallback
+      ) {
+        return;
+      }
+
+      image.addEventListener(
+        'error',
+        function () {
+
+          image.style.display =
+            'none';
+
+          fallback.style.display =
+            'flex';
+
+        }
+      );
+
+      if (
+        image.complete &&
+        image.naturalWidth === 0
+      ) {
+
+        image.style.display =
+          'none';
+
+        fallback.style.display =
+          'flex';
+      }
+    }
+
+
+    /* =======================================================
+       DRAWER
+    ======================================================= */
+
+    function toggleDrawer(
+      open
+    ) {
+
+      const drawer =
+        document.querySelector(
+          '.drawer'
+        );
+
+      const overlay =
+        document.getElementById(
+          'drawer-overlay'
+        );
+
+      if (!drawer) {
+        return;
+      }
+
+      if (open) {
+
+        drawer.classList.add(
+          'open'
+        );
+
+        if (overlay) {
+
+          overlay.classList.add(
+            'open'
+          );
+
+        }
+
+        document.body.style.overflow =
+          'hidden';
+
+      } else {
+
+        drawer.classList.remove(
+          'open'
+        );
+
+        if (overlay) {
+
+          overlay.classList.remove(
+            'open'
+          );
+
+        }
+
+        document.body.style.overflow =
+          '';
+      }
+    }
+
+
     /* =======================================================
        SESSION
-    ======================================================== */
+    ======================================================= */
 
     /**
-     * IMPORTANT :
+     * Le JWT reste uniquement côté serveur
+     * dans le cookie httpOnly.
      *
-     * Le JWT n'est plus accessible côté JavaScript.
-     *
-     * Il est stocké dans :
-     *
-     *     jwt_token
-     *
-     * sous forme de cookie httpOnly.
-     *
-     * Le navigateur l'envoie automatiquement.
+     * Aucun token n'est manipulé côté client.
      */
 
     async function getCurrentUser() {
@@ -1773,10 +2308,6 @@
               }
             }
           );
-
-        /*
-         * Pas connecté.
-         */
 
         if (
           response.status === 401
@@ -1824,9 +2355,10 @@
       }
     }
 
+
     /* =======================================================
        LOGOUT
-    ======================================================== */
+    ======================================================= */
 
     function logout() {
 
@@ -1843,9 +2375,56 @@
         '/api/auth/logout';
     }
 
+
     /* =======================================================
-       BOUTONS DYNAMIQUES
-    ======================================================== */
+       DISCORD ICON
+    ======================================================= */
+
+    function discordIcon() {
+
+      return `
+        <svg
+          class="discord-svg"
+          viewBox="0 0 127.14 96.36"
+          aria-hidden="true"
+        >
+          <path
+            d="
+              M107.7,8.07
+              A105.15,105.15,0,0,0,77.26,0
+              a77.19,77.19,0,0,0-3.3,6.83
+              A96.67,96.67,0,0,0,53.22,6.83
+              A77.19,77.19,0,0,0,49.88,0
+              A105.15,105.15,0,0,0,19.44,8.07
+              C3.66,31.58,-1.86,54.65,1,77.53
+              A105.73,105.73,0,0,0,32,96.36
+              a77.7,77.7,0,0,0,6.63-10.85
+              a68.43,68.43,0,0,1-10.43-5
+              c.87-.64,1.71-1.32,2.51-2
+              a75.4,75.4,0,0,0,72.71,0
+              c.8.71,1.64,1.39,2.51,2
+              a68.17,68.17,0,0,1-10.43,5
+              a78.23,78.23,0,0,0,6.63,10.85
+              a105.73,105.73,0,0,0,31.54-18.83
+              C129,54.65,122.94,31.58,107.7,8.07ZM42.45,65.69
+              C36.18,65.69,31,60,31,53
+              S36.18,40.36,42.45,40.36
+              S53.92,46,53.92,53
+              S48.72,65.69,42.45,65.69Zm42.24,0
+              C78.41,65.69,73.24,60,73.24,53
+              S78.41,40.36,84.69,40.36
+              S96.15,46,96.15,53
+              S91,65.69,84.69,65.69Z
+            "
+          />
+        </svg>
+      `;
+    }
+
+
+    /* =======================================================
+       DYNAMIC BUTTONS
+    ======================================================= */
 
     async function setupDynamicButtons() {
 
@@ -1869,16 +2448,17 @@
         !ctaArea
       ) {
 
+        addLaunchLog(
+          'error',
+          'Impossible d\'initialiser les boutons dynamiques.'
+        );
+
         return;
       }
 
-      /*
-       * Le serveur décide si l'utilisateur
-       * est connecté.
-       */
-
       const user =
         await getCurrentUser();
+
 
       /* =====================================================
          UTILISATEUR CONNECTÉ
@@ -1886,18 +2466,19 @@
 
       if (user) {
 
+        const username =
+          user.username ||
+          'Utilisateur';
+
         addLaunchLog(
           'success',
-          `Session active : @${user.username}`
+          `Session active : @${username}`
         );
 
         headerArea.innerHTML = `
           <a
             href="/dashboard"
-            class="btn-nav-login"
-            style="
-              background:#059669;
-            "
+            class="header-button header-button-primary"
           >
             Dashboard
           </a>
@@ -1907,10 +2488,7 @@
               ? `
                 <a
                   href="/ai-dev"
-                  class="btn-nav-login"
-                  style="
-                    background:#7c3aed;
-                  "
+                  class="header-button header-button-admin"
                 >
                   Panel Admin
                 </a>
@@ -1930,48 +2508,22 @@
         ctaArea.innerHTML = `
           <a
             href="/dashboard"
-            class="btn-primary"
-            style="
-              background:
-                linear-gradient(
-                  135deg,
-                  #059669,
-                  #10b981
-                );
-              color:white;
-            "
+            class="cta-button cta-primary"
           >
             Accéder au Dashboard
           </a>
 
           <a
             href="/pricing"
-            class="btn-secondary"
-            style="
-              background:
-                linear-gradient(
-                  135deg,
-                  #4f46e5,
-                  #06b6d4
-                );
-              color:white;
-              border:none;
-              box-shadow:
-                0 4px 12px
-                rgba(
-                  6,
-                  182,
-                  212,
-                  0.25
-                );
-            "
+            class="cta-button cta-secondary"
           >
-            S'abonner à OMNIX
+            Découvrir les offres
           </a>
         `;
 
         return;
       }
+
 
       /* =====================================================
          VISITEUR
@@ -1985,20 +2537,16 @@
       /*
        * IMPORTANT :
        *
-       * On ne construit plus l'URL Discord
-       * dans le navigateur.
+       * Nous ne construisons pas l'URL OAuth
+       * Discord dans le navigateur.
        *
-       * On utilise notre endpoint :
-       *
-       * /api/auth/login
-       *
-       * Le serveur possède la configuration OAuth.
+       * Le backend possède la configuration OAuth.
        */
 
       headerArea.innerHTML = `
         <a
           href="/api/auth/login"
-          class="btn-nav-login"
+          class="header-button header-button-primary"
         >
           Se connecter
         </a>
@@ -2007,82 +2555,25 @@
       ctaArea.innerHTML = `
         <a
           href="/api/auth/login"
-          class="btn-primary"
+          class="cta-button cta-primary"
         >
-
-          <svg
-            class="discord-svg"
-            viewBox="0 0 127.14 96.36"
-            aria-hidden="true"
-          >
-            <path
-              d="
-                M107.7,8.07
-                A105.15,105.15,0,0,0,77.26,0
-                a77.19,77.19,0,0,0-3.3,6.83
-                A96.67,96.67,0,0,0,53.22,6.83
-                A77.19,77.19,0,0,0,49.88,0
-                A105.15,105.15,0,0,0,19.44,8.07
-                C3.66,31.58,-1.86,54.65,1,77.53
-                A105.73,105.73,0,0,0,32,96.36
-                a77.7,77.7,0,0,0,6.63-10.85
-                a68.43,68.43,0,0,1-10.43-5
-                c.87-.64,1.71-1.32,2.51-2
-                a75.4,75.4,0,0,0,72.71,0
-                c.8.71,1.64,1.39,2.51,2
-                a68.17,68.17,0,0,1-10.43,5
-                a78.23,78.23,0,0,0,6.63,10.85
-                a105.73,105.73,0,0,0,31.54-18.83
-                C129,54.65,122.94,31.58,107.7,8.07ZM42.45,65.69
-                C36.18,65.69,31,60,31,53
-                S36.18,40.36,42.45,40.36
-                S53.92,46,53.92,53
-                S48.72,65.69,42.45,65.69Zm42.24,0
-                C78.41,65.69,73.24,60,73.24,53
-                S78.41,40.36,84.69,40.36
-                S96.15,46,96.15,53
-                S91,65.69,84.69,65.69Z
-              "
-            />
-          </svg>
-
+          ${discordIcon()}
           Entrer dans l'application
-
         </a>
 
         <a
           href="/pricing"
-          class="btn-secondary"
-          style="
-            background:
-              linear-gradient(
-                135deg,
-                #4f46e5,
-                #06b6d4
-              );
-
-            color:white;
-
-            border:none;
-
-            box-shadow:
-              0 4px 12px
-              rgba(
-                6,
-                182,
-                212,
-                0.25
-              );
-          "
+          class="cta-button cta-secondary"
         >
-          S'abonner à OMNIX
+          Découvrir les offres
         </a>
       `;
     }
 
+
     /* =======================================================
-       ANIMATION STATISTIQUES
-    ======================================================== */
+       ANIMATION STATISTICS
+    ======================================================= */
 
     function animateValue(
       element,
@@ -2095,6 +2586,9 @@
       if (!element) {
         return;
       }
+
+      const numericStart =
+        Number(start);
 
       const numericEnd =
         Number(end);
@@ -2119,7 +2613,7 @@
       ) {
 
         if (
-          !startTimestamp
+          startTimestamp === null
         ) {
 
           startTimestamp =
@@ -2135,14 +2629,21 @@
             1
           );
 
+        const easedProgress =
+          1 -
+          Math.pow(
+            1 - progress,
+            3
+          );
+
         const value =
           Math.floor(
-            progress *
+            easedProgress *
             (
               numericEnd -
-              start
+              numericStart
             ) +
-            start
+            numericStart
           );
 
         element.textContent =
@@ -2152,14 +2653,15 @@
           suffix;
 
         if (
-          progress <
-          1
+          progress < 1
         ) {
 
           window.requestAnimationFrame(
             step
           );
+
         }
+
       }
 
       window.requestAnimationFrame(
@@ -2167,9 +2669,10 @@
       );
     }
 
+
     /* =======================================================
-       STATISTIQUES
-    ======================================================== */
+       STATS API
+    ======================================================= */
 
     async function loadRealStats() {
 
@@ -2246,10 +2749,6 @@
         const data =
           await response.json();
 
-        /*
-         * Vérification de la structure.
-         */
-
         if (
           !data ||
           !data.bot ||
@@ -2286,11 +2785,9 @@
             data.bot.ping
           );
 
-        /*
-         * -----------------------------------------------------
-         * SERVEURS
-         * -----------------------------------------------------
-         */
+        /* -----------------------------------------------------
+           SERVEURS
+        ----------------------------------------------------- */
 
         animateValue(
           servers,
@@ -2300,14 +2797,12 @@
           )
             ? guildCount
             : 0,
-          800
+          850
         );
 
-        /*
-         * -----------------------------------------------------
-         * MEMBRES
-         * -----------------------------------------------------
-         */
+        /* -----------------------------------------------------
+           MEMBRES
+        ----------------------------------------------------- */
 
         animateValue(
           users,
@@ -2317,14 +2812,12 @@
           )
             ? userCount
             : 0,
-          800
+          850
         );
 
-        /*
-         * -----------------------------------------------------
-         * COMMANDES
-         * -----------------------------------------------------
-         */
+        /* -----------------------------------------------------
+           COMMANDES
+        ----------------------------------------------------- */
 
         animateValue(
           commands,
@@ -2334,14 +2827,12 @@
           )
             ? commandCount
             : 0,
-          800
+          850
         );
 
-        /*
-         * -----------------------------------------------------
-         * UPTIME
-         * -----------------------------------------------------
-         */
+        /* -----------------------------------------------------
+           UPTIME
+        ----------------------------------------------------- */
 
         animateValue(
           uptime,
@@ -2351,15 +2842,13 @@
           )
             ? uptimeValue
             : 100,
-          800,
+          850,
           '%'
         );
 
-        /*
-         * -----------------------------------------------------
-         * LATENCE
-         * -----------------------------------------------------
-         */
+        /* -----------------------------------------------------
+           LATENCE
+        ----------------------------------------------------- */
 
         const finalPing =
           Number.isFinite(
@@ -2372,7 +2861,7 @@
           latency,
           0,
           finalPing,
-          800,
+          850,
           ' ms'
         );
 
@@ -2389,7 +2878,7 @@
             : String(error);
 
         console.error(
-          '[Frontend Stats]',
+          '[OMNIX Frontend Stats]',
           error
         );
 
@@ -2399,87 +2888,1195 @@
         );
 
         /*
-         * IMPORTANT :
+         * On n'affiche jamais de faux zéro.
          *
-         * On n'affiche plus de faux 0.
-         *
-         * 0 = réellement zéro.
+         * 0 = valeur réelle.
          * -- = donnée indisponible.
          */
 
         if (servers) {
-          servers.textContent =
-            '--';
+          servers.textContent = '--';
         }
 
         if (users) {
-          users.textContent =
-            '--';
+          users.textContent = '--';
         }
 
         if (commands) {
-          commands.textContent =
-            '--';
+          commands.textContent = '--';
         }
 
         if (uptime) {
-          uptime.textContent =
-            '--';
+          uptime.textContent = '--';
         }
 
         if (latency) {
-          latency.textContent =
-            '--';
+          latency.textContent = '--';
         }
       }
     }
 
+
     /* =======================================================
-       BOOT
-    ======================================================== */
+       PARTIE 1 — FIN
+    ======================================================= */
+    <!-- =====================================================
+     SAAS PREVIEW
+====================================================== -->
 
-    async function bootIndex() {
+<section class="omnix-preview">
 
-      addLaunchLog(
-        'info',
-        'Initialisation de la plateforme OMNIX...'
+  <div class="preview-glow preview-glow-right"></div>
+  <div class="preview-glow preview-glow-left"></div>
+
+  <div class="preview-top">
+
+    <div>
+      <span class="preview-kicker">
+        OMNIX CONSOLE
+      </span>
+
+      <h2>
+        Une plateforme pensée pour
+        <span>votre serveur</span>
+      </h2>
+
+      <p>
+        Centralisez la modération, les tickets,
+        l'économie, l'IA, les statistiques et
+        l'administration de votre communauté
+        depuis une seule interface.
+      </p>
+    </div>
+
+    <div class="preview-status">
+      <span class="status-dot"></span>
+      SYSTÈME OPÉRATIONNEL
+    </div>
+
+  </div>
+
+  <div class="preview-grid">
+
+    <div class="preview-card">
+
+      <div class="preview-card-icon">
+        🛡️
+      </div>
+
+      <h3>
+        Sécurité avancée
+      </h3>
+
+      <p>
+        AutoMod, anti-spam, anti-raid,
+        anti-liens et outils de modération.
+      </p>
+
+    </div>
+
+    <div class="preview-card">
+
+      <div class="preview-card-icon">
+        🎫
+      </div>
+
+      <h3>
+        Tickets
+      </h3>
+
+      <p>
+        Gérez les demandes de vos membres
+        avec un système de support complet.
+      </p>
+
+    </div>
+
+    <div class="preview-card">
+
+      <div class="preview-card-icon">
+        🤖
+      </div>
+
+      <h3>
+        Intelligence artificielle
+      </h3>
+
+      <p>
+        Intégrez l'IA directement dans
+        votre expérience communautaire.
+      </p>
+
+    </div>
+
+    <div class="preview-card">
+
+      <div class="preview-card-icon">
+        📊
+      </div>
+
+      <h3>
+        Statistiques
+      </h3>
+
+      <p>
+        Analysez votre serveur et suivez
+        son évolution en temps réel.
+      </p>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     STATISTIQUES
+====================================================== -->
+
+<section class="omnix-stats-section">
+
+  <div class="section-heading">
+
+    <span>
+      OMNIX NETWORK
+    </span>
+
+    <h2>
+      Une plateforme en constante évolution
+    </h2>
+
+    <p>
+      Les statistiques ci-dessous sont récupérées
+      directement depuis l'API OMNIX.
+    </p>
+
+  </div>
+
+  <div class="stats-grid">
+
+    <div class="stat-item">
+
+      <span
+        class="stat-num"
+        id="s-servers"
+      >
+        ...
+      </span>
+
+      <span class="stat-label">
+        Serveurs
+      </span>
+
+    </div>
+
+    <div class="stat-item">
+
+      <span
+        class="stat-num"
+        id="s-users"
+      >
+        ...
+      </span>
+
+      <span class="stat-label">
+        Membres
+      </span>
+
+    </div>
+
+    <div class="stat-item">
+
+      <span
+        class="stat-num"
+        id="s-commands"
+      >
+        ...
+      </span>
+
+      <span class="stat-label">
+        Commandes
+      </span>
+
+    </div>
+
+    <div class="stat-item">
+
+      <span
+        class="stat-num"
+        id="s-uptime"
+      >
+        ...
+      </span>
+
+      <span class="stat-label">
+        Uptime
+      </span>
+
+    </div>
+
+    <div class="stat-item">
+
+      <span
+        class="stat-num"
+        id="s-latency"
+      >
+        ...
+      </span>
+
+      <span class="stat-label">
+        Latence
+      </span>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     TERMINAL DIAGNOSTIC
+====================================================== -->
+
+<section
+  class="terminal-wrapper"
+  id="index-terminal"
+>
+
+  <div class="terminal">
+
+    <div class="terminal-header">
+
+      <div class="terminal-left">
+
+        <div class="terminal-dots">
+
+          <span
+            class="terminal-dot"
+            style="background:#ef4444;"
+          ></span>
+
+          <span
+            class="terminal-dot"
+            style="background:#f59e0b;"
+          ></span>
+
+          <span
+            class="terminal-dot"
+            style="background:#10b981;"
+          ></span>
+
+        </div>
+
+        <span class="terminal-title">
+          OMNIX DIAGNOSTIC
+        </span>
+
+      </div>
+
+      <span class="terminal-live">
+        ● LIVE
+      </span>
+
+    </div>
+
+    <div
+      id="index-terminal-screen"
+      class="terminal-screen"
+    >
+      <div>
+        [SYSTEM] Console de diagnostic OMNIX prête.
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     FINAL CTA
+====================================================== -->
+
+<section class="final-cta">
+
+  <div class="final-cta-glow"></div>
+
+  <span class="final-kicker">
+    PRÊT À PASSER À L'ÉTAPE SUPÉRIEURE ?
+  </span>
+
+  <h2>
+    Votre serveur mérite
+    <span>OMNIX.</span>
+  </h2>
+
+  <p>
+    Connectez votre compte Discord et découvrez
+    votre espace de gestion.
+  </p>
+
+  <div
+    class="final-actions"
+    id="final-cta-actions"
+  >
+
+    <a
+      href="/api/auth/login"
+      class="btn-primary"
+    >
+      Se connecter avec Discord
+    </a>
+
+    <a
+      href="/pricing"
+      class="btn-secondary"
+    >
+      Découvrir les tarifs
+    </a>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+     FOOTER
+====================================================== -->
+
+<footer>
+
+  <div class="footer-inner">
+
+    <div class="footer-brand">
+
+      <div class="footer-logo">
+        O
+      </div>
+
+      <div>
+
+        <strong>
+          OMNIX
+        </strong>
+
+        <span>
+          Le robot de demain.
+        </span>
+
+      </div>
+
+    </div>
+
+    <div class="footer-links">
+
+      <a href="/">
+        Accueil
+      </a>
+
+      <a href="/pricing">
+        Tarifs
+      </a>
+
+      <a href="/dashboard">
+        Dashboard
+      </a>
+
+      <a href="/api/auth/login">
+        Connexion
+      </a>
+
+    </div>
+
+    <div class="footer-copy">
+
+      © 2026 OMNIX.
+      Tous droits réservés.
+
+    </div>
+
+  </div>
+
+</footer>
+
+
+<!-- =====================================================
+     JAVASCRIPT OMNIX
+====================================================== -->
+
+<script>
+
+  /* =====================================================
+     TERMINAL LOG
+  ====================================================== */
+
+  function addLaunchLog(
+    type,
+    message
+  ) {
+
+    const screen =
+      document.getElementById(
+        'index-terminal-screen'
       );
 
-      /*
-       * On lance les deux vérifications.
-       */
+    if (!screen) {
+      return;
+    }
 
-      await setupDynamicButtons();
+    const time =
+      new Date().toLocaleTimeString(
+        'fr-FR'
+      );
 
-      await loadRealStats();
+    const labels = {
+      info: 'INFO',
+      success: 'SUCCESS',
+      warn: 'WARN',
+      error: 'ERROR',
+      debug: 'DEBUG'
+    };
+
+    const colors = {
+      info: '#a3e635',
+      success: '#10b981',
+      warn: '#f59e0b',
+      error: '#ef4444',
+      debug: '#38bdf8'
+    };
+
+    const line =
+      document.createElement(
+        'div'
+      );
+
+    line.style.color =
+      colors[type] || colors.info;
+
+    line.style.marginBottom =
+      '5px';
+
+    line.textContent =
+      `[${time}] [${labels[type] || 'INFO'}] ${message}`;
+
+    screen.appendChild(
+      line
+    );
+
+    screen.scrollTop =
+      screen.scrollHeight;
+  }
+
+
+  /* =====================================================
+     GLOBAL JS ERRORS
+  ====================================================== */
+
+  window.onerror =
+    function (
+      message,
+      source,
+      lineno,
+      colno
+    ) {
+
+      const filename =
+        source
+          ? source.split('/').pop()
+          : 'unknown';
+
+      addLaunchLog(
+        'error',
+        `Erreur JS : ${message} (${filename}:${lineno}:${colno})`
+      );
+
+      return false;
+    };
+
+
+  /* =====================================================
+     CURRENT USER
+  ====================================================== */
+
+  async function getCurrentUser() {
+
+    try {
+
+      const response =
+        await fetch(
+          '/api/auth/me',
+          {
+            method: 'GET',
+            credentials: 'include',
+            cache: 'no-store',
+            headers: {
+              Accept:
+                'application/json'
+            }
+          }
+        );
+
+      if (
+        response.status === 401
+      ) {
+
+        return null;
+      }
+
+      if (
+        !response.ok
+      ) {
+
+        throw new Error(
+          `HTTP ${response.status}`
+        );
+      }
+
+      const data =
+        await response.json();
+
+      if (
+        !data ||
+        !data.success ||
+        !data.user
+      ) {
+
+        return null;
+      }
+
+      return data.user;
+
+    } catch (error) {
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : String(error);
+
+      addLaunchLog(
+        'warn',
+        `Session indisponible : ${message}`
+      );
+
+      return null;
+    }
+  }
+
+
+  /* =====================================================
+     LOGOUT
+  ====================================================== */
+
+  function logout() {
+
+    addLaunchLog(
+      'warn',
+      'Déconnexion de la session OMNIX...'
+    );
+
+    window.location.href =
+      '/api/auth/logout';
+  }
+
+
+  /* =====================================================
+     AUTH UI
+  ====================================================== */
+
+  async function setupDynamicButtons() {
+
+    const headerArea =
+      document.getElementById(
+        'auth-buttons-header'
+      );
+
+    const ctaArea =
+      document.getElementById(
+        'cta-action-area'
+      );
+
+    const finalArea =
+      document.getElementById(
+        'final-cta-actions'
+      );
+
+    if (!headerArea) {
+      return;
+    }
+
+    addLaunchLog(
+      'info',
+      'Vérification de la session OMNIX...'
+    );
+
+    const user =
+      await getCurrentUser();
+
+
+    /* ===================================================
+       CONNECTÉ
+    ================================================== */
+
+    if (user) {
+
+      addLaunchLog(
+        'success',
+        `Session active : @${user.username}`
+      );
+
+      headerArea.innerHTML = `
+
+        <a
+          href="/dashboard"
+          class="btn-nav-login"
+          style="background:#059669;"
+        >
+          Dashboard
+        </a>
+
+        ${
+          user.isOwner
+            ? `
+              <a
+                href="/ai-dev"
+                class="btn-nav-login"
+                style="background:#7c3aed;"
+              >
+                Panel Admin
+              </a>
+            `
+            : ''
+        }
+
+        <button
+          type="button"
+          class="btn-nav-logout"
+          onclick="logout()"
+        >
+          Déconnexion
+        </button>
+
+      `;
+
+
+      if (ctaArea) {
+
+        ctaArea.innerHTML = `
+
+          <a
+            href="/dashboard"
+            class="btn-primary"
+          >
+            Accéder au Dashboard
+          </a>
+
+          <a
+            href="/pricing"
+            class="btn-secondary"
+          >
+            Gérer mon abonnement
+          </a>
+
+        `;
+      }
+
+
+      if (finalArea) {
+
+        finalArea.innerHTML = `
+
+          <a
+            href="/dashboard"
+            class="btn-primary"
+          >
+            Ouvrir mon Dashboard
+          </a>
+
+          <a
+            href="/pricing"
+            class="btn-secondary"
+          >
+            Voir les abonnements
+          </a>
+
+        `;
+      }
+
+      return;
+    }
+
+
+    /* ===================================================
+       VISITEUR
+    ================================================== */
+
+    addLaunchLog(
+      'info',
+      'Aucune session active. Mode invité.'
+    );
+
+    headerArea.innerHTML = `
+
+      <a
+        href="/api/auth/login"
+        class="btn-nav-login"
+      >
+        Se connecter
+      </a>
+
+    `;
+
+
+    if (ctaArea) {
+
+      ctaArea.innerHTML = `
+
+        <a
+          href="/api/auth/login"
+          class="btn-primary"
+        >
+
+          <svg
+            class="discord-svg"
+            viewBox="0 0 127.14 96.36"
+            aria-hidden="true"
+          >
+
+            <path
+              d="
+                M107.7,8.07
+                A105.15,105.15,0,0,0,77.26,0
+                a77.19,77.19,0,0,0-3.3,6.83
+                A96.67,96.67,0,0,0,53.22,6.83
+                A77.19,77.19,0,0,0,49.88,0
+                A105.15,105.15,0,0,0,19.44,8.07
+                C3.66,31.58,-1.86,54.65,1,77.53
+                A105.73,105.73,0,0,0,32,96.36
+                a77.7,77.7,0,0,0,6.63-10.85
+                a68.43,68.43,0,0,1-10.43-5
+                c.87-.64,1.71-1.32,2.51-2
+                a75.4,75.4,0,0,0,72.71,0
+                c.8.71,1.64,1.39,2.51,2
+                a68.17,68.17,0,0,1-10.43,5
+                a78.23,78.23,0,0,0,6.63,10.85
+                a105.73,105.73,0,0,0,31.54-18.83
+                C129,54.65,122.94,31.58,107.7,8.07ZM42.45,65.69
+                C36.18,65.69,31,60,31,53
+                S36.18,40.36,42.45,40.36
+                S53.92,46,53.92,53
+                S48.72,65.69,42.45,65.69Zm42.24,0
+                C78.41,65.69,73.24,60,73.24,53
+                S78.41,40.36,84.69,40.36
+                S96.15,46,96.15,53
+                S91,65.69,84.69,65.69Z
+              "
+            />
+
+          </svg>
+
+          Entrer dans l'application
+
+        </a>
+
+        <a
+          href="/pricing"
+          class="btn-secondary"
+        >
+          Découvrir OMNIX
+        </a>
+
+      `;
+    }
+
+
+    if (finalArea) {
+
+      finalArea.innerHTML = `
+
+        <a
+          href="/api/auth/login"
+          class="btn-primary"
+        >
+          Commencer avec Discord
+        </a>
+
+        <a
+          href="/pricing"
+          class="btn-secondary"
+        >
+          Voir les tarifs
+        </a>
+
+      `;
+    }
+  }
+
+
+  /* =====================================================
+     ANIMATION STATISTICS
+  ====================================================== */
+
+  function animateValue(
+    element,
+    start,
+    end,
+    duration,
+    suffix = ''
+  ) {
+
+    if (!element) {
+      return;
+    }
+
+    const numericEnd =
+      Number(end);
+
+    if (
+      !Number.isFinite(
+        numericEnd
+      )
+    ) {
+
+      element.textContent =
+        '--';
+
+      return;
+    }
+
+    let startTimestamp =
+      null;
+
+    function step(
+      timestamp
+    ) {
+
+      if (
+        startTimestamp === null
+      ) {
+
+        startTimestamp =
+          timestamp;
+      }
+
+      const progress =
+        Math.min(
+          (
+            timestamp -
+            startTimestamp
+          ) / duration,
+          1
+        );
+
+      const value =
+        Math.floor(
+          progress *
+          (
+            numericEnd -
+            start
+          ) +
+          start
+        );
+
+      element.textContent =
+        value.toLocaleString(
+          'fr-FR'
+        ) +
+        suffix;
+
+      if (
+        progress < 1
+      ) {
+
+        requestAnimationFrame(
+          step
+        );
+      }
+    }
+
+    requestAnimationFrame(
+      step
+    );
+  }
+
+
+  /* =====================================================
+     REAL STATS
+  ====================================================== */
+
+  async function loadRealStats() {
+
+    addLaunchLog(
+      'info',
+      'Récupération des statistiques globales...'
+    );
+
+    const servers =
+      document.getElementById(
+        's-servers'
+      );
+
+    const users =
+      document.getElementById(
+        's-users'
+      );
+
+    const commands =
+      document.getElementById(
+        's-commands'
+      );
+
+    const uptime =
+      document.getElementById(
+        's-uptime'
+      );
+
+    const latency =
+      document.getElementById(
+        's-latency'
+      );
+
+    try {
+
+      const started =
+        performance.now();
+
+      const response =
+        await fetch(
+          '/api/stats',
+          {
+            method: 'GET',
+            credentials: 'include',
+            cache: 'no-store',
+            headers: {
+              Accept:
+                'application/json'
+            }
+          }
+        );
+
+      const requestLatency =
+        Math.round(
+          performance.now() -
+          started
+        );
+
+      if (
+        !response.ok
+      ) {
+
+        throw new Error(
+          `HTTP ${response.status}`
+        );
+      }
+
+      const data =
+        await response.json();
+
+      if (
+        !data ||
+        !data.bot ||
+        !data.database
+      ) {
+
+        throw new Error(
+          'Structure API invalide.'
+        );
+      }
+
+      const guildCount =
+        Number(
+          data.bot.guildsCount
+        );
+
+      const userCount =
+        Number(
+          data.database.totalUsers
+        );
+
+      const commandCount =
+        Number(
+          data.commands
+        );
+
+      const uptimeValue =
+        Number(
+          data.bot.uptime
+        );
+
+      const apiPing =
+        Number(
+          data.bot.ping
+        );
+
+
+      animateValue(
+        servers,
+        0,
+        Number.isFinite(guildCount)
+          ? guildCount
+          : 0,
+        800
+      );
+
+
+      animateValue(
+        users,
+        0,
+        Number.isFinite(userCount)
+          ? userCount
+          : 0,
+        800
+      );
+
+
+      animateValue(
+        commands,
+        0,
+        Number.isFinite(commandCount)
+          ? commandCount
+          : 0,
+        800
+      );
+
+
+      animateValue(
+        uptime,
+        0,
+        Number.isFinite(uptimeValue)
+          ? uptimeValue
+          : 100,
+        800,
+        '%'
+      );
+
+
+      const finalPing =
+        Number.isFinite(apiPing)
+          ? apiPing
+          : requestLatency;
+
+
+      animateValue(
+        latency,
+        0,
+        finalPing,
+        800,
+        ' ms'
+      );
+
+
+      addLaunchLog(
+        'success',
+        `Statistiques chargées : ${guildCount} serveurs / ${userCount} membres / ${commandCount} commandes / ${finalPing} ms`
+      );
+
+    } catch (error) {
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : String(error);
+
+      console.error(
+        '[OMNIX Stats]',
+        error
+      );
+
+      addLaunchLog(
+        'error',
+        `Échec API statistiques : ${message}`
+      );
+
+
+      [
+        servers,
+        users,
+        commands,
+        uptime,
+        latency
+      ].forEach(
+        element => {
+
+          if (element) {
+            element.textContent =
+              '--';
+          }
+
+        }
+      );
+    }
+  }
+
+
+  /* =====================================================
+     BOOT
+  ====================================================== */
+
+  async function bootIndex() {
+
+    addLaunchLog(
+      'info',
+      'Initialisation de la plateforme OMNIX...'
+    );
+
+    try {
+
+      await Promise.all([
+        setupDynamicButtons(),
+        loadRealStats()
+      ]);
 
       addLaunchLog(
         'success',
         'Initialisation terminée.'
       );
-    }
 
-    /* =======================================================
-       DOM READY
-    ======================================================== */
+    } catch (error) {
 
-    if (
-      document.readyState ===
-      'loading'
-    ) {
-
-      document.addEventListener(
-        'DOMContentLoaded',
-        bootIndex
+      console.error(
+        '[OMNIX Boot]',
+        error
       );
 
-    } else {
-
-      void bootIndex();
-
+      addLaunchLog(
+        'error',
+        'Erreur pendant l’initialisation.'
+      );
     }
+  }
 
-  </script>
+
+  /* =====================================================
+     DOM READY
+  ====================================================== */
+
+  if (
+    document.readyState ===
+    'loading'
+  ) {
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      bootIndex,
+      {
+        once: true
+      }
+    );
+
+  } else {
+
+    void bootIndex();
+
+  }
+
+</script>
+
+
+<!-- =====================================================
+     FIN INDEX OMNIX
+====================================================== -->
 
 </body>
 </html>
