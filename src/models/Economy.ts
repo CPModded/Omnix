@@ -1,24 +1,159 @@
-import { Schema, model, Document } from 'mongoose';
+import mongoose, {
+  Schema,
+  type Document,
+  type Model,
+} from 'mongoose';
 
-export interface IEconomy extends Document {
+/* =========================================================
+   INTERFACE
+========================================================= */
+
+export interface IEconomy
+  extends Document {
   guildId: string;
   userId: string;
+
   wallet: number;
   bank: number;
+
   lastWork: Date | null;
+
   createdAt: Date;
   updatedAt: Date;
 }
 
-const EconomySchema = new Schema<IEconomy>({
-  guildId: { type: String, required: true, index: true },
-  userId: { type: String, required: true, index: true },
-  wallet: { type: Number, default: 100 }, // Solde de départ
-  bank: { type: Number, default: 0 },
-  lastWork: { type: Date, default: null }
-}, { timestamps: true });
+/* =========================================================
+   SCHEMA
+========================================================= */
 
-// Garantit un seul compte d'économie par utilisateur et par serveur
-EconomySchema.index({ guildId: 1, userId: 1 }, { unique: true });
+const EconomySchema =
+  new Schema<IEconomy>(
+    {
+      /*
+       * Discord Guild ID
+       *
+       * IMPORTANT :
+       * toutes les données économiques sont isolées
+       * par serveur.
+       */
+      guildId: {
+        type: String,
+        required: true,
+        index: true,
+        trim: true,
+      },
 
-export const Economy = model<IEconomy>('Economy', EconomySchema);
+      /*
+       * Discord User ID
+       */
+      userId: {
+        type: String,
+        required: true,
+        index: true,
+        trim: true,
+      },
+
+      /*
+       * Argent disponible immédiatement.
+       */
+      wallet: {
+        type: Number,
+        default: 100,
+        min: 0,
+      },
+
+      /*
+       * Argent placé en banque.
+       */
+      bank: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+
+      /*
+       * Dernière utilisation de /work.
+       */
+      lastWork: {
+        type: Date,
+        default: null,
+      },
+    },
+    {
+      timestamps: true,
+
+      /*
+       * Collection explicite afin de garder
+       * une structure MongoDB stable.
+       */
+      collection: 'economy',
+    },
+  );
+
+/* =========================================================
+   INDEXES
+========================================================= */
+
+/*
+ * UN compte économique par utilisateur
+ * et par serveur.
+ *
+ * Guild A + User X
+ * Guild B + User X
+ *
+ * = deux comptes totalement indépendants.
+ */
+EconomySchema.index(
+  {
+    guildId: 1,
+    userId: 1,
+  },
+  {
+    unique: true,
+  },
+);
+
+/*
+ * Optimise les recherches des membres
+ * d'un serveur.
+ */
+EconomySchema.index({
+  guildId: 1,
+  wallet: -1,
+});
+
+/*
+ * Optimise les recherches liées
+ * aux cooldowns / /work.
+ */
+EconomySchema.index({
+  guildId: 1,
+  lastWork: 1,
+});
+
+/* =========================================================
+   MODEL
+========================================================= */
+
+/*
+ * Évite :
+ *
+ * OverwriteModelError:
+ * Cannot overwrite `Economy` model once compiled.
+ *
+ * Important avec tsx / hot reload / Render.
+ */
+const Economy: Model<IEconomy> =
+  mongoose.models.Economy ??
+  mongoose.model<IEconomy>(
+    'Economy',
+    EconomySchema,
+  );
+
+/* =========================================================
+   EXPORTS
+========================================================= */
+
+export { Economy };
+
+export default Economy;
