@@ -1,11 +1,11 @@
 import mongoose, {
   Schema,
-  Document,
-  Model,
+  type Document,
+  type Model,
 } from 'mongoose';
 
 /* =========================================================
-   INTERFACE
+   TYPES
 ========================================================= */
 
 export interface IModerationCase
@@ -26,11 +26,11 @@ export interface IModerationCase
 
   active: boolean;
 
-  duration?: number;
+  duration?: number | null;
 
-  expiresAt?: Date;
+  expiresAt?: Date | null;
 
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, unknown> | null;
 }
 
 /* =========================================================
@@ -44,83 +44,137 @@ const ModerationCaseSchema =
         type: String,
         required: true,
         index: true,
+        trim: true,
       },
 
       caseId: {
         type: Number,
         required: true,
+        min: 1,
       },
 
       type: {
         type: String,
         required: true,
         index: true,
+        trim: true,
       },
 
       userId: {
         type: String,
         required: true,
         index: true,
+        trim: true,
       },
 
       moderatorId: {
         type: String,
         required: true,
         index: true,
+        trim: true,
       },
 
       reason: {
         type: String,
         default: 'Aucune raison fournie',
+        trim: true,
       },
 
       createdAt: {
         type: Date,
         default: Date.now,
+        index: true,
       },
 
       active: {
         type: Boolean,
         default: true,
+        index: true,
       },
 
       duration: {
         type: Number,
-        required: false,
+        default: null,
+        min: 0,
       },
 
       expiresAt: {
         type: Date,
-        required: false,
+        default: null,
+        index: true,
       },
 
       metadata: {
         type: Schema.Types.Mixed,
-        required: false,
+        default: null,
       },
     },
     {
+      collection: 'moderation_cases',
+
+      /*
+       * createdAt est géré explicitement
+       * car le modèle possède déjà son propre champ.
+       */
+      timestamps: false,
+
       versionKey: false,
-    }
+    },
   );
 
 /* =========================================================
-   INDEX
+   INDEXES
 ========================================================= */
 
-ModerationCaseSchema.index({
-  guildId: 1,
-  caseId: 1,
-});
+/*
+ * CRITIQUE :
+ *
+ * Un caseId doit être unique PAR SERVEUR,
+ * pas globalement.
+ *
+ * Exemple :
+ *
+ * Guild A → Case #1
+ * Guild B → Case #1
+ *
+ * sont parfaitement valides.
+ */
+ModerationCaseSchema.index(
+  {
+    guildId: 1,
+    caseId: 1,
+  },
+  {
+    unique: true,
+  },
+);
 
+/*
+ * Recherche rapide des sanctions
+ * d'un membre sur un serveur.
+ */
 ModerationCaseSchema.index({
   guildId: 1,
   userId: 1,
+  createdAt: -1,
 });
 
+/*
+ * Historique de modération d'un serveur.
+ */
 ModerationCaseSchema.index({
   guildId: 1,
   createdAt: -1,
+});
+
+/*
+ * Recherche des sanctions actives
+ * pouvant nécessiter une expiration automatique.
+ */
+ModerationCaseSchema.index({
+  guildId: 1,
+  active: 1,
+  expiresAt: 1,
 });
 
 /* =========================================================
@@ -131,11 +185,13 @@ const ModerationCase: Model<IModerationCase> =
   mongoose.models.ModerationCase ??
   mongoose.model<IModerationCase>(
     'ModerationCase',
-    ModerationCaseSchema
+    ModerationCaseSchema,
   );
 
 /* =========================================================
    EXPORT
 ========================================================= */
+
+export { ModerationCase };
 
 export default ModerationCase;
