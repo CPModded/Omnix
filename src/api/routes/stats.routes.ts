@@ -6,7 +6,7 @@ import express, {
 import mongoose from 'mongoose';
 
 import { User } from '../../models/User.ts';
-import { GuildConfig } from '../../models/GuildConfig.ts';
+import GuildConfig from '../../models/GuildConfig.ts';
 import AiSession from '../../models/AiSession.ts';
 
 /* =========================================================
