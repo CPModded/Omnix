@@ -6,7 +6,7 @@ import express, {
 import axios from 'axios';
 
 import { User } from '../../models/User.ts';
-import { GuildConfig } from '../../models/GuildConfig.ts';
+import GuildConfig from '../../models/GuildConfig.ts';
 
 import {
   getRequestToken,
