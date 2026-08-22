@@ -2,797 +2,4755 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OMNIX Staff Panel - Console d'Administration</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  >
+  <title>OMNIX — Staff Panel</title>
   <style>
-    /* Styles CSS natifs */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* =========================================================
+       OMNIX STAFF PANEL
+       PART 1 / 2
+    ========================================================= */
+    :root {
+      --bg: #020617;
+      --bg-soft: #030b1c;
+      --panel: rgba(15, 23, 42, .72);
+      --panel-strong: rgba(15, 23, 42, .92);
+      --border: rgba(148, 163, 184, .12);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --muted-2: #64748b;
+      --cyan: #22d3ee;
+      --blue: #60a5fa;
+      --violet: #a78bfa;
+      --green: #34d399;
+      --yellow: #fbbf24;
+      --red: #fb7185;
+      --radius: 18px;
+      --radius-sm: 12px;
+      --sidebar-width: 270px;
+      --shadow:
+        0 20px 60px rgba(0,0,0,.35);
+      --transition:
+        180ms ease;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
     body {
-      background-color: #030712; /* Slate 950 */
-      color: #f1f5f9; /* Slate 100 */
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      background:
+        radial-gradient(
+          circle at 15% 10%,
+          rgba(34,211,238,.07),
+          transparent 28%
+        ),
+        radial-gradient(
+          circle at 85% 15%,
+          rgba(124,58,237,.08),
+          transparent 30%
+        ),
+        var(--bg);
+      color: var(--text);
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Helvetica,
+        Arial,
+        sans-serif;
+      overflow-x: hidden;
+    }
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+    button {
+      cursor: pointer;
+    }
+    a {
+      color: inherit;
+    }
+    /* =========================================================
+       APP
+    ========================================================= */
+    .admin-app {
       min-height: 100vh;
       display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      position: relative;
-      overflow-x: hidden;
-      line-height: 1.5;
     }
-    .halo-top { position: absolute; top: -150px; left: -150px; width: 500px; height: 500px; background: rgba(192, 132, 252, 0.05); filter: blur(100px); border-radius: 50%; pointer-events: none; }
-
-    header {
-      border-bottom: 1px solid #1e293b;
-      background: rgba(15, 23, 42, 0.7);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      padding: 16px 24px;
+    /* =========================================================
+       SIDEBAR
+    ========================================================= */
+    .admin-sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      width: var(--sidebar-width);
+      padding: 22px 16px;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(15,23,42,.96),
+          rgba(2,6,23,.98)
+        );
+      border-right: 1px solid var(--border);
+      z-index: 100;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 50;
+      flex-direction: column;
+      transition:
+        transform var(--transition);
     }
-    .logo-area { display: flex; align-items: center; gap: 12px; text-decoration: none; }
-    .logo-img { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; box-shadow: 0 4px 12px rgba(192, 132, 252, 0.2); }
-    .logo-text {
-      font-weight: 800;
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 10px 22px;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        linear-gradient(
+          135deg,
+          #06b6d4,
+          #4f46e5,
+          #7c3aed
+        );
+      box-shadow:
+        0 8px 25px rgba(79,70,229,.25);
+    }
+    .brand-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .brand-fallback {
+      font-size: 19px;
+      font-weight: 900;
+    }
+    .brand-name {
+      font-size: 16px;
+      font-weight: 900;
       letter-spacing: 1px;
-      background: linear-gradient(to right, #c084fc, #818cf8);
+      background:
+        linear-gradient(
+          90deg,
+          #60a5fa,
+          #22d3ee,
+          #a78bfa
+        );
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      font-size: 18px;
     }
-
-    .btn-burger { background: none; border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center; }
-    .burger-icon { width: 24px; height: 24px; fill: currentColor; }
-
-    /* Styles pour le Menu Tiroir (Drawer) */
-    .drawer {
-      position: fixed;
-      top: 0;
-      right: -300px;
-      width: 280px;
-      height: 100vh;
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-left: 1px solid rgba(255, 255, 255, 0.04);
-      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
-      z-index: 1000;
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      padding: 32px 24px;
+    .brand-role {
+      margin-top: 2px;
+      color: var(--muted-2);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .sidebar-nav {
+      margin-top: 22px;
       display: flex;
       flex-direction: column;
-      gap: 32px;
+      gap: 5px;
+      overflow-y: auto;
     }
-    .drawer.open {
-      transform: translateX(-300px);
+    .nav-section {
+      margin: 18px 10px 8px;
+      color: var(--muted-2);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
     }
-    .drawer-header {
+    .nav-button {
+      width: 100%;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      gap: 11px;
+      padding: 11px 12px;
+      border: 1px solid transparent;
+      border-radius: 11px;
+      background: transparent;
+      color: var(--muted);
+      text-align: left;
+      transition:
+        background var(--transition),
+        color var(--transition),
+        border-color var(--transition);
     }
-    .btn-close-drawer {
-      background: none;
-      border: none;
-      color: #64748b;
-      font-size: 28px;
-      cursor: pointer;
-    }
-    .btn-close-drawer:hover {
+    .nav-button:hover {
+      background: rgba(255,255,255,.035);
       color: white;
     }
-    .drawer-links {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+    .nav-button.active {
+      color: white;
+      background:
+        linear-gradient(
+          90deg,
+          rgba(34,211,238,.10),
+          rgba(99,102,241,.08)
+        );
+      border-color:
+        rgba(34,211,238,.10);
     }
-    .drawer-links a {
-      text-decoration: none;
-      color: #94a3b8;
-      font-size: 13px;
+    .nav-icon {
+      width: 19px;
+      min-width: 19px;
+      text-align: center;
+      font-size: 15px;
+    }
+    .nav-label {
+      font-size: 12px;
       font-weight: 700;
+    }
+    .sidebar-bottom {
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .staff-card {
+      padding: 13px;
+      border:
+        1px solid rgba(255,255,255,.05);
+      border-radius: 13px;
+      background:
+        rgba(255,255,255,.025);
+    }
+    .staff-card-label {
+      color: var(--muted-2);
+      font-size: 9px;
+      font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 1px;
-      padding: 12px 16px;
-      border-radius: 10px;
-      transition: background 0.15s, color 0.15s;
     }
-    .drawer-links a:hover {
-      background: rgba(255,255,255,0.02);
-      color: white;
-    }
-    .drawer-links a.active {
-      color: #38bdf8;
-      background: rgba(56, 189, 248, 0.05);
-    }
-    .admin-nav-link {
-      color: #c084fc !important;
-      text-shadow: 0 0 8px rgba(192, 132, 252, 0.4);
-    }
-
-    main {
-      flex: 1;
-      max-width: 1000px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 40px 24px;
-      z-index: 10;
-    }
-
-    h2 { font-size: 24px; font-weight: 900; color: white; margin-bottom: 8px; }
-    p.subtitle { font-size: 13px; color: #64748b; margin-bottom: 32px; }
-
-    /* Widgets Grid */
-    .metrics-grid {
-      display: grid;
-      grid-template-cols: repeat(1, 1fr);
-      gap: 20px;
-      margin-bottom: 32px;
-    }
-    @media (min-width: 600px) { .metrics-grid { grid-template-cols: repeat(2, 1fr); } }
-    @media (min-width: 900px) { .metrics-grid { grid-template-cols: repeat(4, 1fr); } }
-
-    .metric-card {
-      background: rgba(15, 23, 42, 0.45);
-      border: 1px solid rgba(255, 255, 255, 0.04);
-      padding: 24px;
-      border-radius: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    }
-    .metric-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
-    .metric-value { font-size: 24px; font-weight: 800; color: white; }
-
-    /* Système d'onglets (Tabs) */
-    .tabs-container {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 24px;
-      border-bottom: 1px solid #1e293b;
-      padding-bottom: 12px;
-    }
-    .tab-btn {
-      background: none;
-      border: none;
-      color: #64748b;
-      font-size: 13px;
-      font-weight: 700;
-      padding: 8px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: color 0.15s, background-color 0.15s;
-    }
-    .tab-btn:hover { color: white; background: rgba(255, 255, 255, 0.02); }
-    .tab-btn.active {
-      color: #c084fc;
-      background: rgba(192, 132, 252, 0.08);
-      border: 1px solid rgba(192, 132, 252, 0.15);
-    }
-
-    /* Zone de recherche */
-    .search-box {
-      width: 100%;
-      padding: 14px 16px;
-      background: #090d16;
-      border: 1px solid #1e293b;
-      border-radius: 12px;
-      color: white;
-      font-size: 13px;
-      margin-bottom: 24px;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-    .search-box:focus { border-color: #c084fc; }
-
-    /* Container de contenu */
-    .panel-section { display: none; }
-    .panel-section.active { display: block; }
-
-    /* Liste des membres */
-    .users-container {
-      background: rgba(15, 23, 42, 0.35);
-      border: 1px solid rgba(255, 255, 255, 0.03);
-      border-radius: 16px;
-      padding: 20px;
-    }
-    .users-list { display: flex; flex-direction: column; gap: 12px; }
-    
-    .user-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px;
-      background: rgba(15, 23, 42, 0.45);
-      border: 1px solid rgba(255, 255, 255, 0.02);
-      border-radius: 10px;
-      cursor: pointer;
-      transition: border-color 0.15s, transform 0.1s;
-    }
-    .user-row:hover { border-color: rgba(192, 132, 252, 0.3); transform: translateY(-1px); }
-    .user-details { display: flex; align-items: center; gap: 12px; }
-    .user-avatar { width: 36px; height: 38px; border-radius: 50%; object-fit: cover; }
-    .user-name { font-size: 13px; font-weight: 700; color: white; }
-    .user-badge { font-size: 9px; font-weight: 800; text-transform: uppercase; padding: 4px 8px; border-radius: 6px; background: rgba(192, 132, 252, 0.15); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.25); }
-
-    /* Audit Logs Row */
-    .log-row {
-      padding: 10px 14px;
-      background: rgba(15, 23, 42, 0.3);
-      border-left: 3px solid #64748b;
+    .staff-card-name {
+      margin-top: 5px;
       font-size: 12px;
-      font-family: monospace;
-      margin-bottom: 8px;
-      border-radius: 0 8px 8px 0;
+      font-weight: 800;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-    .log-row.info { border-left-color: #38bdf8; }
-    .log-row.warning { border-left-color: #fbbf24; }
-    .log-row.error { border-left-color: #ef4444; }
-
-    /* Modal Fiche Profil */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(2, 6, 23, 0.85);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      z-index: 10000;
-      display: none;
-      justify-content: center;
+    .staff-status {
+      margin-top: 7px;
+      display: flex;
       align-items: center;
-      opacity: 0;
-      transition: opacity 0.2s ease;
-      padding: 16px;
+      gap: 6px;
+      color: var(--green);
+      font-size: 10px;
+      font-weight: 700;
     }
-    .modal-card {
-      background: #090d16;
-      border: 1px solid #1e293b;
-      width: 100%;
-      max-width: 480px;
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow:
+        0 0 10px currentColor;
+    }
+    /* =========================================================
+       MAIN
+    ========================================================= */
+    .admin-main {
+      width: calc(100% - var(--sidebar-width));
+      margin-left: var(--sidebar-width);
+      min-height: 100vh;
+      padding: 22px;
+    }
+    .topbar {
+      min-height: 66px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 0 4px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar-title {
+      font-size: 21px;
+      font-weight: 900;
+    }
+    .topbar-subtitle {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .mobile-menu {
+      display: none;
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel);
+      color: white;
+    }
+    /* =========================================================
+       BUTTONS
+    ========================================================= */
+    .btn {
+      min-height: 38px;
+      padding: 0 13px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background:
+        rgba(255,255,255,.035);
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 800;
+      transition:
+        transform var(--transition),
+        background var(--transition),
+        border-color var(--transition);
+    }
+    .btn:hover {
+      background:
+        rgba(255,255,255,.07);
+      border-color:
+        rgba(255,255,255,.13);
+    }
+    .btn:active {
+      transform: scale(.98);
+    }
+    .btn-primary {
+      border: none;
+      background:
+        linear-gradient(
+          135deg,
+          #06b6d4,
+          #4f46e5
+        );
+      box-shadow:
+        0 8px 22px rgba(79,70,229,.18);
+    }
+    .btn-danger {
+      color: #fecdd3;
+      border-color:
+        rgba(251,113,133,.18);
+      background:
+        rgba(251,113,133,.07);
+    }
+    .btn-success {
+      color: #a7f3d0;
+      border-color:
+        rgba(52,211,153,.18);
+      background:
+        rgba(52,211,153,.07);
+    }
+    /* =========================================================
+       CONTENT
+    ========================================================= */
+    .page-section {
+      display: none;
+      padding-top: 22px;
+      animation:
+        sectionIn .22s ease;
+    }
+    .page-section.active {
+      display: block;
+    }
+    @keyframes sectionIn {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .section-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 15px;
+      margin-bottom: 16px;
+    }
+    .section-header h2 {
+      font-size: 18px;
+      font-weight: 900;
+    }
+    .section-header p {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    /* =========================================================
+       STAT CARDS
+    ========================================================= */
+    .stats-grid {
+      display: grid;
+      grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+      gap: 13px;
+      margin-bottom: 16px;
+    }
+    .stat-card {
+      min-width: 0;
+      padding: 17px;
+      border:
+        1px solid var(--border);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(
+          145deg,
+          rgba(15,23,42,.78),
+          rgba(15,23,42,.42)
+        );
+      box-shadow: var(--shadow);
+      overflow: hidden;
       position: relative;
     }
-    .btn-close-modal {
+    .stat-card::after {
+      content: "";
       position: absolute;
-      top: 16px;
-      right: 16px;
-      background: none;
-      border: none;
-      color: #64748b;
-      font-size: 24px;
-      cursor: pointer;
+      width: 100px;
+      height: 100px;
+      right: -45px;
+      bottom: -45px;
+      border-radius: 50%;
+      background:
+        rgba(34,211,238,.06);
+      filter: blur(12px);
     }
-    .btn-close-modal:hover { color: white; }
-
-    footer { border-top: 1px solid #0f172a; padding: 24px; text-align: center; font-size: 12px; color: #475569; }
+    .stat-label {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .7px;
+    }
+    .stat-value {
+      margin-top: 8px;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -.5px;
+    }
+    .stat-meta {
+      margin-top: 6px;
+      color: var(--muted-2);
+      font-size: 10px;
+    }
+    .stat-meta.good {
+      color: var(--green);
+    }
+    .stat-meta.warning {
+      color: var(--yellow);
+    }
+    .stat-meta.error {
+      color: var(--red);
+    }
+    /* =========================================================
+       PANELS
+    ========================================================= */
+    .panel-grid {
+      display: grid;
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .panel {
+      min-width: 0;
+      border:
+        1px solid var(--border);
+      border-radius: var(--radius);
+      background:
+        rgba(15,23,42,.62);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel-header {
+      min-height: 55px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0 16px;
+      border-bottom:
+        1px solid var(--border);
+    }
+    .panel-title {
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .panel-subtitle {
+      margin-top: 2px;
+      color: var(--muted-2);
+      font-size: 9px;
+    }
+    .panel-body {
+      padding: 16px;
+    }
+    /* =========================================================
+       CHARTS
+    ========================================================= */
+    .chart-box {
+      width: 100%;
+      height: 270px;
+      position: relative;
+    }
+    .chart-box canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+    /* =========================================================
+       TABLES
+    ========================================================= */
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    .data-table th {
+      padding: 11px 10px;
+      color: var(--muted-2);
+      font-size: 9px;
+      font-weight: 900;
+      text-align: left;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      border-bottom:
+        1px solid var(--border);
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 12px 10px;
+      color: #cbd5e1;
+      border-bottom:
+        1px solid rgba(148,163,184,.06);
+      vertical-align: middle;
+    }
+    .data-table tr:hover td {
+      background:
+        rgba(255,255,255,.018);
+    }
+    .user-cell {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+    .avatar {
+      width: 30px;
+      height: 30px;
+      flex: 0 0 30px;
+      border-radius: 9px;
+      background:
+        linear-gradient(
+          135deg,
+          #334155,
+          #1e293b
+        );
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 900;
+      color: white;
+    }
+    .user-name {
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .user-id {
+      margin-top: 2px;
+      color: var(--muted-2);
+      font-size: 9px;
+    }
+    /* =========================================================
+       BADGES
+    ========================================================= */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 7px;
+      border-radius: 7px;
+      font-size: 9px;
+      font-weight: 800;
+    }
+    .badge-green {
+      color: #a7f3d0;
+      background: rgba(52,211,153,.09);
+    }
+    .badge-blue {
+      color: #bae6fd;
+      background: rgba(56,189,248,.09);
+    }
+    .badge-violet {
+      color: #ddd6fe;
+      background: rgba(139,92,246,.10);
+    }
+    .badge-yellow {
+      color: #fde68a;
+      background: rgba(251,191,36,.09);
+    }
+    .badge-red {
+      color: #fecdd3;
+      background: rgba(251,113,133,.09);
+    }
+    .badge-gray {
+      color: #cbd5e1;
+      background: rgba(148,163,184,.08);
+    }
+    /* =========================================================
+       TOOLBAR
+    ========================================================= */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 13px;
+    }
+    .input,
+    .select {
+      height: 38px;
+      padding: 0 11px;
+      border:
+        1px solid var(--border);
+      border-radius: 10px;
+      background:
+        rgba(2,6,23,.65);
+      color: white;
+      outline: none;
+      font-size: 11px;
+    }
+    .input {
+      min-width: 180px;
+      flex: 1;
+    }
+    .select {
+      min-width: 145px;
+    }
+    .input:focus,
+    .select:focus {
+      border-color:
+        rgba(34,211,238,.35);
+      box-shadow:
+        0 0 0 3px
+        rgba(34,211,238,.05);
+    }
+    /* =========================================================
+       LOADING / EMPTY
+    ========================================================= */
+    .loading {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .spinner {
+      width: 22px;
+      height: 22px;
+      margin: 0 auto 10px;
+      border:
+        2px solid rgba(255,255,255,.08);
+      border-top-color:
+        var(--cyan);
+      border-radius: 50%;
+      animation:
+        spin .7s linear infinite;
+    }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    .empty {
+      padding: 35px 20px;
+      text-align: center;
+      color: var(--muted-2);
+      font-size: 11px;
+    }
+    /* =========================================================
+       PAGINATION
+    ========================================================= */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 7px;
+      padding: 12px 15px;
+    }
+    .pagination-info {
+      margin-right: auto;
+      color: var(--muted-2);
+      font-size: 10px;
+    }
+    /* =========================================================
+       OVERLAY
+    ========================================================= */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background:
+        rgba(0,0,0,.55);
+      z-index: 90;
+    }
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+    @media (max-width: 1150px) {
+      .stats-grid {
+        grid-template-columns:
+          repeat(2, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 900px) {
+      :root {
+        --sidebar-width: 245px;
+      }
+      .panel-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 720px) {
+      .admin-sidebar {
+        transform:
+          translateX(-100%);
+      }
+      .admin-sidebar.open {
+        transform:
+          translateX(0);
+      }
+      .sidebar-overlay.open {
+        display: block;
+      }
+      .admin-main {
+        width: 100%;
+        margin-left: 0;
+        padding: 15px;
+      }
+      .mobile-menu {
+        display: block;
+      }
+      .topbar {
+        align-items: flex-start;
+      }
+      .topbar-actions .btn {
+        display: none;
+      }
+    }
+    @media (max-width: 520px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      .toolbar {
+        align-items: stretch;
+      }
+      .input,
+      .select {
+        width: 100%;
+        min-width: 0;
+      }
+      .section-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .chart-box {
+        height: 220px;
+      }
+    }
   </style>
 </head>
 <body>
-
-  <div class="halo-top"></div>
-
-  <!-- Barre de navigation -->
-  <header>
-    <a href="/" class="logo-area">
-      <img src="/logo.png" id="logo-main-img" onerror="this.style.display='none'; document.getElementById('logo-fallback-box').style.display='flex';" class="logo-img" alt="OMNIX Logo">
-      <div id="logo-fallback-box" style="display: none; width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #c084fc, #7c3aed); align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 18px; box-shadow: 0 4px 12px rgba(192, 132, 252, 0.2);">O</div>
-      <span class="logo-text">OMNIX Staff</span>
-    </a>
-    <button onclick="toggleDrawer(true)" class="btn-burger">
-      <svg class="burger-icon" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
-    </button>
-  </header>
-
-  <!-- LIAISON DE LA BARRE LATÉRALE CENTRALISÉE -->
-  <%- include('partials/sidebar') %>
-
-  <!-- Contenu Principal -->
-  <main>
-    <h2>Console d'Administration</h2>
-    <p class="subtitle">Suivi de production de la plateforme, gestion des comptes et audit technique.</p>
-
-    <!-- Grille des statistiques de monitoring -->
-    <div class="metrics-grid">
-      <div class="metric-card">
-        <span class="metric-label">Latence API</span>
-        <span class="metric-value" id="m-latency">0 ms</span>
+<div class="admin-app">
+  <!-- =======================================================
+       SIDEBAR
+  ======================================================== -->
+  <aside id="adminSidebar" class="admin-sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <img
+          src="/logo.png"
+          alt="OMNIX"
+          onerror="
+            this.style.display='none';
+            document.getElementById('brandFallback').style.display='flex';
+          "
+        >
+        <span
+          id="brandFallback"
+          class="brand-fallback"
+          style="display:none;"
+        >
+          O
+        </span>
       </div>
-      <div class="metric-card">
-        <span class="metric-label">Serveurs Actifs</span>
-        <span class="metric-value" id="m-servers">0</span>
-      </div>
-      <div class="metric-card">
-        <span class="metric-label">Comptes Indexés</span>
-        <span class="metric-value" id="m-users">0</span>
-      </div>
-      <div class="metric-card">
-        <span class="metric-label">Uptime OMNIX</span>
-        <span class="metric-value" id="m-uptime">99.9%</span>
+      <div>
+        <div class="brand-name">
+          OMNIX
+        </div>
+        <div class="brand-role">
+          Staff Control Center
+        </div>
       </div>
     </div>
-
-    <!-- Sélecteur d'onglets (Tabs) -->
-    <div class="tabs-container">
-      <button onclick="switchTab('membres')" id="tab-btn-membres" class="tab-btn active">Membres</button>
-      <button onclick="switchTab('audit')" id="tab-btn-audit" class="tab-btn">Audit Center</button>
-      <button onclick="switchTab('system')" id="tab-btn-system" class="tab-btn">Console</button>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        Général
+      </div>
+      <button
+        class="nav-button active"
+        data-section="overview"
+      >
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">
+          Vue générale
+        </span>
+      </button>
+      <button
+        class="nav-button"
+        data-section="users"
+      >
+        <span class="nav-icon">👥</span>
+        <span class="nav-label">
+          Utilisateurs
+        </span>
+      </button>
+      <button
+        class="nav-button"
+        data-section="guilds"
+      >
+        <span class="nav-icon">🖥️</span>
+        <span class="nav-label">
+          Serveurs Discord
+        </span>
+      </button>
+      <div class="nav-section">
+        Intelligence artificielle
+      </div>
+      <button
+        class="nav-button"
+        data-section="ai"
+      >
+        <span class="nav-icon">🤖</span>
+        <span class="nav-label">
+          Statistiques IA
+        </span>
+      </button>
+      <button
+        class="nav-button"
+        data-section="aiLogs"
+      >
+        <span class="nav-icon">💬</span>
+        <span class="nav-label">
+          Logs conversations IA
+        </span>
+      </button>
+      <div class="nav-section">
+        Système
+      </div>
+      <button
+        class="nav-button"
+        data-section="health"
+      >
+        <span class="nav-icon">❤️</span>
+        <span class="nav-label">
+          Santé système
+        </span>
+      </button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="staff-card">
+        <div class="staff-card-label">
+          Session Staff
+        </div>
+        <div
+          id="staffName"
+          class="staff-card-name"
+        >
+          Chargement...
+        </div>
+        <div class="staff-status">
+          <span class="status-dot"></span>
+          Panel sécurisé
+        </div>
+      </div>
     </div>
-
-    <!-- ONGLET 1 : SECTION MEMBRES -->
-    <section id="section-membres" class="panel-section active">
-      <input type="text" id="search-input" class="search-box" placeholder="Rechercher par pseudo, ID ou statut..." oninput="filterUsers()">
-      
-      <div class="users-container">
-        <div id="users-loading" style="text-align: center; color: #64748b; padding: 20px 0; font-size: 13px;">
-          Récupération sécurisée des comptes...
-        </div>
-        <div class="users-list" id="users-list" style="display: none;">
-          <!-- Injecté dynamiquement -->
-        </div>
-      </div>
-    </section>
-
-    <!-- ONGLET 2 : SECTION AUDIT CENTER -->
-    <section id="section-audit" class="panel-section">
-      <div class="users-container" style="max-height: 400px; overflow-y: auto;">
-        <div id="audit-loading" style="text-align: center; color: #64748b; padding: 20px 0; font-size: 13px;">
-          Chargement du journal d'audit...
-        </div>
-        <div id="audit-list" style="display: flex; flex-direction: column;">
-          <!-- Injecté dynamiquement -->
-        </div>
-      </div>
-    </section>
-
-    <!-- ONGLET 3 : SECTION SYSTEME -->
-    <section id="section-system" class="panel-section">
-      <div id="omnix-terminal" style="width: 100%; background: #020617; border: 1px solid #1e293b; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); overflow: hidden;">
-        <div style="background: #0f172a; border-bottom: 1px solid #1e293b; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444; display: inline-block;"></span>
-            <span style="width: 10px; height: 10px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span>
-            <span style="width: 10px; height: 10px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
-            <span style="color: #64748b; font-size: 11px; font-weight: bold; margin-left: 8px; letter-spacing: 1px;">⚙️ CONSOLE DE SUIVI OMNIX (STAFF)</span>
+  </aside>
+  <div
+    id="sidebarOverlay"
+    class="sidebar-overlay"
+  ></div>
+  <!-- =======================================================
+       MAIN
+  ======================================================== -->
+  <main class="admin-main">
+    <header class="topbar">
+      <div
+        style="
+          display:flex;
+          align-items:center;
+          gap:12px;
+        "
+      >
+        <button
+          id="mobileMenu"
+          class="mobile-menu"
+          type="button"
+        >
+          ☰
+        </button>
+        <div>
+          <div class="topbar-title">
+            Staff Panel
           </div>
-          <span style="color: #38bdf8; font-size: 10px; font-weight: bold;">TEMPS RÉEL</span>
+          <div class="topbar-subtitle">
+            Centre de contrôle administratif OMNIX
+          </div>
         </div>
-        <div id="terminal-screen" style="padding: 16px; height: 260px; overflow-y: auto; font-size: 12px; color: #a3e635; line-height: 1.5; background: #030712;">
-          [SYSTEM] Initialisation de la console d'administration...
+      </div>
+      <div class="topbar-actions">
+        <button
+          class="btn"
+          id="refreshAll"
+          type="button"
+        >
+          ↻ Actualiser
+        </button>
+        <a
+          href="/"
+          class="btn"
+        >
+          ← Retour
+        </a>
+      </div>
+    </header>
+    <!-- =====================================================
+         OVERVIEW
+    ====================================================== -->
+    <section
+      id="section-overview"
+      class="page-section active"
+    >
+      <div class="section-header">
+        <div>
+          <h2>
+            Vue générale
+          </h2>
+          <p>
+            Vue globale de l'activité OMNIX.
+          </p>
+        </div>
+        <div
+          style="
+            display:flex;
+            gap:7px;
+            align-items:center;
+          "
+        >
+          <input
+            id="overviewStart"
+            class="input"
+            type="date"
+            style="max-width:145px;"
+          >
+          <input
+            id="overviewEnd"
+            class="input"
+            type="date"
+            style="max-width:145px;"
+          >
+          <button
+            id="overviewApply"
+            class="btn btn-primary"
+            type="button"
+          >
+            Filtrer
+          </button>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">
+            Utilisateurs
+          </div>
+          <div
+            id="statUsers"
+            class="stat-value"
+          >
+            —
+          </div>
+          <div
+            id="statNewUsers"
+            class="stat-meta"
+          >
+            —
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            Serveurs Discord
+          </div>
+          <div
+            id="statGuilds"
+            class="stat-value"
+          >
+            —
+          </div>
+          <div
+            id="statGuildPremium"
+            class="stat-meta"
+          >
+            —
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            Requêtes IA
+          </div>
+          <div
+            id="statAi"
+            class="stat-value"
+          >
+            —
+          </div>
+          <div
+            id="statAiErrors"
+            class="stat-meta"
+          >
+            —
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            Plans actifs
+          </div>
+          <div
+            id="statPlans"
+            class="stat-value"
+          >
+            —
+          </div>
+          <div
+            id="statAudit"
+            class="stat-meta"
+          >
+            —
+          </div>
+        </div>
+      </div>
+      <div class="panel-grid">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">
+                Inscriptions utilisateurs
+              </div>
+              <div class="panel-subtitle">
+                Évolution quotidienne
+              </div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="chart-box">
+              <canvas id="usersChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">
+                Nouveaux serveurs
+              </div>
+              <div class="panel-subtitle">
+                Serveurs enregistrés
+              </div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="chart-box">
+              <canvas id="guildsChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              Activité IA
+            </div>
+            <div class="panel-subtitle">
+              Requêtes, tokens et erreurs
+            </div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="chart-box">
+            <canvas id="overviewAiChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- =====================================================
+         USERS
+    ====================================================== -->
+    <section
+      id="section-users"
+      class="page-section"
+    >
+      <div class="section-header">
+        <div>
+          <h2>
+            Utilisateurs
+          </h2>
+          <p>
+            Comptes enregistrés sur OMNIX.
+          </p>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-body">
+          <div class="toolbar">
+            <input
+              id="usersSearch"
+              class="input"
+              type="search"
+              placeholder="Rechercher par Discord ID, pseudo ou email..."
+            >
+            <button
+              id="usersSearchBtn"
+              class="btn btn-primary"
+              type="button"
+            >
+              Rechercher
+            </button>
+          </div>
+          <div
+            id="usersTableContainer"
+            class="table-wrapper"
+          >
+            <div class="loading">
+              <div class="spinner"></div>
+              Chargement des utilisateurs...
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- =====================================================
+         GUILDS
+    ====================================================== -->
+    <section
+      id="section-guilds"
+      class="page-section"
+    >
+      <div class="section-header">
+        <div>
+          <h2>
+            Serveurs Discord
+          </h2>
+          <p>
+            Tous les serveurs utilisant OMNIX.
+          </p>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-body">
+          <div class="toolbar">
+            <input
+              id="guildsSearch"
+              class="input"
+              type="search"
+              placeholder="Rechercher un serveur ou un Guild ID..."
+            >
+            <button
+              id="guildsSearchBtn"
+              class="btn btn-primary"
+              type="button"
+            >
+              Rechercher
+            </button>
+          </div>
+          <div
+            id="guildsTableContainer"
+            class="table-wrapper"
+          >
+            <div class="loading">
+              <div class="spinner"></div>
+              Chargement des serveurs...
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- =====================================================
+         AI STATISTICS
+    ====================================================== -->
+    <section
+      id="section-ai"
+      class="page-section"
+    >
+      <div class="section-header">
+        <div>
+          <h2>
+            Intelligence artificielle
+          </h2>
+          <p>
+            Analyse globale de l'utilisation de l'IA OMNIX.
+          </p>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">
+            Requêtes
+          </div>
+          <div
+            id="aiTotalRequests"
+            class="stat-value"
+          >
+            —
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            Tokens
+          </div>
+          <div
+            id="aiTotalTokens"
+            class="stat-value"
+          >
+            —
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            Erreurs
+          </div>
+          <div
+            id="aiTotalErrors"
+            class="stat-value"
+          >
+            —
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            Taux d'erreur
+          </div>
+          <div
+            id="aiErrorRate"
+            class="stat-value"
+          >
+            —
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              Activité IA
+            </div>
+            <div class="panel-subtitle">
+              Données issues de /api/admin/statistics/ai
+            </div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="chart-box">
+            <canvas id="aiChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- =====================================================
+         AI LOGS
+    ====================================================== -->
+    <section
+      id="section-aiLogs"
+      class="page-section"
+    >
+      <div class="section-header">
+        <div>
+          <h2>
+            Logs des conversations IA
+          </h2>
+          <p>
+            Conversations du site et des serveurs Discord.
+          </p>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-body">
+          <div class="toolbar">
+            <input
+              id="aiLogSearch"
+              class="input"
+              type="search"
+              placeholder="Rechercher dans les conversations..."
+            >
+            <input
+              id="aiLogGuild"
+              class="input"
+              type="text"
+              placeholder="Guild ID"
+            >
+            <input
+              id="aiLogOwner"
+              class="input"
+              type="text"
+              placeholder="Owner ID"
+            >
+            <select
+              id="aiLogSource"
+              class="select"
+            >
+              <option value="">
+                Toutes les sources
+              </option>
+              <option value="website">
+                Site web
+              </option>
+              <option value="discord">
+                Discord
+              </option>
+            </select>
+            <select
+              id="aiLogStatus"
+              class="select"
+            >
+              <option value="">
+                Tous les statuts
+              </option>
+              <option value="success">
+                Succès
+              </option>
+              <option value="error">
+                Erreurs
+              </option>
+            </select>
+            <button
+              id="aiLogsSearchBtn"
+              class="btn btn-primary"
+              type="button"
+            >
+              Filtrer
+            </button>
+          </div>
+          <div
+            id="aiLogsTableContainer"
+            class="table-wrapper"
+          >
+            <div class="loading">
+              <div class="spinner"></div>
+              Chargement des logs IA...
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- =====================================================
+         HEALTH
+    ====================================================== -->
+    <section
+      id="section-health"
+      class="page-section"
+    >
+      <div class="section-header">
+        <div>
+          <h2>
+            Santé système
+          </h2>
+          <p>
+            État actuel de l'infrastructure OMNIX.
+          </p>
+        </div>
+        <button
+          id="healthRefresh"
+          class="btn btn-primary"
+          type="button"
+        >
+          Vérifier maintenant
+        </button>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">
+            Application
+          </div>
+          <div
+            id="healthStatus"
+            class="stat-value"
+          >
+            —
+          </div>
+          <div
+            id="healthUptime"
+            class="stat-meta"
+          >
+            —
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            MongoDB
+          </div>
+          <div
+            id="healthMongo"
+            class="stat-value"
+          >
+            —
+          </div>
+          <div
+            id="healthMongoState"
+            class="stat-meta"
+          >
+            —
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            RAM utilisée
+          </div>
+          <div
+            id="healthMemory"
+            class="stat-value"
+          >
+            —
+          </div>
+          <div class="stat-meta">
+            Process Node.js
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            Node.js
+          </div>
+          <div
+            id="healthNode"
+            class="stat-value"
+          >
+            —
+          </div>
+          <div
+            id="healthPlatform"
+            class="stat-meta"
+          >
+            —
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              Informations techniques
+            </div>
+            <div class="panel-subtitle">
+              Données retournées par /api/admin/health
+            </div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <pre
+            id="healthRaw"
+            style="
+              margin:0;
+              white-space:pre-wrap;
+              word-break:break-word;
+              color:#94a3b8;
+              font-size:10px;
+              line-height:1.7;
+            "
+          >Chargement...</pre>
         </div>
       </div>
     </section>
   </main>
-
-  <!-- MODAL DE FICHE PROFIL INTERACTIVE SUR CLIC -->
-  <div id="user-modal" class="modal-overlay" onclick="closeUserModal(event)">
-    <div class="modal-card" onclick="event.stopPropagation()">
-      <button class="btn-close-modal" onclick="closeUserModal()">&times;</button>
-      <div id="modal-user-content">
-        <!-- Rempli dynamiquement sur clic -->
-      </div>
-    </div>
-  </div>
-
-  <footer>
-    <p>&copy; 2026 OMNIX. Tous droits réservés.</p>
-  </footer>
-
-  <!-- BLOC JAVASCRIPT DE CONFIGURATION ET D'INTERACTION -->
-  <script>
-    // --- GESTION DE SESSION ET DE TIROIR ---
-    function getToken() {
-      return localStorage.getItem('jwt_token');
+</div>
+<!-- =========================================================
+     SCRIPT
+========================================================= -->
+<script>
+/* =========================================================
+   OMNIX ADMIN
+   PART 1 / 2
+========================================================= */
+"use strict";
+/* =========================================================
+   STATE
+========================================================= */
+const AdminState = {
+  currentSection: "overview",
+  charts: {},
+  overview: null,
+  usersPage: 1,
+  usersLimit: 25,
+  guildsPage: 1,
+  guildsLimit: 25,
+  aiLogsPage: 1,
+  aiLogsLimit: 25
+};
+/* =========================================================
+   HELPERS
+========================================================= */
+function escapeHtml(value) {
+  if (value === null || value === undefined) {
+    return "";
+  }
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+function formatNumber(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) {
+    return "0";
+  }
+  return new Intl.NumberFormat("fr-FR")
+    .format(number);
+}
+function formatBytes(bytes) {
+  const number = Number(bytes);
+  if (!Number.isFinite(number)) {
+    return "0 B";
+  }
+  const units = [
+    "B",
+    "KB",
+    "MB",
+    "GB",
+    "TB"
+  ];
+  let size = number;
+  let index = 0;
+  while (
+    size >= 1024 &&
+    index < units.length - 1
+  ) {
+    size /= 1024;
+    index++;
+  }
+  return (
+    size.toFixed(
+      index === 0 ? 0 : 1
+    ) +
+    " " +
+    units[index]
+  );
+}
+function formatUptime(seconds) {
+  const total = Math.max(
+    0,
+    Number(seconds) || 0
+  );
+  const days =
+    Math.floor(
+      total / 86400
+    );
+  const hours =
+    Math.floor(
+      (total % 86400) / 3600
+    );
+  const minutes =
+    Math.floor(
+      (total % 3600) / 60
+    );
+  return `${days}j ${hours}h ${minutes}m`;
+}
+function formatDate(value) {
+  if (!value) {
+    return "—";
+  }
+  const date =
+    new Date(value);
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return "—";
+  }
+  return date.toLocaleString(
+    "fr-FR",
+    {
+      dateStyle: "short",
+      timeStyle: "short"
     }
-    function setToken(token) {
-      try {
-        localStorage.setItem('jwt_token', token);
-        document.cookie = `jwt_token=${token}; path=/; max-age=604800; SameSite=Lax; Secure`;
-        addTerminalLog('success', "Session de connexion locale synchronisée.");
-      } catch (err) {
-        addTerminalLog('error', "Échec de synchronisation de la session.");
+  );
+}
+function getInitials(value) {
+  const text =
+    String(value || "?")
+      .trim();
+  if (!text) {
+    return "?";
+  }
+  return text
+    .split(/\s+/)
+    .slice(0, 2)
+    .map(
+      part =>
+        part[0]
+          ?.toUpperCase() || ""
+    )
+    .join("");
+}
+function todayInputDate() {
+  const date =
+    new Date();
+  return date
+    .toISOString()
+    .slice(0, 10);
+}
+function daysAgoInputDate(days) {
+  const date =
+    new Date();
+  date.setDate(
+    date.getDate() - days
+  );
+  return date
+    .toISOString()
+    .slice(0, 10);
+}
+/* =========================================================
+   API CLIENT
+========================================================= */
+async function adminFetch(
+  path,
+  options = {}
+) {
+  const response =
+    await fetch(
+      path,
+      {
+        credentials: "include",
+        headers: {
+          "Accept":
+            "application/json",
+          ...(options.headers || {})
+        },
+        ...options
       }
-    }
-    function logout() {
-      localStorage.removeItem('jwt_token');
-      document.cookie = "jwt_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax; Secure";
-      window.location.href = '/';
-    }
-    function parseJwt(token) {
-      if (!token || token === 'null' || token === 'undefined' || !token.includes('.')) return null;
-      try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const pad = base64.length % 4;
-        const paddedBase64 = pad ? base64 + '='.repeat(4 - pad) : base64;
-        const rawBinary = window.atob(paddedBase64);
-        const bytes = new Uint8Array(rawBinary.length);
-        for (let i = 0; i < rawBinary.length; i++) {
-          bytes[i] = rawBinary.charCodeAt(i);
-        }
-        const decoder = new TextDecoder('utf-8');
-        return JSON.parse(decoder.decode(bytes));
-      } catch (e) {
-        return null;
+    );
+  let data = null;
+  try {
+    data =
+      await response.json();
+  } catch {
+    data = null;
+  }
+  if (
+    response.status === 401
+  ) {
+    window.location.href =
+      "/login";
+    throw new Error(
+      "Session expirée."
+    );
+  }
+  if (
+    response.status === 403
+  ) {
+    throw new Error(
+      "Accès Staff refusé."
+    );
+  }
+  if (!response.ok) {
+    throw new Error(
+      data?.error ||
+      "Erreur serveur."
+    );
+  }
+  return data;
+}
+/* =========================================================
+   NAVIGATION
+========================================================= */
+function openSection(
+  section
+) {
+  AdminState.currentSection =
+    section;
+  document
+    .querySelectorAll(
+      ".nav-button"
+    )
+    .forEach(button => {
+      button.classList.toggle(
+        "active",
+        button.dataset.section ===
+          section
+      );
+    });
+  document
+    .querySelectorAll(
+      ".page-section"
+    )
+    .forEach(element => {
+      element.classList.toggle(
+        "active",
+        element.id ===
+          `section-${section}`
+      );
+    });
+  closeMobileSidebar();
+  if (section === "overview") {
+    loadOverview();
+  }
+  if (section === "users") {
+    loadUsers();
+  }
+  if (section === "guilds") {
+    loadGuilds();
+  }
+  if (section === "ai") {
+    loadAiStatistics();
+  }
+  if (section === "aiLogs") {
+    loadAiLogs();
+  }
+  if (section === "health") {
+    loadHealth();
+  }
+}
+document
+  .querySelectorAll(
+    ".nav-button"
+  )
+  .forEach(button => {
+    button.addEventListener(
+      "click",
+      () => {
+        openSection(
+          button.dataset.section
+        );
       }
-    }
-    function toggleDrawer(open) {
-      const drawer = document.getElementById('side-drawer');
-      if (drawer) {
-        if (open) {
-          drawer.classList.add('open');
-        } else {
-          drawer.classList.remove('open');
-        }
-      }
-    }
-
-    let allUsers = [];
-
-    function addTerminalLog(type, message) {
-      const screen = document.getElementById('terminal-screen');
-      if (!screen) return;
-      
-      const time = new Date().toLocaleTimeString();
-      let color = '#a3e635';
-      let label = 'INFO';
-      
-      if (type === 'warn') { color = '#f59e0b'; label = 'WARN'; }
-      else if (type === 'error') { color = '#ef4444'; label = 'ERROR'; }
-      else if (type === 'debug') { color = '#38bdf8'; label = 'DEBUG'; }
-      else if (type === 'success') { color = '#10b981'; label = 'SUCCESS'; }
-      
-      const line = document.createElement('div');
-      line.style.color = color;
-      line.style.marginBottom = '6px';
-      line.innerHTML = `[${time}] [${label}] ${message}`;
-      
-      screen.appendChild(line);
-      screen.scrollTop = screen.scrollHeight;
-    }
-
-    // Gestion des ongets
-    function switchTab(tabName) {
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.panel-section').forEach(sec => sec.classList.remove('active'));
-      
-      document.getElementById(`tab-btn-${tabName}`).classList.add('active');
-      document.getElementById(`section-${tabName}`).classList.add('active');
-      
-      addTerminalLog('debug', `Changement d'onglet : ${tabName.toUpperCase()}`);
-
-      if (tabName === 'audit') {
-        loadAuditLogs();
-      }
-    }
-
-    async function loadMonitoring() {
-      addTerminalLog('info', "Interrogation de l'API de statistiques...");
-      try {
-        const response = await fetch('/api/stats', {
-          credentials: 'same-origin'
-        });
-        if (!response.ok) throw new Error();
-        
-        const stats = await response.json();
-        
-        document.getElementById('m-latency').innerText = `${stats.bot.ping || 12} ms`;
-        document.getElementById('m-servers').innerText = stats.bot.guildsCount || 0;
-        document.getElementById('m-users').innerText = stats.database.totalUsers || 0;
-        
-        addTerminalLog('success', "Métriques système chargées avec succès.");
-      } catch (err) {
-        addTerminalLog('warn', "Échec de récupération des métriques réelles. Affichage des données de secours.");
-        document.getElementById('m-latency').innerText = "14 ms";
-        document.getElementById('m-servers').innerText = "1";
-        document.getElementById('m-users').innerText = "2";
-      }
-    }
-
-    async function loadUsers() {
-      addTerminalLog('info', "Récupération de la liste des comptes enregistrés...");
-      const jwtToken = getToken();
-
-      try {
-        const response = await fetch('/api/admin/users', {
-          headers: { 'Authorization': `Bearer ${jwtToken}` },
-          credentials: 'same-origin'
-        });
-
-        if (!response.ok) throw new Error();
-
-        allUsers = await response.json();
-        renderUsers(allUsers);
-        addTerminalLog('success', `${allUsers.length} compte(s) récupéré(s) avec succès.`);
-
-      } catch (err) {
-        addTerminalLog('warn', "Échec de l'accès à l'API Admin (Users). Affichage du compte de secours.");
-        const payload = parseJwt(jwtToken);
-        const fallbackUsers = [
+    );
+  });
+/* =========================================================
+   MOBILE SIDEBAR
+========================================================= */
+function openMobileSidebar() {
+  document
+    .getElementById(
+      "adminSidebar"
+    )
+    .classList.add("open");
+  document
+    .getElementById(
+      "sidebarOverlay"
+    )
+    .classList.add("open");
+}
+function closeMobileSidebar() {
+  document
+    .getElementById(
+      "adminSidebar"
+    )
+    .classList.remove("open");
+  document
+    .getElementById(
+      "sidebarOverlay"
+    )
+    .classList.remove("open");
+}
+document
+  .getElementById(
+    "mobileMenu"
+  )
+  ?.addEventListener(
+    "click",
+    openMobileSidebar
+  );
+document
+  .getElementById(
+    "sidebarOverlay"
+  )
+  ?.addEventListener(
+    "click",
+    closeMobileSidebar
+  );
+/* =========================================================
+   OVERVIEW
+========================================================= */
+async function loadOverview() {
+  const start =
+    document.getElementById(
+      "overviewStart"
+    )?.value;
+  const end =
+    document.getElementById(
+      "overviewEnd"
+    )?.value;
+  const params =
+    new URLSearchParams();
+  if (start) {
+    params.set(
+      "start",
+      `${start}T00:00:00`
+    );
+  }
+  if (end) {
+    params.set(
+      "end",
+      `${end}T23:59:59`
+    );
+  }
+  try {
+    const data =
+      await adminFetch(
+        `/api/admin/overview?${params.toString()}`
+      );
+    AdminState.overview =
+      data;
+    renderOverview(
+      data
+    );
+    await Promise.all([
+      loadUserStatistics(
+        start,
+        end
+      ),
+      loadGuildStatistics(
+        start,
+        end
+      ),
+      loadAiStatistics(
+        start,
+        end
+      )
+    ]);
+  } catch (error) {
+    console.error(
+      "[OMNIX ADMIN] Overview:",
+      error
+    );
+    showError(
+      "Impossible de charger la vue générale.",
+      error.message
+    );
+  }
+}
+function renderOverview(
+  data
+) {
+  const users =
+    data?.users || {};
+  const guilds =
+    data?.guilds || {};
+  const pricing =
+    data?.pricing || {};
+  const ai =
+    data?.ai || {};
+  const staff =
+    data?.staff || {};
+  setText(
+    "statUsers",
+    formatNumber(
+      users.total
+    )
+  );
+  setText(
+    "statNewUsers",
+    `+${formatNumber(
+      users.new
+    )} sur la période`
+  );
+  setText(
+    "statGuilds",
+    formatNumber(
+      guilds.total
+    )
+  );
+  setText(
+    "statGuildPremium",
+    `${formatNumber(
+      guilds.premium
+    )} Premium · ${formatNumber(
+      guilds.free
+    )} Free`
+  );
+  setText(
+    "statAi",
+    formatNumber(
+      ai.requests
+    )
+  );
+  setText(
+    "statAiErrors",
+    `${formatNumber(
+      ai.errors
+    )} erreur(s)`
+  );
+  setText(
+    "statPlans",
+    formatNumber(
+      pricing.active
+    )
+  );
+  setText(
+    "statAudit",
+    `${formatNumber(
+      staff.auditActions
+    )} actions Staff`
+  );
+  const name =
+    data?.user?.username ||
+    data?.user?.tag ||
+    "Staff OMNIX";
+  setText(
+    "staffName",
+    name
+  );
+}
+async function loadUserStatistics(
+  start,
+  end
+) {
+  const params =
+    new URLSearchParams();
+  if (start) {
+    params.set(
+      "start",
+      `${start}T00:00:00`
+    );
+  }
+  if (end) {
+    params.set(
+      "end",
+      `${end}T23:59:59`
+    );
+  }
+  try {
+    const data =
+      await adminFetch(
+        `/api/admin/statistics/users?${params.toString()}`
+      );
+    drawLineChart(
+      "usersChart",
+      data?.data || [],
+      "count",
+      "Inscriptions"
+    );
+  } catch (error) {
+    console.error(
+      "[OMNIX ADMIN] User chart:",
+      error
+    );
+  }
+}
+async function loadGuildStatistics(
+  start,
+  end
+) {
+  const params =
+    new URLSearchParams();
+  if (start) {
+    params.set(
+      "start",
+      `${start}T00:00:00`
+    );
+  }
+  if (end) {
+    params.set(
+      "end",
+      `${end}T23:59:59`
+    );
+  }
+  try {
+    const data =
+      await adminFetch(
+        `/api/admin/statistics/guilds?${params.toString()}`
+      );
+    drawLineChart(
+      "guildsChart",
+      data?.data || [],
+      "count",
+      "Serveurs"
+    );
+  } catch (error) {
+    console.error(
+      "[OMNIX ADMIN] Guild chart:",
+      error
+    );
+  }
+}
+async function loadAiStatistics(
+  start,
+  end
+) {
+  const params =
+    new URLSearchParams();
+  if (start) {
+    params.set(
+      "start",
+      `${start}T00:00:00`
+    );
+  }
+  if (end) {
+    params.set(
+      "end",
+      `${end}T23:59:59`
+    );
+  }
+  try {
+    const data =
+      await adminFetch(
+        `/api/admin/statistics/ai?${params.toString()}`
+      );
+    renderAiStatistics(
+      data?.data || []
+    );
+    drawAiChart(
+      data?.data || []
+    );
+    drawOverviewAiChart(
+      data?.data || []
+    );
+  } catch (error) {
+    console.error(
+      "[OMNIX ADMIN] AI chart:",
+      error
+    );
+  }
+}
+/* =========================================================
+   AI STATISTICS RENDER
+========================================================= */
+function renderAiStatistics(
+  rows
+) {
+  const totalRequests =
+    rows.reduce(
+      (sum, row) =>
+        sum +
+        Number(
+          row.requests || 0
+        ),
+      0
+    );
+  const totalTokens =
+    rows.reduce(
+      (sum, row) =>
+        sum +
+        Number(
+          row.tokens || 0
+        ),
+      0
+    );
+  const totalErrors =
+    rows.reduce(
+      (sum, row) =>
+        sum +
+        Number(
+          row.errors || 0
+        ),
+      0
+    );
+  const errorRate =
+    totalRequests > 0
+      ? (
+          totalErrors /
+          totalRequests *
+          100
+        ).toFixed(2) + "%"
+      : "0%";
+  setText(
+    "aiTotalRequests",
+    formatNumber(
+      totalRequests
+    )
+  );
+  setText(
+    "aiTotalTokens",
+    formatNumber(
+      totalTokens
+    )
+  );
+  setText(
+    "aiTotalErrors",
+    formatNumber(
+      totalErrors
+    )
+  );
+  setText(
+    "aiErrorRate",
+    errorRate
+  );
+}
+/* =========================================================
+   CHART ENGINE
+========================================================= */
+function destroyChart(
+  id
+) {
+  if (
+    AdminState.charts[id]
+  ) {
+    AdminState.charts[id].destroy();
+    delete AdminState.charts[id];
+  }
+}
+function drawLineChart(
+  canvasId,
+  rows,
+  valueKey,
+  label
+) {
+  const canvas =
+    document.getElementById(
+      canvasId
+    );
+  if (!canvas) {
+    return;
+  }
+  const ctx =
+    canvas.getContext(
+      "2d"
+    );
+  if (!ctx) {
+    return;
+  }
+  destroyChart(
+    canvasId
+  );
+  const values =
+    rows.map(
+      row =>
+        Number(
+          row[valueKey] || 0
+        )
+    );
+  const labels =
+    rows.map(
+      row =>
+        row.date || ""
+    );
+  AdminState.charts[
+    canvasId
+  ] = new Chart(
+    ctx,
+    {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
           {
-            discordId: payload ? payload.discordId : "1211490202246189167",
-            username: payload ? payload.username : "le.m135",
-            avatar: payload ? payload.avatar : null,
-            isAdmin: true,
-            rewards: { points: 150 },
-            licenses: [
-              { licenseKey: "OMNIX-PREM-X79K", tier: "premium", status: "active" }
-            ]
+            label,
+            data: values,
+            borderColor:
+              "#22d3ee",
+            backgroundColor:
+              "rgba(34,211,238,.08)",
+            borderWidth: 2,
+            pointRadius: 2,
+            pointHoverRadius: 5,
+            tension: .35,
+            fill: true
           }
-        ];
-        allUsers = fallbackUsers;
-        renderUsers(fallbackUsers);
+        ]
+      },
+      options: chartOptions()
+    }
+  );
+}
+function drawAiChart(
+  rows
+) {
+  const canvas =
+    document.getElementById(
+      "aiChart"
+    );
+  if (!canvas) {
+    return;
+  }
+  const ctx =
+    canvas.getContext(
+      "2d"
+    );
+  destroyChart(
+    "aiChart"
+  );
+  AdminState.charts.aiChart =
+    new Chart(
+      ctx,
+      {
+        type: "line",
+        data: {
+          labels:
+            rows.map(
+              row =>
+                row.date
+            ),
+          datasets: [
+            {
+              label:
+                "Requêtes",
+              data:
+                rows.map(
+                  row =>
+                    Number(
+                      row.requests ||
+                      0
+                    )
+                ),
+              borderColor:
+                "#22d3ee",
+              backgroundColor:
+                "rgba(34,211,238,.06)",
+              tension: .35,
+              fill: true
+            },
+            {
+              label:
+                "Erreurs",
+              data:
+                rows.map(
+                  row =>
+                    Number(
+                      row.errors ||
+                      0
+                    )
+                ),
+              borderColor:
+                "#fb7185",
+              backgroundColor:
+                "transparent",
+              tension: .35,
+              fill: false
+            }
+          ]
+        },
+        options:
+          chartOptions()
+      }
+    );
+}
+function drawOverviewAiChart(
+  rows
+) {
+  const canvas =
+    document.getElementById(
+      "overviewAiChart"
+    );
+  if (!canvas) {
+    return;
+  }
+  const ctx =
+    canvas.getContext(
+      "2d"
+    );
+  destroyChart(
+    "overviewAiChart"
+  );
+  AdminState.charts.overviewAiChart =
+    new Chart(
+      ctx,
+      {
+        type: "bar",
+        data: {
+          labels:
+            rows.map(
+              row =>
+                row.date
+            ),
+          datasets: [
+            {
+              label:
+                "Requêtes",
+              data:
+                rows.map(
+                  row =>
+                    Number(
+                      row.requests ||
+                      0
+                    )
+                ),
+              backgroundColor:
+                "rgba(34,211,238,.55)"
+            },
+            {
+              label:
+                "Erreurs",
+              data:
+                rows.map(
+                  row =>
+                    Number(
+                      row.errors ||
+                      0
+                    )
+                ),
+              backgroundColor:
+                "rgba(251,113,133,.55)"
+            }
+          ]
+        },
+        options:
+          chartOptions()
+      }
+    );
+}
+function chartOptions() {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      intersect: false,
+      mode: "index"
+    },
+    plugins: {
+      legend: {
+        labels: {
+          color: "#94a3b8",
+          font: {
+            size: 10
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: {
+          color:
+            "rgba(148,163,184,.06)"
+        },
+        ticks: {
+          color:
+            "#64748b",
+          font: {
+            size: 9
+          },
+          maxTicksLimit: 8
+        }
+      },
+      y: {
+        beginAtZero: true,
+        grid: {
+          color:
+            "rgba(148,163,184,.06)"
+        },
+        ticks: {
+          color:
+            "#64748b",
+          font: {
+            size: 9
+          }
+        }
       }
     }
+  };
+}
+/* =========================================================
+   USERS
+========================================================= */
+async function loadUsers(
+  page =
+    AdminState.usersPage
+) {
+  AdminState.usersPage =
+    page;
+  const search =
+    document.getElementById(
+      "usersSearch"
+    )?.value.trim() || "";
+  const params =
+    new URLSearchParams();
+  params.set(
+    "page",
+    String(page)
+  );
+  params.set(
+    "limit",
+    String(
+      AdminState.usersLimit
+    )
+  );
+  if (search) {
+    params.set(
+      "search",
+      search
+    );
+  }
+  const container =
+    document.getElementById(
+      "usersTableContainer"
+    );
+  container.innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      Chargement des utilisateurs...
+    </div>
+  `;
+  try {
+    const data =
+      await adminFetch(
+        `/api/admin/users?${params.toString()}`
+      );
+    renderUsers(
+      data
+    );
+  } catch (error) {
+    container.innerHTML =
+      errorBox(
+        error.message
+      );
+  }
+}
+function renderUsers(
+  data
+) {
+  const container =
+    document.getElementById(
+      "usersTableContainer"
+    );
+  const users =
+    data?.data || [];
+  if (!users.length) {
+    container.innerHTML =
+      `<div class="empty">
+        Aucun utilisateur trouvé.
+      </div>`;
+    return;
+  }
+  container.innerHTML = `
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Utilisateur</th>
+          <th>Email</th>
+          <th>Statut</th>
+          <th>Création</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${users.map(user => {
+          const name =
+            user.username ||
+            user.tag ||
+            user.discordId ||
+            "Utilisateur";
+          const premium =
+            user.isPremium === true;
+          const admin =
+            user.isAdmin === true ||
+            user.isOwner === true;
+          return `
+            <tr>
+              <td>
+                <div class="user-cell">
+                  <div class="avatar">
+                    ${escapeHtml(
+                      getInitials(name)
+                    )}
+                  </div>
+                  <div>
+                    <div class="user-name">
+                      ${escapeHtml(name)}
+                    </div>
+                    <div class="user-id">
+                      ${escapeHtml(
+                        user.discordId ||
+                        user.id ||
+                        "ID inconnu"
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                ${escapeHtml(
+                  user.email || "—"
+                )}
+              </td>
+              <td>
+                ${
+                  admin
+                    ? `<span class="badge badge-violet">STAFF</span>`
+                    : premium
+                      ? `<span class="badge badge-blue">PREMIUM</span>`
+                      : `<span class="badge badge-gray">FREE</span>`
+                }
+              </td>
+              <td>
+                ${formatDate(
+                  user.createdAt
+                )}
+              </td>
+            </tr>
+          `;
+        }).join("")}
+      </tbody>
+    </table>
+    ${renderPagination(
+      data?.pagination,
+      "users"
+    )}
+  `;
+}
+/* =========================================================
+   GUILDS
+========================================================= */
+async function loadGuilds(
+  page =
+    AdminState.guildsPage
+) {
+  AdminState.guildsPage =
+    page;
+  const search =
+    document.getElementById(
+      "guildsSearch"
+    )?.value.trim() || "";
+  const params =
+    new URLSearchParams();
+  params.set(
+    "page",
+    String(page)
+  );
+  params.set(
+    "limit",
+    String(
+      AdminState.guildsLimit
+    )
+  );
+  if (search) {
+    params.set(
+      "search",
+      search
+    );
+  }
+  const container =
+    document.getElementById(
+      "guildsTableContainer"
+    );
+  container.innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      Chargement des serveurs...
+    </div>
+  `;
+  try {
+    const data =
+      await adminFetch(
+        `/api/admin/guilds?${params.toString()}`
+      );
+    renderGuilds(
+      data
+    );
+  } catch (error) {
+    container.innerHTML =
+      errorBox(
+        error.message
+      );
+  }
+}
+function renderGuilds(
+  data
+) {
+  const container =
+    document.getElementById(
+      "guildsTableContainer"
+    );
+  const guilds =
+    data?.data || [];
+  if (!guilds.length) {
+    container.innerHTML =
+      `<div class="empty">
+        Aucun serveur trouvé.
+      </div>`;
+    return;
+  }
+  container.innerHTML = `
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Serveur</th>
+          <th>Owner</th>
+          <th>Premium</th>
+          <th>Création</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${guilds.map(guild => {
+          const premium =
+            guild?.premium?.isPremium === true ||
+            guild?.premium?.isPremium === "true";
+          return `
+            <tr>
+              <td>
+                <div class="user-cell">
+                  <div class="avatar">
+                    🖥️
+                  </div>
+                  <div>
+                    <div class="user-name">
+                      ${escapeHtml(
+                        guild.guildName ||
+                        guild.name ||
+                        "Serveur"
+                      )}
+                    </div>
+                    <div class="user-id">
+                      ${escapeHtml(
+                        guild.guildId ||
+                        "Guild ID inconnu"
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                ${escapeHtml(
+                  guild.ownerId ||
+                  guild.owner?.id ||
+                  "—"
+                )}
+              </td>
+              <td>
+                ${
+                  premium
+                    ? `<span class="badge badge-violet">PREMIUM</span>`
+                    : `<span class="badge badge-gray">FREE</span>`
+                }
+              </td>
+              <td>
+                ${formatDate(
+                  guild.createdAt
+                )}
+              </td>
+              <td>
+                <button
+                  class="btn"
+                  type="button"
+                  onclick="
+                    openGuildDetail(
+                      '${escapeJs(
+                        guild.guildId
+                      )}'
+                    )
+                  "
+                >
+                  Voir
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join("")}
+      </tbody>
+    </table>
+    ${renderPagination(
+      data?.pagination,
+      "guilds"
+    )}
+  `;
+}
+/* =========================================================
+   PAGINATION
+========================================================= */
+function renderPagination(
+  pagination,
+  type
+) {
+  if (!pagination) {
+    return "";
+  }
+  const page =
+    Number(
+      pagination.page || 1
+    );
+  const pages =
+    Number(
+      pagination.pages || 1
+    );
+  const total =
+    Number(
+      pagination.total || 0
+    );
+  if (pages <= 1) {
+    return `
+      <div class="pagination">
+        <div class="pagination-info">
+          ${formatNumber(total)} résultat(s)
+        </div>
+      </div>
+    `;
+  }
+  const safeType =
+    escapeJs(type);
+  return `
+    <div class="pagination">
+      <div class="pagination-info">
+        Page ${page} / ${pages}
+        · ${formatNumber(total)} résultat(s)
+      </div>
+      <button
+        class="btn"
+        ${page <= 1 ? "disabled" : ""}
+        onclick="
+          changePage(
+            '${safeType}',
+            ${page - 1}
+          )
+        "
+      >
+        ←
+      </button>
+      <button
+        class="btn"
+        ${page >= pages ? "disabled" : ""}
+        onclick="
+          changePage(
+            '${safeType}',
+            ${page + 1}
+          )
+        "
+      >
+        →
+      </button>
+    </div>
+  `;
+}
+function changePage(
+  type,
+  page
+) {
+  if (page < 1) {
+    return;
+  }
+  if (type === "users") {
+    loadUsers(page);
+  }
+  if (type === "guilds") {
+    loadGuilds(page);
+  }
+  if (type === "aiLogs") {
+    loadAiLogs(page);
+  }
+}
+/* =========================================================
+   GLOBAL EVENTS PART 1
+========================================================= */
+document
+  .getElementById(
+    "overviewApply"
+  )
+  ?.addEventListener(
+    "click",
+    () => {
+      loadOverview();
+    }
+  );
+document
+  .getElementById(
+    "refreshAll"
+  )
+  ?.addEventListener(
+    "click",
+    () => {
+      openSection(
+        AdminState.currentSection
+      );
+    }
+  );
+document
+  .getElementById(
+    "healthRefresh"
+  )
+  ?.addEventListener(
+    "click",
+    loadHealth
+  );
+document
+  .getElementById(
+    "usersSearchBtn"
+  )
+  ?.addEventListener(
+    "click",
+    () => {
+      loadUsers(1);
+    }
+  );
+document
+  .getElementById(
+    "usersSearch"
+  )
+  ?.addEventListener(
+    "keydown",
+    event => {
+      if (
+        event.key === "Enter"
+      ) {
+        loadUsers(1);
+      }
+    }
+  );
+document
+  .getElementById(
+    "guildsSearchBtn"
+  )
+  ?.addEventListener(
+    "click",
+    () => {
+      loadGuilds(1);
+    }
+  );
+document
+  .getElementById(
+    "guildsSearch"
+  )
+  ?.addEventListener(
+    "keydown",
+    event => {
+      if (
+        event.key === "Enter"
+      ) {
+        loadGuilds(1);
+      }
+    }
+  );
+/* =========================================================
+   UTILITY FUNCTIONS
+========================================================= */
+function setText(
+  id,
+  value
+) {
+  const element =
+    document.getElementById(
+      id
+    );
+  if (element) {
+    element.textContent =
+      value;
+  }
+}
+function errorBox(
+  message
+) {
+  return `
+    <div class="empty">
+      <div
+        style="
+          color:#fb7185;
+          font-weight:800;
+          margin-bottom:5px;
+        "
+      >
+        Une erreur est survenue
+      </div>
+      ${escapeHtml(
+        message
+      )}
+    </div>
+  `;
+}
+function showError(
+  title,
+  message
+) {
+  console.error(
+    title,
+    message
+  );
+}
+function escapeJs(
+  value
+) {
+  return String(
+    value || ""
+  )
+    .replaceAll(
+      "\\",
+      "\\\\"
+    )
+    .replaceAll(
+      "'",
+      "\\'"
+    )
+    .replaceAll(
+      "\n",
+      "\\n"
+    )
+    .replaceAll(
+      "\r",
+      "\\r"
+    );
+}
+/* =========================================================
+   DEFAULT DATE RANGE
+========================================================= */
+(function initDates() {
+  const start =
+    document.getElementById(
+      "overviewStart"
+    );
+  const end =
+    document.getElementById(
+      "overviewEnd"
+    );
+  if (start) {
+    start.value =
+      daysAgoInputDate(30);
+  }
+  if (end) {
+    end.value =
+      todayInputDate();
+  }
+})();
+/* =========================================================
+   BOOT
+========================================================= */
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+    loadOverview();
+  }
+);
 
-    async function loadAuditLogs() {
-      const container = document.getElementById('audit-list');
-      const loadingLabel = document.getElementById('audit-loading');
-      
-      container.innerHTML = '';
-      loadingLabel.style.display = 'block';
+<!-- =========================================================
+     OMNIX ADMIN
+     PART 2 / 2
+========================================================= -->
 
-      addTerminalLog('info', "Chargement de l'historique de l'Audit Center...");
-      const jwtToken = getToken();
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
 
-      try {
-        const response = await fetch('/api/admin/audit-logs', {
-          headers: { 'Authorization': `Bearer ${jwtToken}` },
-          credentials: 'same-origin'
-        });
+<script>
+"use strict";
 
-        if (!response.ok) throw new Error();
+/* =========================================================
+   ADMIN ROUTES
+   Les routes déjà utilisées dans la PARTIE 1 sont conservées.
+========================================================= */
 
-        const logs = await response.json();
-        loadingLabel.style.display = 'none';
+const ADMIN_ROUTES = {
+  overview:
+    "/api/admin/overview",
 
-        if (logs.length === 0) {
-          container.innerHTML = '<div style="text-align: center; color: #64748b; padding: 20px 0;">Aucune action enregistrée pour le moment.</div>';
+  users:
+    "/api/admin/users",
+
+  guilds:
+    "/api/admin/guilds",
+
+  userStatistics:
+    "/api/admin/statistics/users",
+
+  guildStatistics:
+    "/api/admin/statistics/guilds",
+
+  aiStatistics:
+    "/api/admin/statistics/ai",
+
+  aiLogs:
+    "/api/admin/statistics/ai/logs",
+
+  health:
+    "/api/admin/health"
+};
+
+/* =========================================================
+   PATCH API ROUTES
+   Remplace les appels de la PARTIE 1 par les constantes.
+   Cela évite d'avoir les routes dispersées.
+========================================================= */
+
+async function loadOverview() {
+
+  const start =
+    document.getElementById(
+      "overviewStart"
+    )?.value;
+
+  const end =
+    document.getElementById(
+      "overviewEnd"
+    )?.value;
+
+  const params =
+    new URLSearchParams();
+
+  if (start) {
+    params.set(
+      "start",
+      `${start}T00:00:00`
+    );
+  }
+
+  if (end) {
+    params.set(
+      "end",
+      `${end}T23:59:59`
+    );
+  }
+
+  try {
+
+    const query =
+      params.toString();
+
+    const url =
+      query
+        ? `${ADMIN_ROUTES.overview}?${query}`
+        : ADMIN_ROUTES.overview;
+
+    const data =
+      await adminFetch(
+        url
+      );
+
+    AdminState.overview =
+      data;
+
+    renderOverview(
+      data
+    );
+
+    await Promise.all([
+      loadUserStatistics(
+        start,
+        end
+      ),
+
+      loadGuildStatistics(
+        start,
+        end
+      ),
+
+      loadAiStatistics(
+        start,
+        end
+      )
+    ]);
+
+  } catch (error) {
+
+    console.error(
+      "[OMNIX ADMIN] Overview:",
+      error
+    );
+
+    showError(
+      "Impossible de charger la vue générale.",
+      error.message
+    );
+  }
+}
+
+/* =========================================================
+   USER STATISTICS
+========================================================= */
+
+async function loadUserStatistics(
+  start,
+  end
+) {
+
+  const params =
+    new URLSearchParams();
+
+  if (start) {
+    params.set(
+      "start",
+      `${start}T00:00:00`
+    );
+  }
+
+  if (end) {
+    params.set(
+      "end",
+      `${end}T23:59:59`
+    );
+  }
+
+  try {
+
+    const query =
+      params.toString();
+
+    const url =
+      query
+        ? `${ADMIN_ROUTES.userStatistics}?${query}`
+        : ADMIN_ROUTES.userStatistics;
+
+    const data =
+      await adminFetch(
+        url
+      );
+
+    drawLineChart(
+      "usersChart",
+      Array.isArray(data?.data)
+        ? data.data
+        : [],
+      "count",
+      "Inscriptions"
+    );
+
+  } catch (error) {
+
+    console.error(
+      "[OMNIX ADMIN] User statistics:",
+      error
+    );
+
+  }
+}
+
+/* =========================================================
+   GUILD STATISTICS
+========================================================= */
+
+async function loadGuildStatistics(
+  start,
+  end
+) {
+
+  const params =
+    new URLSearchParams();
+
+  if (start) {
+    params.set(
+      "start",
+      `${start}T00:00:00`
+    );
+  }
+
+  if (end) {
+    params.set(
+      "end",
+      `${end}T23:59:59`
+    );
+  }
+
+  try {
+
+    const query =
+      params.toString();
+
+    const url =
+      query
+        ? `${ADMIN_ROUTES.guildStatistics}?${query}`
+        : ADMIN_ROUTES.guildStatistics;
+
+    const data =
+      await adminFetch(
+        url
+      );
+
+    drawLineChart(
+      "guildsChart",
+      Array.isArray(data?.data)
+        ? data.data
+        : [],
+      "count",
+      "Serveurs"
+    );
+
+  } catch (error) {
+
+    console.error(
+      "[OMNIX ADMIN] Guild statistics:",
+      error
+    );
+
+  }
+}
+
+/* =========================================================
+   AI STATISTICS
+========================================================= */
+
+async function loadAiStatistics(
+  start,
+  end
+) {
+
+  const params =
+    new URLSearchParams();
+
+  if (start) {
+    params.set(
+      "start",
+      `${start}T00:00:00`
+    );
+  }
+
+  if (end) {
+    params.set(
+      "end",
+      `${end}T23:59:59`
+    );
+  }
+
+  try {
+
+    const query =
+      params.toString();
+
+    const url =
+      query
+        ? `${ADMIN_ROUTES.aiStatistics}?${query}`
+        : ADMIN_ROUTES.aiStatistics;
+
+    const data =
+      await adminFetch(
+        url
+      );
+
+    const rows =
+      Array.isArray(data?.data)
+        ? data.data
+        : [];
+
+    renderAiStatistics(
+      rows
+    );
+
+    drawAiChart(
+      rows
+    );
+
+    drawOverviewAiChart(
+      rows
+    );
+
+  } catch (error) {
+
+    console.error(
+      "[OMNIX ADMIN] AI statistics:",
+      error
+    );
+
+  }
+}
+
+/* =========================================================
+   AI LOGS
+========================================================= */
+
+async function loadAiLogs(
+  page =
+    AdminState.aiLogsPage
+) {
+
+  AdminState.aiLogsPage =
+    page;
+
+  const search =
+    document.getElementById(
+      "aiLogSearch"
+    )?.value.trim() || "";
+
+  const guildId =
+    document.getElementById(
+      "aiLogGuild"
+    )?.value.trim() || "";
+
+  const ownerId =
+    document.getElementById(
+      "aiLogOwner"
+    )?.value.trim() || "";
+
+  const source =
+    document.getElementById(
+      "aiLogSource"
+    )?.value || "";
+
+  const status =
+    document.getElementById(
+      "aiLogStatus"
+    )?.value || "";
+
+  const params =
+    new URLSearchParams();
+
+  params.set(
+    "page",
+    String(page)
+  );
+
+  params.set(
+    "limit",
+    String(
+      AdminState.aiLogsLimit
+    )
+  );
+
+  if (search) {
+    params.set(
+      "search",
+      search
+    );
+  }
+
+  if (guildId) {
+    params.set(
+      "guildId",
+      guildId
+    );
+  }
+
+  if (ownerId) {
+    params.set(
+      "ownerId",
+      ownerId
+    );
+  }
+
+  if (source) {
+    params.set(
+      "source",
+      source
+    );
+  }
+
+  if (status) {
+    params.set(
+      "status",
+      status
+    );
+  }
+
+  const container =
+    document.getElementById(
+      "aiLogsTableContainer"
+    );
+
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      Chargement des logs IA...
+    </div>
+  `;
+
+  try {
+
+    const data =
+      await adminFetch(
+        `${ADMIN_ROUTES.aiLogs}?${params.toString()}`
+      );
+
+    renderAiLogs(
+      data
+    );
+
+  } catch (error) {
+
+    console.error(
+      "[OMNIX ADMIN] AI logs:",
+      error
+    );
+
+    container.innerHTML =
+      errorBox(
+        error.message
+      );
+  }
+}
+
+/* =========================================================
+   RENDER AI LOGS
+========================================================= */
+
+function renderAiLogs(
+  data
+) {
+
+  const container =
+    document.getElementById(
+      "aiLogsTableContainer"
+    );
+
+  if (!container) {
+    return;
+  }
+
+  const logs =
+    Array.isArray(data?.data)
+      ? data.data
+      : [];
+
+  if (!logs.length) {
+
+    container.innerHTML = `
+      <div class="empty">
+        Aucun log IA trouvé.
+      </div>
+    `;
+
+    return;
+  }
+
+  container.innerHTML = `
+    <table class="data-table">
+
+      <thead>
+        <tr>
+          <th>Utilisateur</th>
+          <th>Source</th>
+          <th>Serveur</th>
+          <th>Requête</th>
+          <th>Tokens</th>
+          <th>Statut</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        ${logs.map(log => {
+
+          const username =
+            log.username ||
+            log.user?.username ||
+            log.discordUsername ||
+            log.ownerId ||
+            "Utilisateur";
+
+          const guildId =
+            log.guildId ||
+            log.guild?.id ||
+            "—";
+
+          const source =
+            String(
+              log.source ||
+              "unknown"
+            ).toLowerCase();
+
+          const status =
+            String(
+              log.status ||
+              (
+                log.error
+                  ? "error"
+                  : "success"
+              )
+            ).toLowerCase();
+
+          const prompt =
+            log.prompt ||
+            log.message ||
+            log.input ||
+            log.question ||
+            "—";
+
+          const tokens =
+            Number(
+              log.tokens ??
+              log.totalTokens ??
+              log.usage?.total_tokens ??
+              0
+            );
+
+          return `
+            <tr>
+
+              <td>
+
+                <div class="user-cell">
+
+                  <div class="avatar">
+                    ${escapeHtml(
+                      getInitials(
+                        username
+                      )
+                    )}
+                  </div>
+
+                  <div>
+
+                    <div class="user-name">
+                      ${escapeHtml(
+                        username
+                      )}
+                    </div>
+
+                    <div class="user-id">
+                      ${escapeHtml(
+                        log.userId ||
+                        log.discordId ||
+                        log.ownerId ||
+                        "ID inconnu"
+                      )}
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </td>
+
+              <td>
+
+                ${
+                  source === "discord"
+
+                    ? `
+                      <span class="badge badge-violet">
+                        DISCORD
+                      </span>
+                    `
+
+                    : source === "website"
+
+                      ? `
+                        <span class="badge badge-blue">
+                          SITE
+                        </span>
+                      `
+
+                      : `
+                        <span class="badge badge-gray">
+                          ${escapeHtml(
+                            source
+                          )}
+                        </span>
+                      `
+                }
+
+              </td>
+
+              <td>
+                ${escapeHtml(
+                  guildId
+                )}
+              </td>
+
+              <td
+                title="${escapeHtml(
+                  prompt
+                )}"
+                style="
+                  max-width:300px;
+                  overflow:hidden;
+                  text-overflow:ellipsis;
+                  white-space:nowrap;
+                "
+              >
+                ${escapeHtml(
+                  prompt
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  tokens
+                )}
+              </td>
+
+              <td>
+
+                ${
+                  status === "success"
+
+                    ? `
+                      <span class="badge badge-green">
+                        SUCCÈS
+                      </span>
+                    `
+
+                    : `
+                      <span class="badge badge-red">
+                        ERREUR
+                      </span>
+                    `
+                }
+
+              </td>
+
+              <td>
+                ${formatDate(
+                  log.createdAt ||
+                  log.timestamp ||
+                  log.date
+                )}
+              </td>
+
+            </tr>
+          `;
+
+        }).join("")}
+
+      </tbody>
+
+    </table>
+
+    ${renderPagination(
+      data?.pagination,
+      "aiLogs"
+    )}
+  `;
+}
+
+/* =========================================================
+   HEALTH
+========================================================= */
+
+async function loadHealth() {
+
+  setText(
+    "healthStatus",
+    "..."
+  );
+
+  setText(
+    "healthMongo",
+    "..."
+  );
+
+  setText(
+    "healthMemory",
+    "..."
+  );
+
+  setText(
+    "healthNode",
+    "..."
+  );
+
+  setText(
+    "healthUptime",
+    "Vérification..."
+  );
+
+  setText(
+    "healthMongoState",
+    "..."
+  );
+
+  setText(
+    "healthPlatform",
+    "..."
+  );
+
+  const raw =
+    document.getElementById(
+      "healthRaw"
+    );
+
+  if (raw) {
+    raw.textContent =
+      "Vérification de l'infrastructure...";
+  }
+
+  try {
+
+    const data =
+      await adminFetch(
+        ADMIN_ROUTES.health
+      );
+
+    renderHealth(
+      data
+    );
+
+  } catch (error) {
+
+    console.error(
+      "[OMNIX ADMIN] Health:",
+      error
+    );
+
+    setText(
+      "healthStatus",
+      "ERREUR"
+    );
+
+    setText(
+      "healthMongo",
+      "INCONNU"
+    );
+
+    setText(
+      "healthMemory",
+      "—"
+    );
+
+    setText(
+      "healthNode",
+      "—"
+    );
+
+    setText(
+      "healthUptime",
+      "Impossible de vérifier"
+    );
+
+    setText(
+      "healthMongoState",
+      error.message
+    );
+
+    if (raw) {
+      raw.textContent =
+        JSON.stringify(
+          {
+            error:
+              error.message
+          },
+          null,
+          2
+        );
+    }
+  }
+}
+
+/* =========================================================
+   RENDER HEALTH
+========================================================= */
+
+function renderHealth(
+  data
+) {
+
+  const application =
+    data?.application ||
+    data?.app ||
+    {};
+
+  const mongo =
+    data?.mongodb ||
+    data?.mongo ||
+    data?.database ||
+    {};
+
+  const memory =
+    data?.memory ||
+    data?.process?.memory ||
+    {};
+
+  const node =
+    data?.node ||
+    {};
+
+  const status =
+    data?.status ||
+    application?.status ||
+    "unknown";
+
+  const uptime =
+    data?.uptime ??
+    application?.uptime ??
+    0;
+
+  const mongoStatus =
+    mongo?.status ||
+    mongo?.state ||
+    (
+      mongo?.connected === true
+        ? "connected"
+        : "unknown"
+    );
+
+  const heapUsed =
+    memory?.heapUsed ??
+    memory?.heapUsedBytes ??
+    memory?.rss ??
+    0;
+
+  const nodeVersion =
+    data?.nodeVersion ||
+    node?.version ||
+    "—";
+
+  const platform =
+    data?.platform ||
+    node?.platform ||
+    navigator.platform ||
+    "—";
+
+  setText(
+    "healthStatus",
+    String(
+      status
+    ).toUpperCase()
+  );
+
+  setText(
+    "healthUptime",
+    formatUptime(
+      uptime
+    )
+  );
+
+  setText(
+    "healthMongo",
+    String(
+      mongoStatus
+    ).toUpperCase()
+  );
+
+  setText(
+    "healthMongoState",
+    mongo?.message ||
+    mongo?.details ||
+    "État de la connexion MongoDB"
+  );
+
+  setText(
+    "healthMemory",
+    formatBytes(
+      heapUsed
+    )
+  );
+
+  setText(
+    "healthNode",
+    nodeVersion
+  );
+
+  setText(
+    "healthPlatform",
+    platform
+  );
+
+  const raw =
+    document.getElementById(
+      "healthRaw"
+    );
+
+  if (raw) {
+
+    raw.textContent =
+      JSON.stringify(
+        data,
+        null,
+        2
+      );
+  }
+}
+
+/* =========================================================
+   GUILD DETAIL
+========================================================= */
+
+/*
+ * La PARTIE 1 appelle openGuildDetail().
+ *
+ * On ne fait pas ici un appel vers une route non déclarée
+ * dans les routes Admin déjà présentes.
+ *
+ * La fonction affiche les informations disponibles et
+ * prépare le point d'extension pour une route de détail
+ * lorsque celle-ci existe côté backend.
+ */
+
+function openGuildDetail(
+  guildId
+) {
+
+  if (!guildId) {
+    return;
+  }
+
+  const encoded =
+    encodeURIComponent(
+      guildId
+    );
+
+  const url =
+    `/api/admin/guilds?search=${encoded}&page=1&limit=1`;
+
+  adminFetch(
+    url
+  )
+    .then(
+      data => {
+
+        const guild =
+          Array.isArray(
+            data?.data
+          )
+            ? data.data[0]
+            : null;
+
+        if (!guild) {
+
+          alert(
+            "Serveur introuvable."
+          );
+
           return;
         }
 
-        logs.forEach(log => {
-          const row = document.createElement('div');
-          row.className = `log-row ${log.level || 'info'}`;
-          row.innerHTML = `[${new Date(log.createdAt).toLocaleTimeString()}] 👤 @${log.username} : <strong>${log.action.toUpperCase()}</strong> - ${log.details} (${log.ipAddress || 'Aucune IP'})`;
-          container.appendChild(row);
-        });
-
-      } catch (e) {
-        loadingLabel.style.display = 'none';
-        container.innerHTML = `
-          <div class="log-row info">[19:46:12] [INFO] @OmnixEngine : SYSTEM_BOOT - Connexion réseau validée.</div>
-          <div class="log-row warning">[19:47:04] [WARNING] @Massimo : CONFIG_UPDATE - Paramètres du module '/ai' modifiés.</div>
-          <div class="log-row error">[19:48:33] [ERROR] @le.m135 : DB_CONN_ERROR - Perte de connexion Atlas résolue.</div>
-        `;
-        addTerminalLog('warn', "Échec de récupération de l'Audit Center en direct. Affichage du journal d'audit de secours.");
+        showGuildDetailModal(
+          guild
+        );
       }
+    )
+    .catch(
+      error => {
+
+        console.error(
+          "[OMNIX ADMIN] Guild detail:",
+          error
+        );
+
+        alert(
+          error.message ||
+          "Impossible de charger le serveur."
+        );
+      }
+    );
+}
+
+/* =========================================================
+   GUILD DETAIL MODAL
+========================================================= */
+
+function showGuildDetailModal(
+  guild
+) {
+
+  const existing =
+    document.getElementById(
+      "omnixGuildModal"
+    );
+
+  if (existing) {
+    existing.remove();
+  }
+
+  const guildName =
+    guild.guildName ||
+    guild.name ||
+    "Serveur";
+
+  const guildId =
+    guild.guildId ||
+    guild.id ||
+    "—";
+
+  const ownerId =
+    guild.ownerId ||
+    guild.owner?.id ||
+    "—";
+
+  const createdAt =
+    formatDate(
+      guild.createdAt
+    );
+
+  const premium =
+    guild?.premium?.isPremium === true ||
+    guild?.premium?.isPremium === "true";
+
+  const modal =
+    document.createElement(
+      "div"
+    );
+
+  modal.id =
+    "omnixGuildModal";
+
+  modal.style.cssText = `
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    background:rgba(0,0,0,.72);
+    backdrop-filter:blur(8px);
+  `;
+
+  modal.innerHTML = `
+
+    <div
+      style="
+        width:min(560px,100%);
+        max-height:90vh;
+        overflow:auto;
+        border:1px solid rgba(148,163,184,.14);
+        border-radius:18px;
+        background:
+          linear-gradient(
+            145deg,
+            rgba(15,23,42,.98),
+            rgba(2,6,23,.98)
+          );
+        box-shadow:
+          0 30px 100px rgba(0,0,0,.55);
+      "
+    >
+
+      <div
+        style="
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:12px;
+          padding:18px;
+          border-bottom:1px solid rgba(148,163,184,.10);
+        "
+      >
+
+        <div>
+
+          <div
+            style="
+              font-size:16px;
+              font-weight:900;
+              color:#fff;
+            "
+          >
+            ${escapeHtml(
+              guildName
+            )}
+          </div>
+
+          <div
+            style="
+              margin-top:4px;
+              color:#64748b;
+              font-size:10px;
+            "
+          >
+            Guild ID :
+            ${escapeHtml(
+              guildId
+            )}
+          </div>
+
+        </div>
+
+        <button
+          type="button"
+          class="btn"
+          id="closeGuildModal"
+        >
+          ✕
+        </button>
+
+      </div>
+
+      <div
+        style="
+          padding:18px;
+          display:grid;
+          gap:10px;
+        "
+      >
+
+        <div class="panel">
+          <div class="panel-body">
+
+            <div
+              style="
+                display:grid;
+                gap:12px;
+              "
+            >
+
+              <div>
+                <div class="stat-label">
+                  Serveur
+                </div>
+                <div
+                  style="
+                    margin-top:5px;
+                    font-size:13px;
+                    font-weight:800;
+                  "
+                >
+                  ${escapeHtml(
+                    guildName
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div class="stat-label">
+                  Guild ID
+                </div>
+                <div
+                  style="
+                    margin-top:5px;
+                    color:#94a3b8;
+                    font-size:11px;
+                  "
+                >
+                  ${escapeHtml(
+                    guildId
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div class="stat-label">
+                  Owner ID
+                </div>
+                <div
+                  style="
+                    margin-top:5px;
+                    color:#94a3b8;
+                    font-size:11px;
+                  "
+                >
+                  ${escapeHtml(
+                    ownerId
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div class="stat-label">
+                  Plan
+                </div>
+
+                <div
+                  style="
+                    margin-top:6px;
+                  "
+                >
+
+                  ${
+                    premium
+
+                      ? `
+                        <span class="badge badge-violet">
+                          PREMIUM
+                        </span>
+                      `
+
+                      : `
+                        <span class="badge badge-gray">
+                          FREE
+                        </span>
+                      `
+                  }
+
+                </div>
+
+              </div>
+
+              <div>
+                <div class="stat-label">
+                  Enregistrement
+                </div>
+                <div
+                  style="
+                    margin-top:5px;
+                    color:#94a3b8;
+                    font-size:11px;
+                  "
+                >
+                  ${escapeHtml(
+                    createdAt
+                  )}
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <div
+        style="
+          display:flex;
+          justify-content:flex-end;
+          padding:0 18px 18px;
+        "
+      >
+
+        <button
+          type="button"
+          class="btn btn-primary"
+          id="closeGuildModalBottom"
+        >
+          Fermer
+        </button>
+
+      </div>
+
+    </div>
+  `;
+
+  document.body.appendChild(
+    modal
+  );
+
+  const close =
+    () => {
+      modal.remove();
+    };
+
+  document
+    .getElementById(
+      "closeGuildModal"
+    )
+    ?.addEventListener(
+      "click",
+      close
+    );
+
+  document
+    .getElementById(
+      "closeGuildModalBottom"
+    )
+    ?.addEventListener(
+      "click",
+      close
+    );
+
+  modal.addEventListener(
+    "click",
+    event => {
+
+      if (
+        event.target ===
+        modal
+      ) {
+        close();
+      }
+
+    }
+  );
+
+  document.addEventListener(
+    "keydown",
+    function escapeHandler(
+      event
+    ) {
+
+      if (
+        event.key ===
+        "Escape"
+      ) {
+
+        close();
+
+        document.removeEventListener(
+          "keydown",
+          escapeHandler
+        );
+      }
+
+    }
+  );
+}
+
+/* =========================================================
+   AI LOG FILTER EVENTS
+========================================================= */
+
+document
+  .getElementById(
+    "aiLogsSearchBtn"
+  )
+  ?.addEventListener(
+    "click",
+    () => {
+
+      loadAiLogs(
+        1
+      );
+
+    }
+  );
+
+document
+  .getElementById(
+    "aiLogSearch"
+  )
+  ?.addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key ===
+        "Enter"
+      ) {
+
+        loadAiLogs(
+          1
+        );
+
+      }
+
+    }
+  );
+
+document
+  .getElementById(
+    "aiLogGuild"
+  )
+  ?.addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key ===
+        "Enter"
+      ) {
+
+        loadAiLogs(
+          1
+        );
+
+      }
+
+    }
+  );
+
+document
+  .getElementById(
+    "aiLogOwner"
+  )
+  ?.addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key ===
+        "Enter"
+      ) {
+
+        loadAiLogs(
+          1
+        );
+
+      }
+
+    }
+  );
+
+/* =========================================================
+   SELECT FILTER EVENTS
+========================================================= */
+
+document
+  .getElementById(
+    "aiLogSource"
+  )
+  ?.addEventListener(
+    "change",
+    () => {
+
+      loadAiLogs(
+        1
+      );
+
+    }
+  );
+
+document
+  .getElementById(
+    "aiLogStatus"
+  )
+  ?.addEventListener(
+    "change",
+    () => {
+
+      loadAiLogs(
+        1
+      );
+
+    }
+  );
+
+/* =========================================================
+   MOBILE KEYBOARD / ESC
+========================================================= */
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if (
+      event.key ===
+      "Escape"
+    ) {
+
+      closeMobileSidebar();
+
     }
 
-    function renderUsers(users) {
-      const loadingLabel = document.getElementById('users-loading');
-      const listContainer = document.getElementById('users-list');
+  }
+);
 
-      loadingLabel.style.display = 'none';
-      listContainer.innerHTML = '';
-      listContainer.style.display = 'flex';
+/* =========================================================
+   GLOBAL REFRESH
+========================================================= */
 
-      if (users.length === 0) {
-        listContainer.innerHTML = '<div style="text-align: center; color: #64748b; padding: 12px 0;">Aucun membre ne correspond.</div>';
+document
+  .getElementById(
+    "refreshAll"
+  )
+  ?.addEventListener(
+    "click",
+    async () => {
+
+      const button =
+        document.getElementById(
+          "refreshAll"
+        );
+
+      if (!button) {
         return;
       }
 
-      users.forEach(user => {
-        const row = document.createElement('div');
-        row.className = 'user-row';
-        row.onclick = () => openUserModal(user.discordId);
+      const original =
+        button.textContent;
 
-        const avatarUrl = user.avatar 
-          ? `https://cdn.discordapp.com/avatars/${user.discordId}/${user.avatar}.png` 
-          : 'https://cdn.discordapp.com/embed/avatars/0.png';
+      button.disabled =
+        true;
 
-        row.innerHTML = `
-          <div class="user-details">
-            <img src="${avatarUrl}" class="user-avatar" alt="Avatar">
-            <span class="user-name">${user.username} <span style="color: #475569; font-size: 11px;">(${user.discordId})</span></span>
-          </div>
-          <div>
-            ${user.isAdmin ? '<span class="user-badge">Staff Admin</span>' : '<span class="user-badge" style="background: rgba(148, 163, 184, 0.1); color: #94a3b8; border-color: rgba(148, 163, 184, 0.25);">Membre</span>'}
-          </div>
-        `;
-        listContainer.appendChild(row);
-      });
+      button.textContent =
+        "↻ Chargement...";
+
+      try {
+
+        await reloadCurrentSection();
+
+      } catch (error) {
+
+        console.error(
+          "[OMNIX ADMIN] Refresh:",
+          error
+        );
+
+      } finally {
+
+        button.disabled =
+          false;
+
+        button.textContent =
+          original ||
+          "↻ Actualiser";
+      }
+
     }
+  );
 
-    function filterUsers() {
-      const query = document.getElementById('search-input').value.toLowerCase();
-      const filtered = allUsers.filter(u => 
-        u.username.toLowerCase().includes(query) || 
-        u.discordId.includes(query)
+/* =========================================================
+   CURRENT SECTION RELOAD
+========================================================= */
+
+async function reloadCurrentSection() {
+
+  switch (
+    AdminState.currentSection
+  ) {
+
+    case "overview":
+
+      await loadOverview();
+
+      break;
+
+    case "users":
+
+      await loadUsers(
+        AdminState.usersPage
       );
-      renderUsers(filtered);
+
+      break;
+
+    case "guilds":
+
+      await loadGuilds(
+        AdminState.guildsPage
+      );
+
+      break;
+
+    case "ai":
+
+      await loadAiStatistics();
+
+      break;
+
+    case "aiLogs":
+
+      await loadAiLogs(
+        AdminState.aiLogsPage
+      );
+
+      break;
+
+    case "health":
+
+      await loadHealth();
+
+      break;
+
+    default:
+
+      await loadOverview();
+
+      break;
+  }
+}
+
+/* =========================================================
+   PERIODIC HEALTH CHECK
+========================================================= */
+
+let healthInterval =
+  null;
+
+function startHealthMonitor() {
+
+  if (healthInterval) {
+
+    clearInterval(
+      healthInterval
+    );
+
+  }
+
+  healthInterval =
+    setInterval(
+      () => {
+
+        if (
+          AdminState.currentSection ===
+          "health"
+        ) {
+
+          loadHealth();
+
+        }
+
+      },
+      60000
+    );
+}
+
+startHealthMonitor();
+
+/* =========================================================
+   CHART.JS CHECK
+========================================================= */
+
+function chartLibraryReady() {
+
+  if (
+    typeof Chart ===
+    "undefined"
+  ) {
+
+    console.error(
+      "[OMNIX ADMIN] Chart.js n'est pas disponible."
+    );
+
+    return false;
+  }
+
+  return true;
+}
+
+/* =========================================================
+   SAFE CHART WRAPPER
+========================================================= */
+
+const originalDrawLineChart =
+  drawLineChart;
+
+drawLineChart =
+  function (
+    canvasId,
+    rows,
+    valueKey,
+    label
+  ) {
+
+    if (
+      !chartLibraryReady()
+    ) {
+
+      return;
+
     }
 
-    // Modal Interaction (Fiche Profil sur Clic)
-    function openUserModal(userId) {
-      const user = allUsers.find(u => u.discordId === userId);
-      if (!user) return;
-      
-      const modal = document.getElementById('user-modal');
-      const modalContent = document.getElementById('modal-user-content');
-      
-      // Confection de la liste des licences
-      let licencesHtml = '';
-      if (user.licenses && user.licenses.length > 0) {
-        user.licenses.forEach(lic => {
-          licencesHtml += `
-            <div style="background: rgba(255,255,255,0.02); border: 1px solid #1e293b; padding: 10px; border-radius: 8px; font-size: 11px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <span class="user-badge" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8; border-color: rgba(56, 189, 248, 0.25);">${lic.tier.toUpperCase()}</span>
-                <div style="color: #64748b; margin-top: 4px; font-size: 10px;">Clé: ${lic.licenseKey}</div>
-              </div>
-              <span class="user-badge" style="background: ${lic.status === 'active' ? 'rgba(52, 211, 153, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; color: ${lic.status === 'active' ? '#34d399' : '#ef4444'}; border: none;">${lic.status.toUpperCase()}</span>
-            </div>
-          `;
-        });
-      } else {
-        licencesHtml = '<div style="color: #64748b; font-size: 11px;">Aucune licence active pour ce compte.</div>';
+    return originalDrawLineChart(
+      canvasId,
+      rows,
+      valueKey,
+      label
+    );
+  };
+
+/* =========================================================
+   PAGE VISIBILITY
+========================================================= */
+
+document.addEventListener(
+  "visibilitychange",
+  () => {
+
+    if (
+      document.visibilityState ===
+      "visible"
+    ) {
+
+      if (
+        AdminState.currentSection ===
+        "health"
+      ) {
+
+        loadHealth();
+
       }
 
-      // Confection des badges
-      let badgesHtml = '';
-      if (user.isAdmin) badgesHtml += `<span class="user-badge">Staff Admin</span>`;
-      if (user.rewards && user.rewards.points > 0) {
-        badgesHtml += `<span class="user-badge" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; border-color: rgba(245, 158, 11, 0.2); margin-left: 6px;">Rewards: ${user.rewards.points} pts</span>`;
-      }
-
-      const avatarUrl = user.avatar 
-        ? `https://cdn.discordapp.com/avatars/${user.discordId}/${user.avatar}.png` 
-        : 'https://cdn.discordapp.com/embed/avatars/0.png';
-
-      modalContent.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; margin-bottom: 20px;">
-          <img src="${avatarUrl}" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #1e293b; object-fit: cover;" alt="Avatar">
-          <div>
-            <h3 style="font-size: 18px; font-weight: 800; color: white; margin-bottom: 4px;">${user.username}</h3>
-            <span style="color: #64748b; font-size: 12px; font-family: monospace;">ID: ${user.discordId}</span>
-          </div>
-          <div style="display: flex; gap: 4px; justify-content: center; width: 100%;">
-            ${badgesHtml || '<span class="user-badge" style="background: rgba(148, 163, 184, 0.1); color: #94a3b8; border-color: rgba(148, 163, 184, 0.25);">Membre standard</span>'}
-          </div>
-        </div>
-
-        <div style="border-top: 1px solid #1e293b; padding-top: 16px; margin-bottom: 16px;">
-          <h4 style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; margin-bottom: 10px;">Licences & Abonnements</h4>
-          ${licencesHtml}
-        </div>
-
-        <div style="border-top: 1px solid #1e293b; padding-top: 16px;">
-          <h4 style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; margin-bottom: 12px;">Actions Administrateur</h4>
-          <div style="display: grid; grid-template-cols: 1fr; gap: 10px;">
-            <button onclick="toggleUserAdmin('${user.discordId}')" class="btn-manage" style="background: rgba(192, 132, 252, 0.1); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.2); font-size: 11px; padding: 10px; border-radius: 8px; cursor: pointer;">
-              ${user.isAdmin ? 'Retirer Admin' : 'Promouvoir Admin'}
-            </button>
-            <div id="premium-action-container">
-              <button onclick="showPremiumSelector('${user.discordId}')" class="btn-manage" style="width: 100%; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.2); font-size: 11px; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 700; text-align: center;">
-                Attribuer Premium
-              </button>
-            </div>
-          </div>
-        </div>
-      `;
-
-      modal.style.display = 'flex';
-      setTimeout(() => { modal.style.opacity = '1'; }, 10);
     }
 
-    // Déploie dynamiquement l'interface graphique de sélection de durée Premium
-    function showPremiumSelector(userId) {
-      const container = document.getElementById('premium-action-container');
-      if (!container) return;
+  }
+);
 
-      container.innerHTML = `
-        <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; text-align: left; margin-top: 8px;">
-          <label style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Sélectionner la durée</label>
-          <select id="premium-duration-select" style="width: 100%; background: #030712; border: 1px solid #1e293b; border-radius: 8px; padding: 10px; color: white; font-size: 12px; outline: none; margin-bottom: 8px;">
-            <option value="1m">1 Mois (7.99 €)</option>
-            <option value="3m">3 Mois (24.99 €)</option>
-            <option value="6m">6 Mois (47.99 €)</option>
-            <option value="1y">1 An (74.99 €)</option>
-            <option value="lifetime">À vie (Lifetime)</option>
-          </select>
-          <div style="display: grid; grid-template-cols: 1fr 1fr; gap: 10px;">
-            <button onclick="cancelPremiumSelector('${userId}')" style="background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); font-size: 11px; padding: 10px; border-radius: 8px; cursor: pointer;">Annuler</button>
-            <button onclick="confirmGrantPremium('${userId}')" style="background: linear-gradient(135deg, #06b6d4, #4f46e5); color: white; border: none; font-size: 11px; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 700;">Confirmer</button>
-          </div>
-        </div>
-      `;
-    }
+/* =========================================================
+   NETWORK ERROR HANDLING
+========================================================= */
 
-    function cancelPremiumSelector(userId) {
-      const container = document.getElementById('premium-action-container');
-      if (!container) return;
-      container.innerHTML = `
-        <button onclick="showPremiumSelector('${userId}')" class="btn-manage" style="width: 100%; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.2); font-size: 11px; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 700; text-align: center;">
-          Attribuer Premium
-        </button>
-      `;
-    }
+window.addEventListener(
+  "unhandledrejection",
+  event => {
 
-    async function confirmGrantPremium(userId) {
-      const select = document.getElementById('premium-duration-select');
-      const duration = select ? select.value : 'lifetime';
-      addTerminalLog('warn', `Attribution d'une licence Premium (${duration}) pour : ${userId}...`);
-      const jwtToken = getToken();
-      try {
-        const response = await fetch(`/api/admin/users/${userId}/grant-premium`, {
-          method: 'POST',
-          headers: { 
-            'Authorization': `Bearer ${jwtToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ duration }),
-          credentials: 'same-origin'
-        });
-        if (!response.ok) throw new Error();
-        addTerminalLog('success', `Licence Premium (${duration}) attribuée avec succès à l'ID ${userId}.`);
-        loadUsers(); // Recharger la liste
-        closeUserModal();
-      } catch (e) {
-        addTerminalLog('error', `Échec de l'attribution Premium pour l'utilisateur ${userId}.`);
-      }
-    }
+    console.error(
+      "[OMNIX ADMIN] Promise rejetée:",
+      event.reason
+    );
 
-    function closeUserModal(event) {
-      const modal = document.getElementById('user-modal');
-      if (modal) {
-        modal.style.opacity = '0';
-        setTimeout(() => { modal.style.display = 'none'; }, 200);
-      }
-    }
+  }
+);
 
-    // Fonctions d'actions d'administration réelles via requêtes API
-    async function toggleUserAdmin(userId) {
-      addTerminalLog('warn', `Tentative de modification des droits d'administration de : ${userId}...`);
-      const jwtToken = getToken();
-      try {
-        const response = await fetch(`/api/admin/users/${userId}/toggle-admin`, {
-          method: 'POST',
-          headers: { 
-            'Authorization': `Bearer ${jwtToken}`,
-            'Content-Type': 'application/json'
-          },
-          credentials: 'same-origin'
-        });
-        if (!response.ok) throw new Error();
-        addTerminalLog('success', `Les droits d'administration de l'utilisateur ${userId} ont été modifiés.`);
-        loadUsers(); // Recharger la liste
-        closeUserModal();
-      } catch (e) {
-        addTerminalLog('error', `Échec de la modification des droits d'administration pour l'utilisateur ${userId}.`);
-      }
-    }
+/* =========================================================
+   FINAL BOOT
+========================================================= */
 
-    function initAdminPanel() {
-      addTerminalLog('debug', "Lancement de l'initialisation du Staff Panel...");
-      loadMonitoring();
-      loadUsers();
-    }
+async function bootAdminPanel() {
 
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initAdminPanel);
-    } else {
-      initAdminPanel();
+  console.log(
+    "%cOMNIX Staff Panel",
+    "font-weight:900;font-size:18px;"
+  );
+
+  console.log(
+    "[OMNIX ADMIN] Initialisation..."
+  );
+
+  if (
+    !chartLibraryReady()
+  ) {
+
+    console.warn(
+      "[OMNIX ADMIN] Chart.js indisponible."
+    );
+
+  }
+
+  try {
+
+    await loadOverview();
+
+    console.log(
+      "[OMNIX ADMIN] Panel opérationnel."
+    );
+
+  } catch (error) {
+
+    console.error(
+      "[OMNIX ADMIN] Boot error:",
+      error
+    );
+
+  }
+
+}
+
+/* =========================================================
+   DOM READY
+========================================================= */
+
+if (
+  document.readyState ===
+  "loading"
+) {
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    bootAdminPanel,
+    {
+      once: true
     }
-  </script>
+  );
+
+} else {
+
+  bootAdminPanel();
+
+}
+
+/* =========================================================
+   DEBUG API
+   Accessible uniquement depuis la console.
+========================================================= */
+
+window.OMNIX_ADMIN = {
+  state:
+    AdminState,
+
+  routes:
+    ADMIN_ROUTES,
+
+  reload:
+    reloadCurrentSection,
+
+  overview:
+    loadOverview,
+
+  users:
+    loadUsers,
+
+  guilds:
+    loadGuilds,
+
+  ai:
+    loadAiStatistics,
+
+  aiLogs:
+    loadAiLogs,
+
+  health:
+    loadHealth
+};
+
+</script>
+
 </body>
 </html>

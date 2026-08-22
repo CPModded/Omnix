@@ -1,383 +1,2011 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OMNIX - Découvrir</title>
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <meta
+    name="theme-color"
+    content="#030712"
+  >
+
+  <meta
+    name="description"
+    content="Découvrez OMNIX, le robot intelligent pour vos serveurs Discord."
+  >
+
+  <title>OMNIX — Découvrir</title>
+
+  <link
+    rel="icon"
+    href="/logo.png"
+  >
+
   <style>
-    /* Styles CSS natifs */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+
+    /* =========================================================
+       RESET
+    ========================================================= */
+
+    *,
+    *::before,
+    *::after {
+
+      box-sizing:
+        border-box;
+
+      margin:
+        0;
+
+      padding:
+        0;
+
     }
+
+
+    :root {
+
+      --bg:
+        #030712;
+
+      --bg-secondary:
+        #0f172a;
+
+      --panel:
+        rgba(15,23,42,.62);
+
+      --panel-strong:
+        rgba(15,23,42,.88);
+
+      --border:
+        rgba(255,255,255,.07);
+
+      --border-hover:
+        rgba(124,58,237,.32);
+
+      --text:
+        #f8fafc;
+
+      --muted:
+        #94a3b8;
+
+      --muted-dark:
+        #64748b;
+
+      --primary:
+        #7c3aed;
+
+      --primary-2:
+        #4f46e5;
+
+      --cyan:
+        #06b6d4;
+
+      --radius:
+        20px;
+
+      --header-height:
+        72px;
+
+    }
+
+
+    html {
+
+      min-height:
+        100%;
+
+      background:
+        var(--bg);
+
+      scroll-behavior:
+        smooth;
+
+    }
+
+
     body {
-      background-color: #030712; /* Slate 950 */
-      color: #f1f5f9; /* Slate 100 */
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      position: relative;
-      overflow-x: hidden;
-      line-height: 1.5;
+
+      min-height:
+        100vh;
+
+      background:
+        var(--bg);
+
+      color:
+        var(--text);
+
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Helvetica,
+        Arial,
+        sans-serif;
+
+      line-height:
+        1.5;
+
+      overflow-x:
+        hidden;
+
+      display:
+        flex;
+
+      flex-direction:
+        column;
+
     }
-    
+
+
+    button,
+    input,
+    select,
+    textarea {
+
+      font:
+        inherit;
+
+    }
+
+
+    button {
+
+      border:
+        0;
+
+    }
+
+
+    a {
+
+      color:
+        inherit;
+
+      text-decoration:
+        none;
+
+    }
+
+
+    img {
+
+      display:
+        block;
+
+      max-width:
+        100%;
+
+    }
+
+
+    /* =========================================================
+       BACKGROUND
+    ========================================================= */
+
+    .page-background {
+
+      position:
+        fixed;
+
+      inset:
+        0;
+
+      pointer-events:
+        none;
+
+      overflow:
+        hidden;
+
+      z-index:
+        0;
+
+    }
+
+
+    .halo {
+
+      position:
+        absolute;
+
+      width:
+        420px;
+
+      height:
+        420px;
+
+      border-radius:
+        50%;
+
+      filter:
+        blur(90px);
+
+      opacity:
+        .8;
+
+    }
+
+
     .halo-top {
-      position: absolute;
-      top: -150px;
-      left: -150px;
-      width: 400px;
-      height: 400px;
-      background: rgba(124, 58, 237, 0.08); /* Violet */
-      filter: blur(80px);
-      border-radius: 50%;
-      pointer-events: none;
+
+      top:
+        -180px;
+
+      left:
+        -160px;
+
+      background:
+        rgba(124,58,237,.10);
+
     }
+
+
     .halo-bottom {
-      position: absolute;
-      bottom: -150px;
-      right: -150px;
-      width: 400px;
-      height: 400px;
-      background: rgba(6, 182, 212, 0.08); /* Cyan */
-      filter: blur(80px);
-      border-radius: 50%;
-      pointer-events: none;
+
+      right:
+        -180px;
+
+      bottom:
+        -180px;
+
+      background:
+        rgba(6,182,212,.09);
+
     }
 
-    header {
-      border-bottom: 1px solid #1e293b;
-      background: rgba(15, 23, 42, 0.7);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      padding: 16px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 50;
+
+    .background-grid {
+
+      position:
+        absolute;
+
+      inset:
+        0;
+
+      background-image:
+
+        linear-gradient(
+          rgba(255,255,255,.018) 1px,
+          transparent 1px
+        ),
+
+        linear-gradient(
+          90deg,
+          rgba(255,255,255,.018) 1px,
+          transparent 1px
+        );
+
+      background-size:
+        42px 42px;
+
+      opacity:
+        .3;
+
     }
+
+
+    /* =========================================================
+       HEADER
+    ========================================================= */
+
+    .site-header {
+
+      position:
+        sticky;
+
+      top:
+        0;
+
+      z-index:
+        100;
+
+      min-height:
+        var(--header-height);
+
+      display:
+        flex;
+
+      align-items:
+        center;
+
+      justify-content:
+        space-between;
+
+      padding:
+        14px 24px;
+
+      background:
+        rgba(3,7,18,.72);
+
+      border-bottom:
+        1px solid var(--border);
+
+      backdrop-filter:
+        blur(18px);
+
+      -webkit-backdrop-filter:
+        blur(18px);
+
+    }
+
+
     .logo-area {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      text-decoration: none;
+
+      display:
+        inline-flex;
+
+      align-items:
+        center;
+
+      gap:
+        11px;
+
+      min-width:
+        0;
+
     }
+
+
+    .logo-img-wrapper {
+
+      width:
+        40px;
+
+      height:
+        40px;
+
+      flex-shrink:
+        0;
+
+      position:
+        relative;
+
+    }
+
+
     .logo-img {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
-      object-fit: cover;
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+
+      width:
+        40px;
+
+      height:
+        40px;
+
+      border-radius:
+        11px;
+
+      object-fit:
+        cover;
+
+      box-shadow:
+        0 5px 18px
+        rgba(79,70,229,.25);
+
     }
+
+
+    .logo-fallback {
+
+      width:
+        40px;
+
+      height:
+        40px;
+
+      display:
+        none;
+
+      align-items:
+        center;
+
+      justify-content:
+        center;
+
+      border-radius:
+        11px;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--cyan),
+          var(--primary)
+        );
+
+      color:
+        white;
+
+      font-size:
+        18px;
+
+      font-weight:
+        950;
+
+      box-shadow:
+        0 5px 18px
+        rgba(79,70,229,.25);
+
+    }
+
+
     .logo-text {
-      font-weight: 800;
-      letter-spacing: 1px;
-      background: linear-gradient(to right, #60a5fa, #22d3ee, #a78bfa);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      font-size: 18px;
+
+      font-size:
+        18px;
+
+      font-weight:
+        900;
+
+      letter-spacing:
+        .8px;
+
+      background:
+        linear-gradient(
+          90deg,
+          #60a5fa,
+          #22d3ee,
+          #a78bfa
+        );
+
+      -webkit-background-clip:
+        text;
+
+      background-clip:
+        text;
+
+      -webkit-text-fill-color:
+        transparent;
+
     }
 
-    /* Menu Tiroir (Drawer) Latéral Droit */
-    .btn-burger {
-      background: none;
-      border: none;
-      color: #94a3b8;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-    }
-    .burger-icon {
-      width: 24px;
-      height: 24px;
-      fill: currentColor;
-    }
-    .drawer {
-      position: fixed;
-      top: 0;
-      right: -300px;
-      width: 280px;
-      height: 100vh;
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-left: 1px solid rgba(255, 255, 255, 0.04);
-      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
-      z-index: 1000;
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      padding: 32px 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 32px;
-    }
-    .drawer.open { transform: translateX(-300px); }
-    .drawer-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .btn-close-drawer {
-      background: none;
-      border: none;
-      color: #64748b;
-      font-size: 28px;
-      cursor: pointer;
-    }
-    .btn-close-drawer:hover {
-      color: white;
-    }
-    .drawer-links {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .drawer-links a {
-      text-decoration: none;
-      color: #94a3b8;
-      font-size: 13px;
-      font-weight: 700;
-      text-transform: uppercase;
-      padding: 12px 16px;
-      border-radius: 10px;
-      transition: background 0.15s, color 0.15s;
-    }
-    .drawer-links a:hover {
-      background: rgba(255,255,255,0.02);
-      color: white;
-    }
-    .drawer-links a.active {
-      color: #38bdf8;
-      background: rgba(56, 189, 248, 0.05);
-    }
-    .admin-nav-link {
-      color: #c084fc !important;
-      text-shadow: 0 0 8px rgba(192, 132, 252, 0.4);
+
+    /* =========================================================
+       HEADER ACTION
+    ========================================================= */
+
+    .header-action {
+
+      display:
+        flex;
+
+      align-items:
+        center;
+
+      gap:
+        10px;
+
     }
 
-    main {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 24px;
-      z-index: 10;
+
+    .menu-button {
+
+      width:
+        40px;
+
+      height:
+        40px;
+
+      display:
+        inline-flex;
+
+      align-items:
+        center;
+
+      justify-content:
+        center;
+
+      border-radius:
+        11px;
+
+      background:
+        rgba(255,255,255,.035);
+
+      border:
+        1px solid var(--border);
+
+      color:
+        #cbd5e1;
+
+      cursor:
+        pointer;
+
+      transition:
+        background .18s ease,
+        border-color .18s ease,
+        transform .18s ease;
+
     }
 
-    .card-container {
-      position: relative;
-      width: 100%;
-      max-width: 400px;
-    }
-    .card-glow {
-      position: absolute;
-      top: -2px;
-      left: -2px;
-      right: -2px;
-      bottom: -2px;
-      background: linear-gradient(135deg, #7c3aed, #06b6d4);
-      border-radius: 24px;
-      filter: blur(15px);
-      opacity: 0.15;
-      z-index: -1;
-    }
-    .card {
-      background: rgba(15, 23, 42, 0.55);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 20px;
-      padding: 40px 32px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+
+    .menu-button:hover {
+
+      background:
+        rgba(124,58,237,.10);
+
+      border-color:
+        rgba(124,58,237,.22);
+
+      color:
+        white;
+
     }
 
-    /* Image de profil d'OMNIX stable */
-    .avatar {
-      width: 90px;
-      height: 90px;
-      border-radius: 50%;
-      overflow: hidden;
-      margin-bottom: 24px;
-      box-shadow: 0 8px 16px rgba(124, 58, 237, 0.2);
-    }
-    .avatar-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+
+    .menu-button:active {
+
+      transform:
+        scale(.96);
+
     }
 
-    h1 {
-      font-size: 24px;
-      font-weight: 800;
-      color: white;
-      margin-bottom: 8px;
-    }
-    .badge {
-      font-size: 11px;
-      font-weight: 700;
-      color: #a78bfa;
-      background: rgba(124, 58, 237, 0.1);
-      border: 1px solid rgba(124, 58, 237, 0.2);
-      padding: 6px 14px;
-      border-radius: 8px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 20px;
-      display: inline-block;
-    }
-    p.description {
-      font-size: 14px;
-      color: #94a3b8;
-      line-height: 1.6;
-      margin-bottom: 32px;
+
+    .menu-button:focus-visible {
+
+      outline:
+        2px solid
+        rgba(34,211,238,.7);
+
+      outline-offset:
+        3px;
+
     }
 
-    .btn-discord {
-      width: 100%;
-      padding: 14px 24px;
-      background: linear-gradient(135deg, #4f46e5, #7c3aed);
-      color: white;
-      font-size: 13px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      text-decoration: none;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
-      margin-bottom: 12px;
-    }
-    .btn-discord:hover {
-      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.3);
-      transform: translateY(-1px);
-    }
-    .btn-discord:active {
-      transform: translateY(0) scale(0.98);
-    }
-    .discord-svg {
-      width: 18px;
-      height: 18px;
-      fill: currentColor;
+
+    .menu-icon {
+
+      width:
+        20px;
+
+      height:
+        20px;
+
+      fill:
+        currentColor;
+
     }
 
-    .btn-buy-premium {
-      width: 100%;
-      padding: 14px 24px;
-      background: linear-gradient(135deg, #06b6d4, #4f46e5);
-      color: white;
-      font-size: 13px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      text-decoration: none;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
-      box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+
+    /* =========================================================
+       MAIN
+    ========================================================= */
+
+    .page-main {
+
+      position:
+        relative;
+
+      z-index:
+        10;
+
+      flex:
+        1;
+
+      width:
+        100%;
+
+      display:
+        flex;
+
+      align-items:
+        center;
+
+      justify-content:
+        center;
+
+      padding:
+        56px 24px 70px;
+
     }
-    .btn-buy-premium:active { transform: scale(0.98); }
-    footer {
-      border-top: 1px solid #0f172a;
-      padding: 24px;
-      text-align: center;
-      font-size: 12px;
-      color: #475569;
+
+
+    .page-container {
+
+      width:
+        100%;
+
+      max-width:
+        480px;
+
+      margin:
+        0 auto;
+
     }
+
+
+    /* =========================================================
+       FOUNDER CARD
+    ========================================================= */
+
+    .founder-card-wrapper {
+
+      position:
+        relative;
+
+      width:
+        100%;
+
+    }
+
+
+    .founder-card-glow {
+
+      position:
+        absolute;
+
+      inset:
+        -2px;
+
+      border-radius:
+        24px;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--primary),
+          var(--cyan)
+        );
+
+      filter:
+        blur(18px);
+
+      opacity:
+        .14;
+
+      pointer-events:
+        none;
+
+    }
+
+
+    .founder-card {
+
+      position:
+        relative;
+
+      width:
+        100%;
+
+      padding:
+        42px 34px;
+
+      border:
+        1px solid var(--border);
+
+      border-radius:
+        22px;
+
+      background:
+        rgba(15,23,42,.58);
+
+      box-shadow:
+        0 25px 60px
+        rgba(0,0,0,.42);
+
+      backdrop-filter:
+        blur(18px);
+
+      -webkit-backdrop-filter:
+        blur(18px);
+
+      text-align:
+        center;
+
+    }
+
+
+    .founder-card::before {
+
+      content:
+        "";
+
+      position:
+        absolute;
+
+      top:
+        0;
+
+      left:
+        12%;
+
+      right:
+        12%;
+
+      height:
+        1px;
+
+      background:
+        linear-gradient(
+          90deg,
+          transparent,
+          rgba(124,58,237,.6),
+          rgba(6,182,212,.6),
+          transparent
+        );
+
+      opacity:
+        .7;
+
+    }
+
+
+    /* =========================================================
+       FOUNDER AVATAR
+    ========================================================= */
+
+    .founder-avatar {
+
+      width:
+        92px;
+
+      height:
+        92px;
+
+      margin:
+        0 auto 24px;
+
+      position:
+        relative;
+
+      border-radius:
+        50%;
+
+      padding:
+        2px;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--primary),
+          var(--cyan)
+        );
+
+      box-shadow:
+        0 10px 30px
+        rgba(124,58,237,.22);
+
+    }
+
+
+    .founder-avatar-inner {
+
+      width:
+        100%;
+
+      height:
+        100%;
+
+      overflow:
+        hidden;
+
+      border-radius:
+        50%;
+
+      background:
+        #111827;
+
+    }
+
+
+    .founder-avatar-img {
+
+      width:
+        100%;
+
+      height:
+        100%;
+
+      object-fit:
+        cover;
+
+    }
+
+
+    .founder-avatar-fallback {
+
+      width:
+        100%;
+
+      height:
+        100%;
+
+      display:
+        none;
+
+      align-items:
+        center;
+
+      justify-content:
+        center;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--cyan),
+          var(--primary)
+        );
+
+      color:
+        white;
+
+      font-size:
+        38px;
+
+      font-weight:
+        950;
+
+    }
+
+
+    /* =========================================================
+       FOUNDER CONTENT
+    ========================================================= */
+
+    .founder-name {
+
+      color:
+        white;
+
+      font-size:
+        26px;
+
+      line-height:
+        1.2;
+
+      font-weight:
+        900;
+
+      letter-spacing:
+        -.5px;
+
+      margin-bottom:
+        10px;
+
+      overflow-wrap:
+        anywhere;
+
+    }
+
+
+    .founder-badge {
+
+      display:
+        inline-flex;
+
+      align-items:
+        center;
+
+      justify-content:
+        center;
+
+      padding:
+        6px 13px;
+
+      margin-bottom:
+        20px;
+
+      border:
+        1px solid
+        rgba(124,58,237,.22);
+
+      border-radius:
+        8px;
+
+      background:
+        rgba(124,58,237,.09);
+
+      color:
+        #c4b5fd;
+
+      font-size:
+        10px;
+
+      font-weight:
+        800;
+
+      letter-spacing:
+        1px;
+
+      text-transform:
+        uppercase;
+
+    }
+
+
+    .founder-description {
+
+      margin:
+        0 auto 30px;
+
+      max-width:
+        380px;
+
+      color:
+        var(--muted);
+
+      font-size:
+        14px;
+
+      line-height:
+        1.7;
+
+      overflow-wrap:
+        anywhere;
+
+    }
+
+
+    /* =========================================================
+       ACTIONS
+    ========================================================= */
+
+    .founder-actions {
+
+      width:
+        100%;
+
+      display:
+        flex;
+
+      flex-direction:
+        column;
+
+      gap:
+        11px;
+
+    }
+
+
+    .founder-button {
+
+      width:
+        100%;
+
+      min-height:
+        50px;
+
+      padding:
+        13px 20px;
+
+      display:
+        inline-flex;
+
+      align-items:
+        center;
+
+      justify-content:
+        center;
+
+      gap:
+        10px;
+
+      border-radius:
+        12px;
+
+      font-size:
+        12px;
+
+      font-weight:
+        800;
+
+      letter-spacing:
+        .7px;
+
+      text-transform:
+        uppercase;
+
+      cursor:
+        pointer;
+
+      transition:
+        transform .18s ease,
+        box-shadow .18s ease,
+        opacity .18s ease,
+        border-color .18s ease;
+
+    }
+
+
+    .founder-button:hover {
+
+      transform:
+        translateY(-1px);
+
+    }
+
+
+    .founder-button:active {
+
+      transform:
+        translateY(0) scale(.985);
+
+    }
+
+
+    .founder-button:focus-visible {
+
+      outline:
+        2px solid
+        rgba(34,211,238,.7);
+
+      outline-offset:
+        3px;
+
+    }
+
+
+    .button-discord {
+
+      color:
+        white;
+
+      background:
+        linear-gradient(
+          135deg,
+          #4f46e5,
+          #7c3aed
+        );
+
+      box-shadow:
+        0 8px 24px
+        rgba(79,70,229,.18);
+
+    }
+
+
+    .button-discord:hover {
+
+      box-shadow:
+        0 10px 30px
+        rgba(79,70,229,.28);
+
+    }
+
+
+    .button-premium {
+
+      color:
+        white;
+
+      background:
+        linear-gradient(
+          135deg,
+          #06b6d4,
+          #4f46e5
+        );
+
+      box-shadow:
+        0 8px 24px
+        rgba(6,182,212,.14);
+
+    }
+
+
+    .button-premium:hover {
+
+      box-shadow:
+        0 10px 30px
+        rgba(6,182,212,.22);
+
+    }
+
+
+    .discord-icon {
+
+      width:
+        19px;
+
+      height:
+        19px;
+
+      flex-shrink:
+        0;
+
+      fill:
+        currentColor;
+
+    }
+
+
+    /* =========================================================
+       FOOTER
+    ========================================================= */
+
+    .site-footer {
+
+      position:
+        relative;
+
+      z-index:
+        10;
+
+      padding:
+        22px 24px;
+
+      border-top:
+        1px solid rgba(255,255,255,.035);
+
+      color:
+        #475569;
+
+      text-align:
+        center;
+
+      font-size:
+        11px;
+
+    }
+
+
+    .site-footer p {
+
+      margin:
+        0;
+
+    }
+
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+
+    @media (max-width: 600px) {
+
+      .site-header {
+
+        padding:
+          12px 16px;
+
+      }
+
+
+      .page-main {
+
+        padding:
+          34px 16px 50px;
+
+      }
+
+
+      .founder-card {
+
+        padding:
+          34px 22px;
+
+        border-radius:
+          18px;
+
+      }
+
+
+      .founder-name {
+
+        font-size:
+          23px;
+
+      }
+
+
+      .founder-description {
+
+        font-size:
+          13px;
+
+      }
+
+    }
+
+
+    @media (max-width: 380px) {
+
+      .logo-text {
+
+        font-size:
+          16px;
+
+      }
+
+
+      .founder-card {
+
+        padding:
+          30px 18px;
+
+      }
+
+
+      .founder-avatar {
+
+        width:
+          82px;
+
+        height:
+          82px;
+
+      }
+
+
+      .founder-name {
+
+        font-size:
+          21px;
+
+      }
+
+    }
+
+
+    /* =========================================================
+       REDUCED MOTION
+    ========================================================= */
+
+    @media (prefers-reduced-motion: reduce) {
+
+      html {
+
+        scroll-behavior:
+          auto;
+
+      }
+
+
+      *,
+      *::before,
+      *::after {
+
+        animation-duration:
+          .01ms !important;
+
+        animation-iteration-count:
+          1 !important;
+
+        transition-duration:
+          .01ms !important;
+
+      }
+
+    }
+
   </style>
+
 </head>
+
+
 <body>
 
-  <div class="halo-top"></div>
-  <div class="halo-bottom"></div>
 
-  <!-- En-tête -->
-  <header>
-    <a href="/" class="logo-area">
-      <img src="/logo.png" id="logo-main-img" onerror="this.style.display='none'; document.getElementById('logo-fallback-box').style.display='flex';" class="logo-img" alt="OMNIX Logo">
-      <div id="logo-fallback-box" style="display: none; width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #06b6d4, #7c3aed); align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 18px; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);">O</div>
-      <span class="logo-text">OMNIX</span>
-    </a>
-    
-    <button onclick="toggleDrawer(true)" class="btn-burger">
-      <svg class="burger-icon" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
-    </button>
-  </header>
+  <!-- =======================================================
+       BACKGROUND
+  ======================================================== -->
 
-  <!-- LIAISON DE LA BARRE LATÉRALE CENTRALISÉE -->
-  <%- include('partials/sidebar') %>
+  <div
+    class="page-background"
+    aria-hidden="true"
+  >
 
-  <!-- Carte Fondateur -->
-  <main>
-    <div class="card-container">
-      <div class="card-glow"></div>
-      <div class="card">
-        
-        <!-- Image de Profil stable -->
-        <div class="avatar">
-          <img src="/logo.png" id="logo-avatar-img" onerror="this.style.display='none'; document.getElementById('avatar-fallback-box').style.display='flex';" class="avatar-img" alt="OMNIX Logo">
-          <div id="avatar-fallback-box" style="display: none; width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg, #06b6d4, #7c3aed); align-items: center; justify-content: center; font-weight: 900; color: white; font-size: 40px; box-shadow: 0 8px 16px rgba(124, 58, 237, 0.2);">O</div>
+    <div class="halo halo-top"></div>
+
+    <div class="halo halo-bottom"></div>
+
+    <div class="background-grid"></div>
+
+  </div>
+
+
+  <!-- =======================================================
+       HEADER
+  ======================================================== -->
+
+  <header class="site-header">
+
+
+    <a
+      href="/"
+      class="logo-area"
+      aria-label="Retour à l'accueil OMNIX"
+    >
+
+      <div class="logo-img-wrapper">
+
+        <img
+          src="/logo.png"
+          id="logo-main-img"
+          class="logo-img"
+          alt="OMNIX"
+          width="40"
+          height="40"
+          onerror="
+            this.style.display='none';
+            document.getElementById('logo-fallback-box').style.display='flex';
+          "
+        >
+
+        <div
+          id="logo-fallback-box"
+          class="logo-fallback"
+          aria-hidden="true"
+        >
+          O
         </div>
 
-        <h1><%= founder.name %></h1>
-        
-        <span class="badge">Robot Intelligent</span>
-
-        <p class="description">
-          <%= founder.description %>
-        </p>
-
-        <!-- Bouton Discord -->
-        <a href="<%= founder.officialServer %>" target="_blank" rel="noopener noreferrer" class="btn-discord">
-          <svg class="discord-svg" viewBox="0 0 127.14 96.36">
-            <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.43-5c.87-.64,1.71-1.32,2.51-2a75.4,75.4,0,0,0,72.71,0c.8.71,1.64,1.39,2.51,2a68.17,68.17,0,0,1-10.43,5,78.23,78.23,0,0,0,6.63,10.85,105.73,105.73,0,0,0,31.54-18.83C129,54.65,122.94,31.58,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.92,46,53.92,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.15,46,96.15,53,91,65.69,84.69,65.69Z"/>
-          </svg>
-          Serveur officiel Discord
-        </a>
-
-        <!-- Bouton d'achat interactif -->
-        <a href="/pricing" class="btn-buy-premium">
-          Obtenir OMNIX Premium
-        </a>
-
       </div>
+
+
+      <span class="logo-text">
+        OMNIX
+      </span>
+
+    </a>
+
+
+    <div class="header-action">
+
+      <button
+        type="button"
+        class="menu-button"
+        onclick="openOmnixSidebar()"
+        aria-label="Ouvrir le menu"
+        aria-controls="omnix-sidebar"
+        aria-expanded="false"
+      >
+
+        <svg
+          class="menu-icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+
+          <path
+            d="
+              M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z
+            "
+          ></path>
+
+        </svg>
+
+      </button>
+
     </div>
+
+  </header>
+
+
+  <!-- =======================================================
+       SIDEBAR OMNIX CENTRALISÉE
+       La navigation/authentification reste gérée par le partial.
+  ======================================================== -->
+
+  <%- include('partials/sidebar') %>
+
+
+  <!-- =======================================================
+       MAIN
+  ======================================================== -->
+
+  <main class="page-main">
+
+    <div class="page-container">
+
+
+      <!-- ===================================================
+           FOUNDER CARD
+      ==================================================== -->
+
+      <section
+        class="founder-card-wrapper"
+        aria-labelledby="founder-name"
+      >
+
+        <div
+          class="founder-card-glow"
+          aria-hidden="true"
+        ></div>
+
+
+        <article class="founder-card">
+
+
+          <!-- ===============================================
+               AVATAR
+          ================================================ -->
+
+          <div
+            class="founder-avatar"
+            aria-hidden="true"
+          >
+
+            <div class="founder-avatar-inner">
+
+              <img
+                src="/logo.png"
+                id="logo-avatar-img"
+                class="founder-avatar-img"
+                alt=""
+                width="92"
+                height="92"
+                onerror="
+                  this.style.display='none';
+                  document.getElementById('avatar-fallback-box').style.display='flex';
+                "
+              >
+
+              <div
+                id="avatar-fallback-box"
+                class="founder-avatar-fallback"
+              >
+                O
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- ===============================================
+               FOUNDER NAME
+          ================================================ -->
+
+          <h1
+            id="founder-name"
+            class="founder-name"
+          >
+            <%= founder?.name || 'OMNIX' %>
+          </h1>
+
+
+          <!-- ===============================================
+               BADGE
+          ================================================ -->
+
+          <span class="founder-badge">
+            Robot Intelligent
+          </span>
+
+
+          <!-- ===============================================
+               DESCRIPTION
+          ================================================ -->
+
+          <p class="founder-description">
+            <%= founder?.description || 'Découvrez OMNIX, votre plateforme intelligente pour gérer et développer vos serveurs Discord.' %>
+          </p>
+
+
+          <!-- ===============================================
+               ACTIONS
+          ================================================ -->
+
+          <div class="founder-actions">
+
+
+            <!-- =============================================
+                 DISCORD OFFICIEL
+            ============================================== -->
+
+            <% if (founder?.officialServer) { %>
+
+              <a
+                href="<%= founder.officialServer %>"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="founder-button button-discord"
+              >
+
+                <svg
+                  class="discord-icon"
+                  viewBox="0 0 127.14 96.36"
+                  aria-hidden="true"
+                >
+
+                  <path
+                    d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.43-5c.87-.64,1.71-1.32,2.51-2a75.4,75.4,0,0,0,72.71,0c.8.71,1.64,1.39,2.51,2a68.17,68.17,0,0,1-10.43,5,78.23,78.23,0,0,0,6.63,10.85,105.73,105.73,0,0,0,31.54-18.83C129,54.65,122.94,31.58,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.92,46,53.92,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.15,46,96.15,53,91,65.69,84.69,65.69Z"
+                  ></path>
+
+                </svg>
+
+                Serveur officiel Discord
+
+              </a>
+
+            <% } %>
+
+
+            <!-- =============================================
+                 PREMIUM
+            ============================================== -->
+
+            <a
+              href="/pricing"
+              class="founder-button button-premium"
+            >
+
+              Obtenir OMNIX Premium
+
+            </a>
+
+
+          </div>
+
+
+        </article>
+
+      </section>
+
+    </div>
+
   </main>
 
-  <footer>
-    <p>&copy; 2026 OMNIX. Tous droits réservés.</p>
+
+  <!-- =======================================================
+       FOOTER
+  ======================================================== -->
+
+  <footer class="site-footer">
+
+    <p>
+      &copy; 2026 OMNIX. Tous droits réservés.
+    </p>
+
+  </footer>
+  
+          <!-- =====================================================
+             FOUNDER CARD — ACTIONS
+        ====================================================== -->
+
+        <div class="founder-actions">
+
+          <a
+            href="<%= founder.officialServer %>"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn btn-discord"
+          >
+
+            <svg
+              class="discord-svg"
+              viewBox="0 0 127.14 96.36"
+              aria-hidden="true"
+            >
+              <path d="M107.7,8.07A105.15,105.15,0,0,0,77.26,0a77.19,77.19,0,0,0-3.3,6.83A96.67,96.67,0,0,0,53.22,6.83,77.19,77.19,0,0,0,49.88,0,105.15,105.15,0,0,0,19.44,8.07C3.66,31.58-1.86,54.65,1,77.53A105.73,105.73,0,0,0,32,96.36a77.7,77.7,0,0,0,6.63-10.85,68.43,68.43,0,0,1-10.43-5c.87-.64,1.71-1.32,2.51-2a75.4,75.4,0,0,0,72.71,0c.8.71,1.64,1.39,2.51,2a68.17,68.17,0,0,1-10.43,5,78.23,78.23,0,0,0,6.63,10.85,105.73,105.73,0,0,0,31.54-18.83C129,54.65,122.94,31.58,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53S36.18,40.36,42.45,40.36,53.92,46,53.92,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.24,60,73.24,53S78.41,40.36,84.69,40.36,96.15,46,96.15,53,91,65.69,84.69,65.69Z"/>
+            </svg>
+
+            Serveur officiel Discord
+
+          </a>
+
+
+          <a
+            href="/pricing"
+            class="btn btn-premium"
+          >
+
+            <span aria-hidden="true">
+              ◆
+            </span>
+
+            Obtenir OMNIX Premium
+
+          </a>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+
+  <!-- =====================================================
+       FOOTER
+  ====================================================== -->
+
+  <footer class="site-footer">
+
+    <div class="footer-content">
+
+      <span>
+        © <%= new Date().getFullYear() %> OMNIX
+      </span>
+
+      <span class="footer-separator">
+        •
+      </span>
+
+      <span>
+        Tous droits réservés.
+      </span>
+
+    </div>
+
   </footer>
 
+
+  <!-- =====================================================
+       DRAWER OVERLAY
+  ====================================================== -->
+
+  <div
+    id="drawer-overlay"
+    class="drawer-overlay"
+    onclick="toggleDrawer(false)"
+    aria-hidden="true"
+  ></div>
+
+
+  <!-- =====================================================
+       OMNIX JAVASCRIPT
+  ====================================================== -->
+
   <script>
-    // --- LES DOUBLONS JS CONFLICTUELS ONT ÉTÉ ENTIÈREMENT NETTOYÉS (GÉRÉS PAR SIDEBAR) ---
-    const jwtToken = localStorage.getItem('jwt_token');
-    if (jwtToken) {
-      const payload = parseJwt(jwtToken);
-      if (payload && payload.isAdmin) {
-        const nav = document.getElementById('drawer-nav');
-        if (nav && !document.getElementById('nav-admin-link')) {
-          const adminLink = document.createElement('a');
-          adminLink.href = '/admin';
-          adminLink.id = 'nav-admin-link';
-          adminLink.className = 'admin-nav-link';
-          adminLink.innerText = 'Staff Panel';
-          nav.appendChild(adminLink);
-        }
+
+    /* =====================================================
+       GLOBAL STATE
+    ===================================================== */
+
+    window.OMNIX =
+      window.OMNIX || {
+
+        founder:
+          null,
+
+        drawerOpen:
+          false
+
+      };
+
+
+    /* =====================================================
+       DRAWER
+    ===================================================== */
+
+    function toggleDrawer(open) {
+
+      const drawer =
+        document.getElementById(
+          'omnix-drawer'
+        );
+
+      const overlay =
+        document.getElementById(
+          'drawer-overlay'
+        );
+
+
+      if (!drawer) {
+        return;
       }
+
+
+      const shouldOpen =
+        typeof open === 'boolean'
+          ? open
+          : !drawer.classList.contains('open');
+
+
+      drawer.classList.toggle(
+        'open',
+        shouldOpen
+      );
+
+
+      if (overlay) {
+
+        overlay.classList.toggle(
+          'open',
+          shouldOpen
+        );
+
+      }
+
+
+      document.body.classList.toggle(
+        'drawer-open',
+        shouldOpen
+      );
+
+
+      OMNIX.drawerOpen =
+        shouldOpen;
+
+
+      drawer.setAttribute(
+        'aria-hidden',
+        String(!shouldOpen)
+      );
+
     }
+
+
+    /* =====================================================
+       ESCAPE KEY
+    ===================================================== */
+
+    document.addEventListener(
+      'keydown',
+      (event) => {
+
+        if (
+          event.key === 'Escape' &&
+          OMNIX.drawerOpen
+        ) {
+
+          toggleDrawer(false);
+
+        }
+
+      }
+    );
+
+
+    /* =====================================================
+       PREVENT DRAWER LINK FROM REMAINING OPEN
+    ===================================================== */
+
+    document.addEventListener(
+      'click',
+      (event) => {
+
+        const target =
+          event.target.closest(
+            '#omnix-drawer a'
+          );
+
+
+        if (!target) {
+          return;
+        }
+
+
+        toggleDrawer(false);
+
+      }
+    );
+
+
+    /* =====================================================
+       IMAGE FALLBACK
+    ===================================================== */
+
+    function setupImageFallback(
+      imageId,
+      fallbackId
+    ) {
+
+      const image =
+        document.getElementById(
+          imageId
+        );
+
+      const fallback =
+        document.getElementById(
+          fallbackId
+        );
+
+
+      if (!image || !fallback) {
+        return;
+      }
+
+
+      image.addEventListener(
+        'error',
+        () => {
+
+          image.style.display =
+            'none';
+
+          fallback.style.display =
+            'flex';
+
+        },
+        {
+          once: true
+        }
+      );
+
+    }
+
+
+    setupImageFallback(
+      'logo-main-img',
+      'logo-fallback-box'
+    );
+
+
+    setupImageFallback(
+      'logo-avatar-img',
+      'avatar-fallback-box'
+    );
+
+
+    /* =====================================================
+       FOUNDER DATA
+       Aucun JWT / localStorage.
+       La page utilise uniquement les données EJS
+       fournies par le serveur.
+    ===================================================== */
+
+    window.OMNIX.founder = {
+
+      name:
+        <%- JSON.stringify(founder?.name || '') %>,
+
+      description:
+        <%- JSON.stringify(founder?.description || '') %>,
+
+      officialServer:
+        <%- JSON.stringify(founder?.officialServer || '') %>
+
+    };
+
+
+    /* =====================================================
+       SECURITY CHECK — OFFICIAL SERVER
+    ===================================================== */
+
+    function isValidExternalUrl(
+      value
+    ) {
+
+      if (!value) {
+        return false;
+      }
+
+
+      try {
+
+        const url =
+          new URL(value);
+
+
+        return (
+          url.protocol === 'https:' ||
+          url.protocol === 'http:'
+        );
+
+      } catch {
+
+        return false;
+
+      }
+
+    }
+
+
+    const discordButton =
+      document.querySelector(
+        '.btn-discord'
+      );
+
+
+    if (
+      discordButton &&
+      !isValidExternalUrl(
+        OMNIX.founder.officialServer
+      )
+    ) {
+
+      discordButton.remove();
+
+    }
+
+
+    /* =====================================================
+       PREMIUM BUTTON
+    ===================================================== */
+
+    const premiumButton =
+      document.querySelector(
+        '.btn-premium'
+      );
+
+
+    if (premiumButton) {
+
+      premiumButton.addEventListener(
+        'click',
+        () => {
+
+          premiumButton.setAttribute(
+            'aria-busy',
+            'true'
+          );
+
+        }
+      );
+
+    }
+
+
+    /* =====================================================
+       PAGE READY
+    ===================================================== */
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      () => {
+
+        document.body.classList.add(
+          'page-ready'
+        );
+
+
+        /*
+         * Le drawer est fermé par défaut.
+         * Aucun token n'est récupéré.
+         * Aucun JWT n'est injecté dans l'URL.
+         * Aucun état d'administration n'est
+         * fabriqué côté client.
+         */
+
+        toggleDrawer(false);
+
+      }
+    );
+
   </script>
+
+
+  <!-- =====================================================
+       ACCESSIBILITY
+  ====================================================== -->
+
+  <script>
+
+    const burgerButton =
+      document.querySelector(
+        '.btn-burger'
+      );
+
+
+    if (burgerButton) {
+
+      burgerButton.setAttribute(
+        'aria-expanded',
+        'false'
+      );
+
+
+      const originalToggle =
+        window.toggleDrawer;
+
+
+      window.toggleDrawer =
+        function(open) {
+
+          originalToggle(open);
+
+
+          const drawer =
+            document.getElementById(
+              'omnix-drawer'
+            );
+
+
+          if (burgerButton && drawer) {
+
+            burgerButton.setAttribute(
+              'aria-expanded',
+              String(
+                drawer.classList.contains(
+                  'open'
+                )
+              )
+            );
+
+          }
+
+        };
+
+    }
+
+  </script>
+
 </body>
 </html>

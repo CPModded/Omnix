@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
+
   <meta charset="UTF-8">
 
   <meta
@@ -22,6 +24,10 @@
 
   <style>
 
+    /* =========================================================
+       RESET
+    ========================================================= */
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -29,8 +35,10 @@
     }
 
     :root {
+
       --bg: #070a12;
       --bg-secondary: #0b0f1a;
+
       --panel: rgba(15, 20, 34, .82);
       --panel-strong: #101628;
 
@@ -51,14 +59,22 @@
       --header-height: 72px;
 
       --radius: 16px;
+
     }
+
 
     html,
     body {
+
       width: 100%;
       min-height: 100%;
-      background: var(--bg);
-      color: var(--text);
+
+      background:
+        var(--bg);
+
+      color:
+        var(--text);
+
       font-family:
         Inter,
         ui-sans-serif,
@@ -67,44 +83,63 @@
         BlinkMacSystemFont,
         "Segoe UI",
         sans-serif;
+
     }
 
+
     body {
+
       overflow-x: hidden;
+
     }
+
 
     button,
     input,
     select,
     textarea {
+
       font: inherit;
+
     }
+
 
     button {
+
       border: 0;
+
     }
+
 
     a {
+
       color: inherit;
       text-decoration: none;
+
     }
 
-    /* =====================================================
+
+    /* =========================================================
        BACKGROUND
-    ===================================================== */
+    ========================================================= */
 
     body::before {
+
       content: "";
+
       position: fixed;
       inset: 0;
+
       pointer-events: none;
 
       background:
+
         radial-gradient(
           circle at 10% 10%,
           rgba(124,92,255,.12),
           transparent 30%
         ),
+
         radial-gradient(
           circle at 90% 20%,
           rgba(79,70,229,.10),
@@ -112,50 +147,68 @@
         );
 
       z-index: -2;
+
     }
 
+
     body::after {
+
       content: "";
+
       position: fixed;
       inset: 0;
 
       background-image:
+
         linear-gradient(
           rgba(255,255,255,.018) 1px,
           transparent 1px
         ),
+
         linear-gradient(
           90deg,
           rgba(255,255,255,.018) 1px,
           transparent 1px
         );
 
-      background-size: 40px 40px;
+      background-size:
+        40px 40px;
 
       pointer-events: none;
+
       opacity: .25;
 
       z-index: -1;
+
     }
 
-    /* =====================================================
+
+    /* =========================================================
        APP
-    ===================================================== */
+    ========================================================= */
 
     .app {
+
       min-height: 100vh;
+
       display: flex;
+
     }
 
-    /* =====================================================
+
+    /* =========================================================
        SIDEBAR
-    ===================================================== */
+    ========================================================= */
 
     .sidebar {
-      position: fixed;
-      inset: 0 auto 0 0;
 
-      width: var(--sidebar-width);
+      position: fixed;
+
+      inset:
+        0 auto 0 0;
+
+      width:
+        var(--sidebar-width);
 
       background:
         rgba(8,11,20,.92);
@@ -163,164 +216,275 @@
       backdrop-filter:
         blur(24px);
 
+      -webkit-backdrop-filter:
+        blur(24px);
+
       border-right:
         1px solid var(--border);
 
       display: flex;
+
       flex-direction: column;
 
       z-index: 1000;
 
       transition:
         transform .25s ease;
+
     }
 
+
     .sidebar-header {
-      height: var(--header-height);
+
+      height:
+        var(--header-height);
 
       display: flex;
+
       align-items: center;
 
-      padding: 0 20px;
+      padding:
+        0 20px;
 
       border-bottom:
         1px solid var(--border);
+
     }
 
+
     .brand {
+
       display: flex;
+
       align-items: center;
+
       gap: 11px;
 
       font-weight: 900;
-      letter-spacing: -.4px;
+
+      letter-spacing:
+        -.4px;
+
     }
 
+
     .brand img {
+
       width: 38px;
       height: 38px;
 
-      border-radius: 12px;
+      border-radius:
+        12px;
 
       object-fit: cover;
 
       box-shadow:
-        0 0 25px rgba(124,92,255,.3);
+        0 0 25px
+        rgba(124,92,255,.3);
+
     }
+
 
     .brand span {
-      font-size: 18px;
-    }
 
-    .brand small {
       display: block;
 
-      margin-top: 2px;
+      font-size:
+        18px;
 
-      color: var(--muted);
-      font-size: 9px;
-      font-weight: 700;
+      line-height:
+        1;
 
-      letter-spacing: .8px;
-      text-transform: uppercase;
     }
+
+
+    .brand small {
+
+      display: block;
+
+      margin-top:
+        4px;
+
+      color:
+        var(--muted);
+
+      font-size:
+        9px;
+
+      font-weight:
+        700;
+
+      letter-spacing:
+        .8px;
+
+      text-transform:
+        uppercase;
+
+    }
+
 
     .sidebar-content {
+
       flex: 1;
 
-      padding: 18px 12px;
+      padding:
+        18px 12px;
 
-      overflow-y: auto;
+      overflow-y:
+        auto;
+
+      scrollbar-width:
+        thin;
+
     }
+
 
     .sidebar-section {
-      margin-bottom: 22px;
+
+      margin-bottom:
+        22px;
+
     }
+
 
     .sidebar-title {
+
       padding:
-        0 11px
-        8px;
+        0 11px 8px;
 
-      color: #667085;
+      color:
+        #667085;
 
-      font-size: 10px;
-      font-weight: 800;
+      font-size:
+        10px;
 
-      text-transform: uppercase;
-      letter-spacing: 1px;
+      font-weight:
+        800;
+
+      text-transform:
+        uppercase;
+
+      letter-spacing:
+        1px;
+
     }
 
+
     .nav-item {
+
       width: 100%;
 
       display: flex;
+
       align-items: center;
 
       gap: 11px;
 
-      padding: 11px 12px;
+      padding:
+        11px 12px;
 
-      margin-bottom: 4px;
+      margin-bottom:
+        4px;
 
-      border-radius: 11px;
+      border-radius:
+        11px;
 
-      color: #9ca7bb;
+      color:
+        #9ca7bb;
 
-      cursor: pointer;
+      cursor:
+        pointer;
 
       transition:
         background .18s ease,
         color .18s ease,
-        transform .18s ease;
+        transform .18s ease,
+        border-color .18s ease;
+
+      border:
+        1px solid transparent;
+
     }
 
+
     .nav-item:hover {
+
       background:
         rgba(124,92,255,.08);
 
-      color: white;
+      color:
+        white;
 
       transform:
         translateX(2px);
+
     }
 
+
     .nav-item.active {
+
       background:
+
         linear-gradient(
           135deg,
           rgba(124,92,255,.20),
           rgba(79,70,229,.12)
         );
 
-      color: white;
+      color:
+        white;
 
       border:
         1px solid
         rgba(124,92,255,.15);
+
     }
+
 
     .nav-icon {
-      width: 20px;
 
-      display: flex;
-      justify-content: center;
+      width:
+        20px;
 
-      font-size: 15px;
+      display:
+        flex;
+
+      align-items:
+        center;
+
+      justify-content:
+        center;
+
+      font-size:
+        15px;
+
+      flex-shrink:
+        0;
+
     }
+
 
     .nav-label {
-      flex: 1;
 
-      font-size: 12px;
-      font-weight: 700;
+      flex:
+        1;
+
+      font-size:
+        12px;
+
+      font-weight:
+        700;
+
     }
 
+
     .nav-badge {
+
       padding:
         3px 6px;
 
-      border-radius: 6px;
+      border-radius:
+        6px;
 
       background:
         rgba(124,92,255,.16);
@@ -328,96 +492,183 @@
       color:
         #b7aaff;
 
-      font-size: 9px;
-      font-weight: 900;
+      font-size:
+        9px;
+
+      font-weight:
+        900;
+
     }
 
+
+    /* =========================================================
+       SIDEBAR USER
+    ========================================================= */
+
     .sidebar-user {
-      padding: 14px;
+
+      padding:
+        14px;
 
       border-top:
         1px solid var(--border);
+
     }
 
+
     .user-card {
-      display: flex;
-      align-items: center;
 
-      gap: 10px;
+      display:
+        flex;
 
-      padding: 10px;
+      align-items:
+        center;
 
-      border-radius: 12px;
+      gap:
+        10px;
+
+      padding:
+        10px;
+
+      border-radius:
+        12px;
 
       background:
         rgba(255,255,255,.025);
+
+      border:
+        1px solid transparent;
+
+      transition:
+        border-color .18s ease,
+        background .18s ease;
+
     }
 
+
+    .user-card:hover {
+
+      background:
+        rgba(255,255,255,.04);
+
+      border-color:
+        rgba(255,255,255,.06);
+
+    }
+
+
     .user-avatar {
-      width: 34px;
-      height: 34px;
 
-      border-radius: 50%;
+      width:
+        34px;
 
-      object-fit: cover;
+      height:
+        34px;
+
+      border-radius:
+        50%;
+
+      object-fit:
+        cover;
 
       background:
         #151b2b;
+
+      flex-shrink:
+        0;
+
     }
+
 
     .user-info {
-      min-width: 0;
-      flex: 1;
+
+      min-width:
+        0;
+
+      flex:
+        1;
+
     }
+
 
     .user-name {
-      font-size: 11px;
-      font-weight: 800;
 
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size:
+        11px;
+
+      font-weight:
+        800;
+
+      white-space:
+        nowrap;
+
+      overflow:
+        hidden;
+
+      text-overflow:
+        ellipsis;
+
     }
+
 
     .user-plan {
-      color: var(--muted);
 
-      font-size: 9px;
+      color:
+        var(--muted);
 
-      margin-top: 2px;
+      font-size:
+        9px;
+
+      margin-top:
+        2px;
+
     }
 
-    /* =====================================================
+
+    /* =========================================================
        MAIN
-    ===================================================== */
+    ========================================================= */
 
     .main {
-      width: calc(
-        100% - var(--sidebar-width)
-      );
+
+      width:
+        calc(100% - var(--sidebar-width));
 
       margin-left:
         var(--sidebar-width);
 
-      min-height: 100vh;
+      min-height:
+        100vh;
+
     }
 
-    /* =====================================================
+
+    /* =========================================================
        HEADER
-    ===================================================== */
+    ========================================================= */
 
     .header {
-      height: var(--header-height);
 
-      position: sticky;
-      top: 0;
+      height:
+        var(--header-height);
 
-      z-index: 500;
+      position:
+        sticky;
 
-      display: flex;
-      align-items: center;
+      top:
+        0;
 
-      justify-content: space-between;
+      z-index:
+        500;
+
+      display:
+        flex;
+
+      align-items:
+        center;
+
+      justify-content:
+        space-between;
 
       padding:
         0 26px;
@@ -428,60 +679,133 @@
       backdrop-filter:
         blur(20px);
 
+      -webkit-backdrop-filter:
+        blur(20px);
+
       border-bottom:
         1px solid var(--border);
+
     }
+
 
     .header-left {
-      display: flex;
-      align-items: center;
-      gap: 14px;
+
+      display:
+        flex;
+
+      align-items:
+        center;
+
+      gap:
+        14px;
+
+      min-width:
+        0;
+
     }
 
+
     .mobile-menu {
-      display: none;
 
-      width: 38px;
-      height: 38px;
+      display:
+        none;
 
-      border-radius: 10px;
+      width:
+        38px;
+
+      height:
+        38px;
+
+      border-radius:
+        10px;
 
       background:
         rgba(255,255,255,.05);
 
-      color: white;
+      color:
+        white;
 
-      cursor: pointer;
+      cursor:
+        pointer;
+
+      transition:
+        background .18s ease,
+        transform .18s ease;
+
     }
+
+
+    .mobile-menu:hover {
+
+      background:
+        rgba(124,92,255,.14);
+
+    }
+
+
+    .mobile-menu:active {
+
+      transform:
+        scale(.96);
+
+    }
+
 
     .page-title {
-      font-size: 18px;
-      font-weight: 900;
+
+      font-size:
+        18px;
+
+      font-weight:
+        900;
+
     }
+
 
     .page-subtitle {
-      margin-top: 2px;
 
-      color: var(--muted);
+      margin-top:
+        2px;
 
-      font-size: 10px;
+      color:
+        var(--muted);
+
+      font-size:
+        10px;
+
     }
+
 
     .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+
+      display:
+        flex;
+
+      align-items:
+        center;
+
+      gap:
+        10px;
+
     }
 
+
     .status-pill {
-      display: flex;
-      align-items: center;
-      gap: 7px;
+
+      display:
+        flex;
+
+      align-items:
+        center;
+
+      gap:
+        7px;
 
       padding:
         8px 12px;
 
-      border-radius: 999px;
+      border-radius:
+        999px;
 
       background:
         rgba(16,185,129,.07);
@@ -490,79 +814,139 @@
         1px solid
         rgba(16,185,129,.15);
 
-      color: #6ee7b7;
+      color:
+        #6ee7b7;
 
-      font-size: 10px;
-      font-weight: 800;
+      font-size:
+        10px;
+
+      font-weight:
+        800;
+
+      white-space:
+        nowrap;
+
     }
 
+
     .status-dot {
-      width: 7px;
-      height: 7px;
 
-      border-radius: 50%;
+      width:
+        7px;
 
-      background: #10b981;
+      height:
+        7px;
+
+      border-radius:
+        50%;
+
+      background:
+        var(--success);
 
       box-shadow:
         0 0 10px
         rgba(16,185,129,.8);
+
+      flex-shrink:
+        0;
+
     }
 
-    /* =====================================================
+
+    /* =========================================================
        CONTENT
-    ===================================================== */
+    ========================================================= */
 
     .content {
-      padding: 28px;
-      max-width: 1500px;
-      margin: auto;
+
+      width:
+        100%;
+
+      max-width:
+        1500px;
+
+      margin:
+        0 auto;
+
+      padding:
+        28px;
+
     }
+
 
     .welcome {
-      margin-bottom: 24px;
+
+      margin-bottom:
+        24px;
+
     }
+
 
     .welcome h1 {
-      font-size: 28px;
-      line-height: 1.15;
 
-      font-weight: 950;
+      font-size:
+        28px;
 
-      letter-spacing: -.8px;
+      line-height:
+        1.15;
+
+      font-weight:
+        950;
+
+      letter-spacing:
+        -.8px;
+
     }
+
 
     .welcome p {
-      margin-top: 7px;
 
-      color: var(--muted);
+      margin-top:
+        7px;
 
-      font-size: 12px;
+      color:
+        var(--muted);
+
+      font-size:
+        12px;
+
     }
 
-    /* =====================================================
+
+    /* =========================================================
        STATS
-    ===================================================== */
+    ========================================================= */
 
     .stats-grid {
-      display: grid;
+
+      display:
+        grid;
 
       grid-template-columns:
-        repeat(4, 1fr);
+        repeat(4, minmax(0, 1fr));
 
-      gap: 14px;
+      gap:
+        14px;
 
-      margin-bottom: 24px;
+      margin-bottom:
+        24px;
+
     }
 
+
     .stat-card {
-      position: relative;
 
-      padding: 18px;
+      position:
+        relative;
 
-      border-radius: var(--radius);
+      padding:
+        18px;
+
+      border-radius:
+        var(--radius);
 
       background:
+
         linear-gradient(
           145deg,
           rgba(18,24,40,.92),
@@ -572,210 +956,417 @@
       border:
         1px solid var(--border);
 
-      overflow: hidden;
+      overflow:
+        hidden;
 
       transition:
         transform .2s ease,
-        border-color .2s ease;
+        border-color .2s ease,
+        box-shadow .2s ease;
+
     }
 
+
     .stat-card:hover {
+
       transform:
         translateY(-2px);
 
       border-color:
         var(--border-hover);
+
+      box-shadow:
+        0 12px 30px
+        rgba(0,0,0,.14);
+
     }
 
+
     .stat-card::after {
-      content: "";
 
-      position: absolute;
+      content:
+        "";
 
-      width: 100px;
-      height: 100px;
+      position:
+        absolute;
 
-      right: -45px;
-      bottom: -45px;
+      width:
+        100px;
 
-      border-radius: 50%;
+      height:
+        100px;
+
+      right:
+        -45px;
+
+      bottom:
+        -45px;
+
+      border-radius:
+        50%;
 
       background:
         rgba(124,92,255,.08);
+
+      pointer-events:
+        none;
+
     }
+
 
     .stat-label {
-      color: var(--muted);
 
-      font-size: 10px;
-      font-weight: 800;
+      color:
+        var(--muted);
 
-      text-transform: uppercase;
-      letter-spacing: .7px;
+      font-size:
+        10px;
+
+      font-weight:
+        800;
+
+      text-transform:
+        uppercase;
+
+      letter-spacing:
+        .7px;
+
     }
+
 
     .stat-value {
-      margin-top: 9px;
 
-      font-size: 26px;
-      font-weight: 950;
+      margin-top:
+        9px;
 
-      letter-spacing: -.7px;
+      font-size:
+        26px;
+
+      font-weight:
+        950;
+
+      letter-spacing:
+        -.7px;
+
+      position:
+        relative;
+
+      z-index:
+        1;
+
     }
+
 
     .stat-description {
-      margin-top: 5px;
 
-      color: #657086;
+      margin-top:
+        5px;
 
-      font-size: 9px;
+      color:
+        #657086;
+
+      font-size:
+        9px;
+
+      position:
+        relative;
+
+      z-index:
+        1;
+
     }
 
-    /* =====================================================
-       SERVER SECTION
-    ===================================================== */
+
+    /* =========================================================
+       SECTIONS
+    ========================================================= */
 
     .section {
-      margin-bottom: 25px;
+
+      margin-bottom:
+        25px;
+
     }
+
 
     .section-header {
-      display: flex;
 
-      align-items: center;
+      display:
+        flex;
 
-      justify-content: space-between;
+      align-items:
+        center;
 
-      margin-bottom: 12px;
+      justify-content:
+        space-between;
+
+      gap:
+        15px;
+
+      margin-bottom:
+        12px;
+
     }
+
+
+    .section-heading {
+
+      min-width:
+        0;
+
+    }
+
 
     .section-heading h2 {
-      font-size: 15px;
-      font-weight: 900;
+
+      font-size:
+        15px;
+
+      font-weight:
+        900;
+
     }
+
 
     .section-heading p {
-      margin-top: 3px;
 
-      color: var(--muted);
+      margin-top:
+        3px;
 
-      font-size: 10px;
+      color:
+        var(--muted);
+
+      font-size:
+        10px;
+
     }
+
 
     .section-actions {
-      display: flex;
-      gap: 8px;
+
+      display:
+        flex;
+
+      align-items:
+        center;
+
+      gap:
+        8px;
+
+      flex-shrink:
+        0;
+
     }
 
+
+    /* =========================================================
+       BUTTONS
+    ========================================================= */
+
     .btn {
-      display: inline-flex;
 
-      align-items: center;
-      justify-content: center;
+      display:
+        inline-flex;
 
-      gap: 7px;
+      align-items:
+        center;
+
+      justify-content:
+        center;
+
+      gap:
+        7px;
 
       padding:
         9px 13px;
 
-      border-radius: 9px;
+      border-radius:
+        9px;
 
-      cursor: pointer;
+      cursor:
+        pointer;
 
-      font-size: 10px;
-      font-weight: 800;
+      font-size:
+        10px;
+
+      font-weight:
+        800;
 
       transition:
         transform .18s ease,
         opacity .18s ease,
-        background .18s ease;
+        background .18s ease,
+        border-color .18s ease;
+
     }
+
 
     .btn:hover {
+
       transform:
         translateY(-1px);
+
     }
 
+
+    .btn:active {
+
+      transform:
+        translateY(0);
+
+    }
+
+
     .btn-primary {
+
       background:
+
         linear-gradient(
           135deg,
-          #7c5cff,
-          #4f46e5
+          var(--primary),
+          var(--primary-2)
         );
 
-      color: white;
+      color:
+        white;
 
       box-shadow:
         0 8px 25px
         rgba(79,70,229,.18);
+
     }
 
+
+    .btn-primary:hover {
+
+      opacity:
+        .94;
+
+    }
+
+
     .btn-secondary {
+
       background:
         rgba(255,255,255,.05);
 
-      color: #dbe2ef;
+      color:
+        #dbe2ef;
 
       border:
         1px solid var(--border);
+
     }
+
+
+    .btn-secondary:hover {
+
+      background:
+        rgba(255,255,255,.08);
+
+      border-color:
+        rgba(255,255,255,.12);
+
+    }
+
+
+    /* =========================================================
+       SERVER TOOLBAR
+    ========================================================= */
 
     .server-toolbar {
-      display: flex;
 
-      gap: 10px;
+      display:
+        flex;
 
-      margin-bottom: 14px;
+      gap:
+        10px;
+
+      margin-bottom:
+        14px;
+
     }
+
 
     .search-box {
-      flex: 1;
 
-      position: relative;
+      flex:
+        1;
+
+      position:
+        relative;
+
     }
 
-    .search-box input {
-      width: 100%;
 
-      height: 40px;
+    .search-box input {
+
+      width:
+        100%;
+
+      height:
+        40px;
 
       padding:
         0 13px;
 
-      border-radius: 10px;
+      border-radius:
+        10px;
 
       border:
         1px solid var(--border);
 
-      outline: none;
+      outline:
+        none;
 
       background:
         rgba(255,255,255,.035);
 
-      color: white;
+      color:
+        white;
 
-      font-size: 11px;
+      font-size:
+        11px;
+
+      transition:
+        border-color .18s ease,
+        background .18s ease,
+        box-shadow .18s ease;
+
     }
+
 
     .search-box input::placeholder {
-      color: #667085;
+
+      color:
+        #667085;
+
     }
 
+
     .search-box input:focus {
+
       border-color:
         rgba(124,92,255,.4);
 
       background:
         rgba(255,255,255,.045);
+
+      box-shadow:
+        0 0 0 3px
+        rgba(124,92,255,.06);
+
     }
 
-    /* =====================================================
+
+    /* =========================================================
        SERVER GRID
-    ===================================================== */
+    ========================================================= */
 
     #servers-container {
-      display: grid;
+
+      display:
+        grid;
 
       grid-template-columns:
         repeat(
@@ -783,21 +1374,31 @@
           minmax(240px, 1fr)
         );
 
-      gap: 12px;
+      gap:
+        12px;
+
     }
 
+
     .server-card {
-      display: flex;
 
-      align-items: center;
+      display:
+        flex;
 
-      gap: 11px;
+      align-items:
+        center;
 
-      min-width: 0;
+      gap:
+        11px;
 
-      padding: 13px;
+      min-width:
+        0;
 
-      border-radius: 13px;
+      padding:
+        13px;
+
+      border-radius:
+        13px;
 
       background:
         rgba(15,20,34,.78);
@@ -805,15 +1406,20 @@
       border:
         1px solid var(--border);
 
-      cursor: pointer;
+      cursor:
+        pointer;
 
       transition:
         transform .18s ease,
         border-color .18s ease,
-        background .18s ease;
+        background .18s ease,
+        box-shadow .18s ease;
+
     }
 
+
     .server-card:hover {
+
       transform:
         translateY(-2px);
 
@@ -822,142 +1428,231 @@
 
       background:
         rgba(20,26,44,.9);
+
     }
 
+
     .server-card.selected {
+
       border-color:
         rgba(124,92,255,.55);
 
       box-shadow:
+
         0 0 0 1px
         rgba(124,92,255,.08),
+
         0 10px 30px
         rgba(0,0,0,.18);
+
     }
 
+
     .server-icon {
-      width: 45px;
-      height: 45px;
 
-      flex-shrink: 0;
+      width:
+        45px;
 
-      border-radius: 12px;
+      height:
+        45px;
 
-      object-fit: cover;
+      flex-shrink:
+        0;
+
+      border-radius:
+        12px;
+
+      object-fit:
+        cover;
 
       background:
         #161c2c;
+
     }
+
 
     .server-details {
-      min-width: 0;
-      flex: 1;
+
+      min-width:
+        0;
+
+      flex:
+        1;
+
     }
+
 
     .server-name {
-      display: block;
 
-      overflow: hidden;
+      display:
+        block;
 
-      white-space: nowrap;
-      text-overflow: ellipsis;
+      overflow:
+        hidden;
 
-      font-size: 11px;
-      font-weight: 850;
+      white-space:
+        nowrap;
+
+      text-overflow:
+        ellipsis;
+
+      font-size:
+        11px;
+
+      font-weight:
+        850;
+
     }
+
 
     .server-meta {
-      display: block;
 
-      margin-top: 4px;
+      display:
+        block;
 
-      color: var(--muted);
+      margin-top:
+        4px;
 
-      font-size: 9px;
+      color:
+        var(--muted);
+
+      font-size:
+        9px;
+
     }
 
+
     .server-status {
-      width: 7px;
-      height: 7px;
 
-      flex-shrink: 0;
+      width:
+        7px;
 
-      border-radius: 50%;
+      height:
+        7px;
+
+      flex-shrink:
+        0;
+
+      border-radius:
+        50%;
 
       background:
-        #10b981;
+        var(--success);
 
       box-shadow:
         0 0 8px
         rgba(16,185,129,.7);
+
     }
 
-    /* =====================================================
+
+    /* =========================================================
        EMPTY STATE
-    ===================================================== */
+    ========================================================= */
 
     .empty-state {
-      padding: 45px 20px;
 
-      text-align: center;
+      padding:
+        45px 20px;
+
+      text-align:
+        center;
 
       border:
         1px dashed
         rgba(255,255,255,.09);
 
-      border-radius: 15px;
+      border-radius:
+        15px;
 
       background:
         rgba(255,255,255,.018);
+
     }
+
 
     .empty-icon {
-      font-size: 30px;
-      margin-bottom: 12px;
+
+      font-size:
+        30px;
+
+      margin-bottom:
+        12px;
+
     }
+
 
     .empty-state strong {
-      display: block;
 
-      font-size: 13px;
+      display:
+        block;
+
+      font-size:
+        13px;
+
     }
 
+
     .empty-state p {
-      max-width: 420px;
+
+      max-width:
+        420px;
 
       margin:
         7px auto 0;
 
-      color: var(--muted);
+      color:
+        var(--muted);
 
-      font-size: 10px;
-      line-height: 1.6;
+      font-size:
+        10px;
+
+      line-height:
+        1.6;
+
     }
 
-    /* =====================================================
+
+    /* =========================================================
        TOAST
-    ===================================================== */
+    ========================================================= */
 
     #toast-container {
-      position: fixed;
 
-      right: 20px;
-      bottom: 20px;
+      position:
+        fixed;
 
-      display: flex;
-      flex-direction: column;
+      right:
+        20px;
 
-      gap: 9px;
+      bottom:
+        20px;
 
-      z-index: 5000;
+      display:
+        flex;
+
+      flex-direction:
+        column;
+
+      gap:
+        9px;
+
+      z-index:
+        5000;
+
     }
 
+
     .toast {
-      min-width: 260px;
 
-      padding: 13px 15px;
+      min-width:
+        260px;
 
-      border-radius: 12px;
+      padding:
+        13px 15px;
+
+      border-radius:
+        12px;
 
       background:
         rgba(16,22,38,.96);
@@ -969,130 +1664,257 @@
         0 20px 50px
         rgba(0,0,0,.3);
 
-      color: white;
+      color:
+        white;
 
-      font-size: 11px;
-      font-weight: 700;
+      font-size:
+        11px;
+
+      font-weight:
+        700;
 
       animation:
         toastIn .22s ease;
+
+      transition:
+        opacity .22s ease,
+        transform .22s ease;
+
     }
+
 
     .toast.error {
+
       border-color:
         rgba(239,68,68,.3);
+
     }
+
 
     .toast.success {
+
       border-color:
         rgba(16,185,129,.3);
+
     }
 
+
     @keyframes toastIn {
+
       from {
-        opacity: 0;
+
+        opacity:
+          0;
+
         transform:
           translateY(10px);
+
       }
 
       to {
-        opacity: 1;
+
+        opacity:
+          1;
+
         transform:
           translateY(0);
+
       }
+
     }
 
-    /* =====================================================
-       RESPONSIVE
-    ===================================================== */
 
-    @media (
-      max-width: 1100px
-    ) {
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+
+    @media (max-width: 1100px) {
 
       .stats-grid {
+
         grid-template-columns:
-          repeat(2, 1fr);
+          repeat(2, minmax(0, 1fr));
+
       }
 
     }
 
-    @media (
-      max-width: 800px
-    ) {
+
+    @media (max-width: 800px) {
 
       :root {
-        --sidebar-width: 260px;
+
+        --sidebar-width:
+          260px;
+
       }
+
 
       .sidebar {
+
         transform:
           translateX(-100%);
+
+        box-shadow:
+          15px 0 50px
+          rgba(0,0,0,.35);
+
       }
+
 
       .sidebar.open {
+
         transform:
           translateX(0);
+
       }
+
 
       .main {
-        width: 100%;
-        margin-left: 0;
+
+        width:
+          100%;
+
+        margin-left:
+          0;
+
       }
+
 
       .mobile-menu {
-        display: block;
+
+        display:
+          block;
+
       }
+
 
       .header {
+
         padding:
           0 15px;
+
       }
+
 
       .content {
-        padding: 18px 14px;
+
+        padding:
+          18px 14px;
+
       }
 
+
       .status-pill {
-        display: none;
+
+        display:
+          none;
+
       }
 
     }
 
-    @media (
-      max-width: 520px
-    ) {
+
+    @media (max-width: 520px) {
 
       .stats-grid {
+
         grid-template-columns:
           1fr;
+
       }
+
 
       .server-toolbar {
-        flex-direction: column;
+
+        flex-direction:
+          column;
+
       }
+
 
       .welcome h1 {
-        font-size: 23px;
+
+        font-size:
+          23px;
+
       }
 
+
+      .section-header {
+
+        align-items:
+          flex-start;
+
+        flex-direction:
+          column;
+
+      }
+
+
+      .section-actions {
+
+        width:
+          100%;
+
+      }
+
+
+      .section-actions .btn {
+
+        width:
+          100%;
+
+      }
+
+
       #servers-container {
+
         grid-template-columns:
           1fr;
+
+      }
+
+
+      #toast-container {
+
+        left:
+          14px;
+
+        right:
+          14px;
+
+        bottom:
+          14px;
+
+      }
+
+
+      .toast {
+
+        min-width:
+          0;
+
+        width:
+          100%;
+
       }
 
     }
 
   </style>
+
 </head>
+
 
 <body>
 
   <div class="app">
 
-    <!-- ===================================================
+
+    <!-- =====================================================
          SIDEBAR
-    ==================================================== -->
+    ====================================================== -->
 
     <aside
       class="sidebar"
@@ -1109,30 +1931,35 @@
           <img
             src="/logo.png"
             alt="OMNIX"
-            onerror="
-              this.style.display='none'
-            "
+            onerror="this.style.display='none';"
           >
 
           <div>
-            <span>OMNIX</span>
+
+            <span>
+              OMNIX
+            </span>
 
             <small>
               Le robot de demain
             </small>
+
           </div>
 
         </a>
 
       </div>
 
+
       <div class="sidebar-content">
+
 
         <div class="sidebar-section">
 
           <div class="sidebar-title">
             Dashboard
           </div>
+
 
           <a
             class="nav-item active"
@@ -1148,6 +1975,7 @@
             </span>
 
           </a>
+
 
           <a
             class="nav-item"
@@ -1166,11 +1994,13 @@
 
         </div>
 
+
         <div class="sidebar-section">
 
           <div class="sidebar-title">
             OMNIX
           </div>
+
 
           <a
             class="nav-item"
@@ -1191,6 +2021,7 @@
 
           </a>
 
+
           <a
             class="nav-item"
             href="/support"
@@ -1209,6 +2040,11 @@
         </div>
 
       </div>
+
+
+      <!-- ===================================================
+           USER
+      ==================================================== -->
 
       <div class="sidebar-user">
 
@@ -1246,11 +2082,16 @@
     </aside>
 
 
-    <!-- ===================================================
+    <!-- =====================================================
          MAIN
-    ==================================================== -->
+    ====================================================== -->
 
     <main class="main">
+
+
+      <!-- ===================================================
+           HEADER
+      ==================================================== -->
 
       <header class="header">
 
@@ -1260,10 +2101,12 @@
             type="button"
             class="mobile-menu"
             onclick="toggleSidebar()"
-            aria-label="Menu"
+            aria-label="Ouvrir le menu"
+            aria-controls="dashboard-sidebar"
           >
             ☰
           </button>
+
 
           <div>
 
@@ -1279,10 +2122,12 @@
 
         </div>
 
+
         <div class="header-actions">
 
           <div
             class="status-pill"
+            id="system-status"
           >
 
             <span
@@ -1298,7 +2143,16 @@
       </header>
 
 
+      <!-- ===================================================
+           CONTENT
+      ==================================================== -->
+
       <section class="content">
+
+
+        <!-- =================================================
+             WELCOME
+        ================================================== -->
 
         <div class="welcome">
 
@@ -1321,6 +2175,7 @@
         <section class="section">
 
           <div class="stats-grid">
+
 
             <article class="stat-card">
 
@@ -1431,6 +2286,7 @@
 
             </div>
 
+
             <div class="section-actions">
 
               <button
@@ -1455,6 +2311,7 @@
                 type="search"
                 placeholder="Rechercher un serveur..."
                 autocomplete="off"
+                aria-label="Rechercher un serveur"
               >
 
             </div>
@@ -1462,9 +2319,7 @@
           </div>
 
 
-          <div
-            id="servers-container"
-          >
+          <div id="servers-container">
 
             <div
               class="empty-state"
@@ -1507,6 +2362,10 @@
   ></div>
 
 
+  <!-- =====================================================
+       JAVASCRIPT — PARTIE 1
+  ====================================================== -->
+
   <script>
 
     /* =====================================================
@@ -1516,13 +2375,20 @@
     window.OMNIX =
       window.OMNIX || {
 
-        user: null,
+        user:
+          null,
 
-        guilds: [],
+        guilds:
+          [],
 
-        selectedGuild: null,
+        selectedGuild:
+          null,
 
-        stats: null
+        stats:
+          null,
+
+        socket:
+          null
 
       };
 
@@ -1531,40 +2397,41 @@
        HTML SECURITY HELPERS
     ===================================================== */
 
-    function escapeHTML(
-      value
-    ) {
+    function escapeHTML(value) {
 
       return String(
         value ?? ''
       )
-      .replace(
-        /&/g,
-        '&amp;'
-      )
-      .replace(
-        /</g,
-        '&lt;'
-      )
-      .replace(
-        />/g,
-        '&gt;'
-      )
-      .replace(
-        /"/g,
-        '&quot;'
-      )
-      .replace(
-        /'/g,
-        '&#039;'
-      );
+
+        .replace(
+          /&/g,
+          '&amp;'
+        )
+
+        .replace(
+          /</g,
+          '&lt;'
+        )
+
+        .replace(
+          />/g,
+          '&gt;'
+        )
+
+        .replace(
+          /"/g,
+          '&quot;'
+        )
+
+        .replace(
+          /'/g,
+          '&#039;'
+        );
 
     }
 
 
-    function escapeAttribute(
-      value
-    ) {
+    function escapeAttribute(value) {
 
       return escapeHTML(
         value
@@ -1577,9 +2444,7 @@
        NUMBER FORMAT
     ===================================================== */
 
-    function formatNumber(
-      value
-    ) {
+    function formatNumber(value) {
 
       const number =
         Number(value);
@@ -1619,20 +2484,25 @@
         return;
       }
 
+
       const toast =
         document.createElement(
           'div'
         );
 
+
       toast.className =
         `toast ${type}`;
+
 
       toast.textContent =
         String(message);
 
+
       container.appendChild(
         toast
       );
+
 
       setTimeout(
         () => {
@@ -1643,8 +2513,13 @@
           toast.style.transform =
             'translateY(8px)';
 
+
           setTimeout(
-            () => toast.remove(),
+            () => {
+
+              toast.remove();
+
+            },
             220
           );
 
@@ -1666,7 +2541,11 @@
           'dashboard-sidebar'
         );
 
-      sidebar?.classList.toggle(
+      if (!sidebar) {
+        return;
+      }
+
+      sidebar.classList.toggle(
         'open'
       );
 
@@ -1674,97 +2553,27 @@
 
 
     /* =====================================================
-       JWT HELPERS
+       SESSION
+       IMPORTANT:
+       OMNIX utilise désormais la session serveur/cookie.
+       Aucun JWT n'est lu depuis localStorage.
+       Aucun token n'est accepté depuis l'URL.
     ===================================================== */
 
-    function decodeJwt(
-      token
-    ) {
+    function initializeSession() {
 
-      try {
-
-        const parts =
-          String(token)
-            .split('.');
-
-        if (
-          parts.length !== 3
-        ) {
-
-          return null;
-
-        }
-
-        const payload =
-          parts[1]
-            .replace(
-              /-/g,
-              '+'
-            )
-            .replace(
-              /_/g,
-              '/'
-            );
-
-        const decoded =
-          atob(
-            payload
-          );
-
-        return JSON.parse(
-          decodeURIComponent(
-            Array.from(
-              decoded
-            )
-            .map(
-              char =>
-                `%${(
-                  '00' +
-                  char
-                    .charCodeAt(0)
-                    .toString(16)
-                ).slice(-2)}`
-            )
-            .join('')
-          )
-        );
-
-      } catch {
-
-        return null;
-
-      }
-
-    }
-
-
-    function getStoredToken() {
-
-      const keys = [
-        'omnix_token',
-        'token',
-        'jwt',
-        'access_token'
-      ];
-
-      for (
-        const key of keys
-      ) {
-
-        try {
-
-          const value =
-            localStorage.getItem(
-              key
-            );
-
-          if (value) {
-            return value;
-          }
-
-        } catch {}
-
-      }
+      /*
+       * Le cookie httpOnly n'est volontairement
+       * pas accessible depuis JavaScript.
+       *
+       * La session sera vérifiée par :
+       *
+       *     /api/auth/me
+       *
+       * avec :
+       *
+       *     credentials: 'include'
+       */
 
       return null;
 
@@ -1772,70 +2581,7 @@
 
 
     /* =====================================================
-       SESSION
-    ===================================================== */
-
-    function initializeSession() {
-
-      let token =
-        getStoredToken();
-
-      try {
-
-        const params =
-          new URLSearchParams(
-            window.location.search
-          );
-
-        const queryToken =
-          params.get(
-            'token'
-          );
-
-        if (queryToken) {
-
-          token =
-            queryToken;
-
-          localStorage.setItem(
-            'omnix_token',
-            queryToken
-          );
-
-          const cleanUrl =
-            window.location.pathname;
-
-          window.history.replaceState(
-            {},
-            document.title,
-            cleanUrl
-          );
-
-        }
-
-      } catch {}
-
-      if (!token) {
-        return null;
-      }
-
-      const payload =
-        decodeJwt(token);
-
-      if (!payload) {
-        return null;
-      }
-
-      OMNIX.user =
-        payload;
-
-      return payload;
-
-    }
-
-
-    /* =====================================================
-       LOAD USER
+       LOAD CURRENT USER
     ===================================================== */
 
     async function loadCurrentUser() {
@@ -1846,30 +2592,64 @@
           await fetch(
             '/api/auth/me',
             {
-              credentials: 'include',
+              method:
+                'GET',
+
+              credentials:
+                'include',
+
+              cache:
+                'no-store',
+
               headers: {
+
                 Accept:
                   'application/json'
+
               }
+
             }
           );
 
-        if (!response.ok) {
 
-          return;
+        if (
+          response.status === 401
+        ) {
+
+          window.location.href =
+            '/api/auth/login';
+
+          return null;
 
         }
 
+
+        if (!response.ok) {
+
+          throw new Error(
+            `HTTP ${response.status}`
+          );
+
+        }
+
+
         const data =
           await response.json();
+
 
         const user =
           data?.user ||
           data;
 
+
         if (!user) {
-          return;
+
+          throw new Error(
+            'Utilisateur absent de la réponse.'
+          );
+
         }
+
 
         OMNIX.user =
           {
@@ -1877,14 +2657,20 @@
             ...user
           };
 
+
         updateUserUI();
+
+
+        return OMNIX.user;
 
       } catch (error) {
 
-        console.warn(
+        console.error(
           '[OMNIX] Impossible de récupérer le profil:',
           error
         );
+
+        return null;
 
       }
 
@@ -1898,8 +2684,8 @@
     function updateUserUI() {
 
       const user =
-        OMNIX.user ||
-        {};
+        OMNIX.user || {};
+
 
       const username =
         user.username ||
@@ -1907,12 +2693,14 @@
         user.name ||
         'Utilisateur';
 
+
       const avatar =
         user.avatarURL ||
         user.avatarUrl ||
         user.avatar ||
         user.avatar_url ||
         '/logo.png';
+
 
       const plan =
         user.plan ||
@@ -1923,10 +2711,12 @@
             : 'Free'
         );
 
+
       const welcome =
         document.getElementById(
           'welcome-title'
         );
+
 
       if (welcome) {
 
@@ -1935,10 +2725,12 @@
 
       }
 
+
       const name =
         document.getElementById(
           'sidebar-user-name'
         );
+
 
       if (name) {
 
@@ -1947,10 +2739,12 @@
 
       }
 
+
       const planElement =
         document.getElementById(
           'sidebar-user-plan'
         );
+
 
       if (planElement) {
 
@@ -1959,18 +2753,24 @@
 
       }
 
+
       const avatarElement =
         document.getElementById(
           'sidebar-user-avatar'
         );
+
 
       if (avatarElement) {
 
         avatarElement.src =
           avatar;
 
+
         avatarElement.onerror =
           () => {
+
+            avatarElement.onerror =
+              null;
 
             avatarElement.src =
               '/logo.png';
@@ -1983,7 +2783,7 @@
 
 
     /* =====================================================
-       API
+       API REQUEST
     ===================================================== */
 
     async function apiRequest(
@@ -1994,12 +2794,17 @@
       const controller =
         new AbortController();
 
+
       const timeout =
         setTimeout(
-          () =>
-            controller.abort(),
+          () => {
+
+            controller.abort();
+
+          },
           options.timeout || 10000
         );
+
 
       try {
 
@@ -2037,15 +2842,10 @@
             }
           );
 
+
         if (
           response.status === 401
         ) {
-
-          try {
-            localStorage.removeItem(
-              'omnix_token'
-            );
-          } catch {}
 
           window.location.href =
             '/api/auth/login';
@@ -2056,12 +2856,16 @@
 
         }
 
+
         const contentType =
           response.headers.get(
             'content-type'
           ) || '';
 
-        let data = null;
+
+        let data =
+          null;
+
 
         if (
           contentType.includes(
@@ -2074,6 +2878,7 @@
 
         }
 
+
         if (!response.ok) {
 
           throw new Error(
@@ -2083,6 +2888,7 @@
           );
 
         }
+
 
         return data;
 
@@ -2112,8 +2918,10 @@
         return;
       }
 
+
       const numericTarget =
         Number(target);
+
 
       if (
         !Number.isFinite(
@@ -2128,17 +2936,18 @@
 
       }
 
+
       const start =
         Number(
           element.dataset.value || 0
         );
 
+
       const startTime =
         performance.now();
 
-      function frame(
-        currentTime
-      ) {
+
+      function frame(currentTime) {
 
         const progress =
           Math.min(
@@ -2149,12 +2958,14 @@
             1
           );
 
+
         const eased =
           1 -
           Math.pow(
             1 - progress,
             3
           );
+
 
         const value =
           Math.round(
@@ -2166,8 +2977,10 @@
             eased
           );
 
+
         element.textContent =
           `${formatNumber(value)}${suffix}`;
+
 
         if (
           progress < 1
@@ -2185,6 +2998,7 @@
         }
 
       }
+
 
       requestAnimationFrame(
         frame
@@ -2204,9 +3018,11 @@
           id
         );
 
+
       if (!element) {
         return;
       }
+
 
       if (
         value === null ||
@@ -2220,6 +3036,7 @@
 
       }
 
+
       animateNumber(
         element,
         value,
@@ -2231,7 +3048,7 @@
 
 
     /* =====================================================
-       CONNECTION
+       CONNECTION STATUS
     ===================================================== */
 
     function updateConnectionStatus(
@@ -2239,1330 +3056,1206 @@
     ) {
 
       const status =
-        document.querySelector(
-          '.status-pill'
+        document.getElementById(
+          'system-status'
         );
+
 
       if (!status) {
         return;
       }
 
+
       if (online) {
 
         status.innerHTML = `
-          <span class="status-dot"></span>
+
+          <span
+            class="status-dot"
+          ></span>
+
           Tous les systèmes opérationnels
+
         `;
+
 
         status.style.color =
           '#6ee7b7';
 
+
+        status.style.background =
+          'rgba(16,185,129,.07)';
+
+
+        status.style.borderColor =
+          'rgba(16,185,129,.15)';
+
       } else {
 
         status.innerHTML = `
+
           <span
             class="status-dot"
             style="
               background:#f59e0b;
-              box-shadow:0 0 10px rgba(245,158,11,.8);
+              box-shadow:
+                0 0 10px
+                rgba(245,158,11,.8);
             "
           ></span>
+
           Connexion instable
+
         `;
+
 
         status.style.color =
           '#fbbf24';
 
+
+        status.style.background =
+          'rgba(245,158,11,.07)';
+
+
+        status.style.borderColor =
+          'rgba(245,158,11,.15)';
+
       }
 
     }
+
+
+    /* =====================================================
+       EXPORT BASIC API
+    ===================================================== */
+
+    window.OMNIXDashboard =
+      window.OMNIXDashboard || {
+
+        toggleSidebar:
+          toggleSidebar,
+
+        showToast:
+          showToast,
+
+        refreshStats:
+          null,
+
+        refreshGuilds:
+          null,
+
+        selectGuild:
+          null,
+
+        openGuild:
+          null,
+
+        state:
+          OMNIX
+
+      };
 
   </script>
   
-  <script>
+    <script>
 
-  /* =====================================================
-     GUILD NORMALIZER
-  ===================================================== */
+    /* =====================================================
+       GUILD HELPERS
+    ===================================================== */
 
-  function normalizeGuild(guild) {
+    function normalizeGuild(guild) {
 
-    if (!guild) {
-      return null;
+      if (!guild || typeof guild !== 'object') {
+        return null;
+      }
+
+      return {
+        ...guild,
+
+        id:
+          guild.id ||
+          guild.guildId ||
+          guild.guild_id ||
+          null,
+
+        name:
+          guild.name ||
+          guild.guildName ||
+          'Serveur sans nom',
+
+        icon:
+          guild.iconURL ||
+          guild.iconUrl ||
+          guild.icon_url ||
+          guild.icon ||
+          '/logo.png',
+
+        memberCount:
+          guild.memberCount ??
+          guild.members ??
+          guild.membersCount ??
+          0,
+
+        botPresent:
+          guild.botPresent ??
+          guild.bot ??
+          true
+      };
+
     }
 
-    const id =
-      guild.id ||
-      guild.guildId ||
-      guild._id;
 
-    if (!id) {
-      return null;
-    }
+    function getGuildIcon(guild) {
 
-    const name =
-      guild.name ||
-      guild.guildName ||
-      'Serveur Discord';
+      if (!guild) {
+        return '/logo.png';
+      }
 
-    let icon =
-      guild.icon ||
-      guild.iconURL ||
-      guild.iconUrl ||
-      null;
-
-    if (
-      !icon &&
-      guild.iconHash
-    ) {
-
-      icon =
-        `https://cdn.discordapp.com/icons/${id}/${guild.iconHash}.png?size=128`;
+      return (
+        guild.iconURL ||
+        guild.iconUrl ||
+        guild.icon_url ||
+        guild.icon ||
+        '/logo.png'
+      );
 
     }
 
-    if (!icon) {
-      icon = '/logo.png';
+
+    function getGuildId(guild) {
+
+      if (!guild) {
+        return null;
+      }
+
+      return (
+        guild.id ||
+        guild.guildId ||
+        guild.guild_id ||
+        null
+      );
+
     }
 
-    const memberCount =
-      guild.memberCount ??
-      guild.members ??
-      guild.approximateMemberCount ??
-      0;
 
-    return {
+    /* =====================================================
+       SERVER FILTER
+    ===================================================== */
 
-      ...guild,
+    function getFilteredGuilds() {
 
-      id: String(id),
+      const input =
+        document.getElementById(
+          'server-search'
+        );
 
-      name: String(name),
+      const search =
+        input
+          ? input.value.trim().toLowerCase()
+          : '';
 
-      icon,
+      if (!search) {
 
-      memberCount:
-        Number(memberCount) || 0,
+        return [
+          ...OMNIX.guilds
+        ];
 
-      botPresent:
-        guild.botPresent ??
-        guild.bot ??
-        true,
+      }
 
-      manageable:
-        guild.manageable ??
-        guild.canManage ??
-        true
+      return OMNIX.guilds.filter(
+        guild => {
 
-    };
+          const name =
+            String(
+              guild?.name || ''
+            ).toLowerCase();
 
-  }
-
-
-  /* =====================================================
-     SORT GUILDS
-  ===================================================== */
-
-  function sortGuilds(guilds) {
-
-    return [...guilds].sort(
-      (a, b) => {
-
-        if (
-          Boolean(a.manageable) !==
-          Boolean(b.manageable)
-        ) {
-
-          return a.manageable
-            ? -1
-            : 1;
-
-        }
-
-        if (
-          Number(a.memberCount) !==
-          Number(b.memberCount)
-        ) {
+          const id =
+            String(
+              guild?.id || ''
+            ).toLowerCase();
 
           return (
-            Number(b.memberCount) -
-            Number(a.memberCount)
+            name.includes(search) ||
+            id.includes(search)
           );
 
         }
-
-        return String(a.name)
-          .localeCompare(
-            String(b.name),
-            'fr'
-          );
-
-      }
-    );
-
-  }
-
-
-  /* =====================================================
-     FILTER GUILDS
-  ===================================================== */
-
-  function filterGuilds(search) {
-
-    const query =
-      String(search || '')
-        .trim()
-        .toLowerCase();
-
-    if (!query) {
-
-      return [
-        ...OMNIX.guilds
-      ];
+      );
 
     }
 
-    return OMNIX.guilds.filter(
-      guild => {
 
-        const name =
-          String(
-            guild.name || ''
-          ).toLowerCase();
+    /* =====================================================
+       RENDER SERVERS
+    ===================================================== */
 
-        const id =
-          String(
-            guild.id || ''
-          );
+    function renderGuilds() {
 
-        return (
-          name.includes(query) ||
-          id.includes(query)
+      const container =
+        document.getElementById(
+          'servers-container'
         );
 
+      if (!container) {
+        return;
       }
-    );
 
-  }
-
-
-  /* =====================================================
-     CREATE SERVER CARD
-  ===================================================== */
-
-  function createServerCard(guild) {
-
-    const card =
-      document.createElement(
-        'div'
-      );
-
-    card.className =
-      'server-card';
-
-    card.dataset.guildId =
-      guild.id;
-
-    const manageable =
-      guild.manageable !== false;
-
-    const members =
-      Number(
-        guild.memberCount || 0
-      );
-
-    const icon =
-      guild.icon ||
-      '/logo.png';
-
-    const name =
-      guild.name ||
-      'Serveur Discord';
-
-    card.innerHTML = `
-
-      <img
-        class="server-icon"
-        src="${escapeAttribute(icon)}"
-        alt=""
-        loading="lazy"
-      >
-
-      <div class="server-details">
-
-        <span
-          class="server-name"
-          title="${escapeAttribute(name)}"
-        >
-          ${escapeHTML(name)}
-        </span>
-
-        <span class="server-meta">
-
-          ${formatNumber(members)}
-          membre${members > 1 ? 's' : ''}
-
-          ${
-            manageable
-              ? ''
-              : ' • accès limité'
-          }
-
-        </span>
-
-      </div>
-
-      <span
-        class="server-status"
-        ${
-          manageable
-            ? ''
-            : `
-              style="
-                background:#f59e0b;
-                box-shadow:
-                  0 0 8px
-                  rgba(245,158,11,.7);
-              "
-            `
-        }
-      ></span>
-
-    `;
-
-    card.addEventListener(
-      'click',
-      () => {
-
-        selectGuild(
-          guild.id
-        );
-
-      }
-    );
-
-    const image =
-      card.querySelector(
-        '.server-icon'
-      );
-
-    image?.addEventListener(
-      'error',
-      () => {
-
-        image.src =
-          '/logo.png';
-
-      },
-      {
-        once: true
-      }
-    );
-
-    return card;
-
-  }
-
-
-  /* =====================================================
-     RENDER GUILDS
-  ===================================================== */
-
-  function renderGuilds(guilds) {
-
-    const container =
-      document.getElementById(
-        'servers-container'
-      );
-
-    if (!container) {
-      return;
-    }
-
-    container.innerHTML =
-      '';
-
-    if (
-      !guilds ||
-      !guilds.length
-    ) {
-
-      container.innerHTML = `
-
-        <div
-          class="empty-state"
-          style="grid-column:1/-1;"
-        >
-
-          <div class="empty-icon">
-            🌐
-          </div>
-
-          <strong>
-            Aucun serveur trouvé
-          </strong>
-
-          <p>
-            Aucun serveur Discord ne
-            correspond à votre recherche.
-          </p>
-
-        </div>
-
-      `;
-
-      return;
-
-    }
-
-    const sorted =
-      sortGuilds(
-        guilds
-      );
-
-    sorted.forEach(
-      guild => {
-
-        const card =
-          createServerCard(
-            guild
-          );
-
-        if (
-          OMNIX.selectedGuild &&
-          String(
-            OMNIX.selectedGuild.id
-          ) ===
-          String(
-            guild.id
-          )
-        ) {
-
-          card.classList.add(
-            'selected'
-          );
-
-        }
-
-        container.appendChild(
-          card
-        );
-
-      }
-    );
-
-  }
-
-
-  /* =====================================================
-     LOAD GUILDS
-  ===================================================== */
-
-  async function refreshGuilds() {
-
-    const container =
-      document.getElementById(
-        'servers-container'
-      );
-
-    if (!container) {
-      return;
-    }
-
-    try {
-
-      container.innerHTML = `
-
-        <div
-          class="empty-state"
-          style="grid-column:1/-1;"
-        >
-
-          <div class="empty-icon">
-            ⏳
-          </div>
-
-          <strong>
-            Chargement des serveurs...
-          </strong>
-
-          <p>
-            Récupération de vos serveurs Discord.
-          </p>
-
-        </div>
-
-      `;
-
-      const data =
-        await apiRequest(
-          '/api/guilds'
-        );
-
-      let rawGuilds = [];
-
-      if (
-        Array.isArray(data)
-      ) {
-
-        rawGuilds =
-          data;
-
-      } else if (
-        Array.isArray(
-          data?.guilds
-        )
-      ) {
-
-        rawGuilds =
-          data.guilds;
-
-      } else if (
-        Array.isArray(
-          data?.servers
-        )
-      ) {
-
-        rawGuilds =
-          data.servers;
-
-      } else if (
-        Array.isArray(
-          data?.data
-        )
-      ) {
-
-        rawGuilds =
-          data.data;
-
-      }
 
       const guilds =
-        rawGuilds
-          .map(
-            normalizeGuild
-          )
-          .filter(
-            Boolean
-          );
+        getFilteredGuilds();
 
-      OMNIX.guilds =
-        guilds;
 
-      renderGuilds(
-        guilds
-      );
+      if (!guilds.length) {
 
-      restoreSelectedGuild();
+        container.innerHTML = `
 
-      updateStat(
-        'stat-servers',
-        guilds.length
-      );
+          <div
+            class="empty-state"
+            style="grid-column:1/-1;"
+          >
 
-    } catch (error) {
+            <div class="empty-icon">
+              🔎
+            </div>
 
-      console.error(
-        '[OMNIX] Guilds:',
-        error
-      );
+            <strong>
+              Aucun serveur trouvé
+            </strong>
 
-      container.innerHTML = `
+            <p>
+              Aucun serveur ne correspond à votre recherche.
+            </p>
 
-        <div
-          class="empty-state"
-          style="grid-column:1/-1;"
-        >
-
-          <div class="empty-icon">
-            ⚠️
           </div>
 
-          <strong>
-            Serveurs indisponibles
-          </strong>
+        `;
 
-          <p>
-            Impossible de récupérer
-            vos serveurs Discord.
-          </p>
+        return;
 
-          <button
-            type="button"
-            class="btn btn-primary"
-            style="margin-top:15px;"
-            onclick="refreshGuilds()"
+      }
+
+
+      container.innerHTML =
+        guilds
+          .map(
+            guild => {
+
+              const id =
+                getGuildId(
+                  guild
+                );
+
+              const name =
+                escapeHTML(
+                  guild.name
+                );
+
+              const icon =
+                escapeAttribute(
+                  getGuildIcon(
+                    guild
+                  )
+                );
+
+              const memberCount =
+                formatNumber(
+                  guild.memberCount || 0
+                );
+
+              const selected =
+                OMNIX.selectedGuild &&
+                getGuildId(
+                  OMNIX.selectedGuild
+                ) === id;
+
+
+              return `
+
+                <article
+                  class="
+                    server-card
+                    ${selected ? 'selected' : ''}
+                  "
+                  data-guild-id="${escapeAttribute(id)}"
+                  onclick="
+                    selectGuild(
+                      '${escapeAttribute(id)}'
+                    )
+                  "
+                >
+
+                  <img
+                    class="server-icon"
+                    src="${icon}"
+                    alt="${name}"
+                    loading="lazy"
+                    onerror="
+                      this.onerror=null;
+                      this.src='/logo.png';
+                    "
+                  >
+
+                  <div class="server-details">
+
+                    <span class="server-name">
+                      ${name}
+                    </span>
+
+                    <span class="server-meta">
+                      ${memberCount} membres
+                    </span>
+
+                  </div>
+
+                  <span
+                    class="server-status"
+                    title="Serveur accessible"
+                  ></span>
+
+                </article>
+
+              `;
+
+            }
+          )
+          .join('');
+
+    }
+
+
+    /* =====================================================
+       LOAD GUILDS
+    ===================================================== */
+
+    async function refreshGuilds() {
+
+      const container =
+        document.getElementById(
+          'servers-container'
+        );
+
+
+      if (container) {
+
+        container.innerHTML = `
+
+          <div
+            class="empty-state"
+            style="grid-column:1/-1;"
           >
-            Réessayer
-          </button>
 
-        </div>
+            <div class="empty-icon">
+              ⏳
+            </div>
 
-      `;
+            <strong>
+              Chargement des serveurs...
+            </strong>
 
-      showToast(
-        'Impossible de charger les serveurs.',
-        'error'
-      );
+            <p>
+              Récupération de vos serveurs Discord.
+            </p>
 
-    }
+          </div>
 
-  }
+        `;
+
+      }
 
 
-  /* =====================================================
-     SELECT SERVER
-  ===================================================== */
+      try {
 
-  function selectGuild(guildId) {
+        /*
+         * La route de récupération des serveurs
+         * reste centralisée ici.
+         *
+         * Le backend doit retourner soit :
+         *
+         *     { guilds: [...] }
+         *
+         * soit directement :
+         *
+         *     [...]
+         */
 
-    const id =
-      String(
-        guildId || ''
-      );
+        const data =
+          await apiRequest(
+            '/api/guilds'
+          );
 
-    if (!id) {
-      return;
-    }
 
-    const guild =
-      OMNIX.guilds.find(
-        item =>
-          String(item.id) === id
-      );
+        const guildList =
+          Array.isArray(data)
+            ? data
+            : (
+                data?.guilds ||
+                data?.servers ||
+                data?.data ||
+                []
+              );
 
-    if (!guild) {
 
-      showToast(
-        'Serveur introuvable.',
-        'error'
-      );
+        OMNIX.guilds =
+          guildList
+            .map(
+              normalizeGuild
+            )
+            .filter(
+              Boolean
+            );
 
-      return;
 
-    }
+        renderGuilds();
 
-    OMNIX.selectedGuild =
-      guild;
 
-    try {
+        if (
+          OMNIX.guilds.length === 0
+        ) {
 
-      localStorage.setItem(
-        'omnix_selected_guild',
-        id
-      );
-
-    } catch {}
-
-    document
-      .querySelectorAll(
-        '.server-card'
-      )
-      .forEach(
-        card => {
-
-          card.classList.toggle(
-            'selected',
-            card.dataset.guildId === id
+          showToast(
+            'Aucun serveur Discord accessible.',
+            'error'
           );
 
         }
-      );
-
-    /*
-     * Accès au dashboard du serveur.
-     */
-
-    openGuild(
-      id
-    );
-
-  }
 
 
-  /* =====================================================
-     OPEN GUILD
-  ===================================================== */
+        return OMNIX.guilds;
 
-  function openGuild(guildId) {
+      } catch (error) {
 
-    const id =
-      String(
-        guildId || ''
-      );
-
-    if (!id) {
-      return;
-    }
-
-    try {
-
-      localStorage.setItem(
-        'omnix_selected_guild',
-        id
-      );
-
-    } catch {}
-
-    window.location.href =
-      `/dashboard/${encodeURIComponent(id)}`;
-
-  }
-
-
-  /* =====================================================
-     RESTORE SELECTED GUILD
-  ===================================================== */
-
-  function restoreSelectedGuild() {
-
-    let savedGuild =
-      null;
-
-    try {
-
-      savedGuild =
-        localStorage.getItem(
-          'omnix_selected_guild'
+        console.error(
+          '[OMNIX] Erreur lors du chargement des serveurs:',
+          error
         );
 
-    } catch {}
 
-    if (!savedGuild) {
-      return;
-    }
+        if (container) {
 
-    const guild =
-      OMNIX.guilds.find(
-        item =>
-          String(item.id) ===
-          String(savedGuild)
-      );
+          container.innerHTML = `
 
-    if (!guild) {
-      return;
-    }
+            <div
+              class="empty-state"
+              style="grid-column:1/-1;"
+            >
 
-    OMNIX.selectedGuild =
-      guild;
+              <div class="empty-icon">
+                ⚠️
+              </div>
 
-    document
-      .querySelectorAll(
-        '.server-card'
-      )
-      .forEach(
-        card => {
+              <strong>
+                Impossible de charger les serveurs
+              </strong>
 
-          card.classList.toggle(
-            'selected',
-            card.dataset.guildId ===
-              String(savedGuild)
-          );
+              <p>
+                Une erreur est survenue pendant la récupération
+                de vos serveurs Discord.
+              </p>
+
+              <div
+                style="
+                  margin-top:14px;
+                "
+              >
+
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  onclick="refreshGuilds()"
+                >
+                  ↻ Réessayer
+                </button>
+
+              </div>
+
+            </div>
+
+          `;
 
         }
-      );
 
-  }
-
-
-  /* =====================================================
-     SEARCH
-  ===================================================== */
-
-  function initializeServerSearch() {
-
-    const input =
-      document.getElementById(
-        'server-search'
-      );
-
-    if (!input) {
-      return;
-    }
-
-    input.addEventListener(
-      'input',
-      event => {
-
-        const results =
-          filterGuilds(
-            event.target.value
-          );
-
-        renderGuilds(
-          results
-        );
-
-      }
-    );
-
-  }
-
-
-  /* =====================================================
-     LOAD DASHBOARD STATS
-  ===================================================== */
-
-  async function refreshDashboardStats() {
-
-    try {
-
-      const data =
-        await apiRequest(
-          '/api/stats'
-        );
-
-      OMNIX.stats =
-        data;
-
-      const bot =
-        data?.bot || {};
-
-      const database =
-        data?.database || {};
-
-      const servers =
-        bot.guildsCount ??
-        data?.guildsCount ??
-        data?.guilds ??
-        OMNIX.guilds.length;
-
-      const members =
-        database.totalUsers ??
-        data?.totalUsers ??
-        data?.members ??
-        bot.membersCount;
-
-      const commands =
-        data?.commands ??
-        data?.commandsCount ??
-        data?.totalCommands;
-
-      const ping =
-        bot.ping ??
-        data?.ping ??
-        data?.latency;
-
-      updateStat(
-        'stat-servers',
-        servers
-      );
-
-      updateStat(
-        'stat-members',
-        members
-      );
-
-      updateStat(
-        'stat-commands',
-        commands
-      );
-
-      updateStat(
-        'stat-ping',
-        ping,
-        ' ms'
-      );
-
-      updateConnectionStatus(
-        true
-      );
-
-    } catch (error) {
-
-      console.error(
-        '[OMNIX] Stats:',
-        error
-      );
-
-      updateConnectionStatus(
-        false
-      );
-
-    }
-
-  }
-
-
-  /* =====================================================
-     ONLINE / OFFLINE
-  ===================================================== */
-
-  function initializeNetworkMonitor() {
-
-    window.addEventListener(
-      'online',
-      () => {
-
-        updateConnectionStatus(
-          true
-        );
-
-        showToast(
-          'Connexion Internet rétablie.',
-          'success'
-        );
-
-        refreshDashboardStats();
-
-        refreshGuilds();
-
-      }
-    );
-
-    window.addEventListener(
-      'offline',
-      () => {
 
         updateConnectionStatus(
           false
         );
 
+
+        return [];
+
+      }
+
+    }
+
+
+    /* =====================================================
+       SELECT GUILD
+    ===================================================== */
+
+    function selectGuild(
+      guildId
+    ) {
+
+      if (!guildId) {
+        return;
+      }
+
+
+      const guild =
+        OMNIX.guilds.find(
+          item =>
+            String(
+              getGuildId(item)
+            ) === String(
+              guildId
+            )
+        );
+
+
+      if (!guild) {
+
         showToast(
-          'Connexion Internet perdue.',
+          'Serveur introuvable.',
           'error'
         );
 
-      }
-    );
-
-  }
-
-
-  /* =====================================================
-     VISIBILITY
-  ===================================================== */
-
-  function initializeVisibilityRefresh() {
-
-    document.addEventListener(
-      'visibilitychange',
-      () => {
-
-        if (
-          document.visibilityState ===
-          'visible'
-        ) {
-
-          refreshDashboardStats();
-
-        }
+        return;
 
       }
-    );
-
-  }
 
 
-  /* =====================================================
-     AUTOMATIC REFRESH
-  ===================================================== */
+      OMNIX.selectedGuild =
+        guild;
 
-  let dashboardRefreshTimer =
-    null;
 
-  function startDashboardRefresh() {
+      renderGuilds();
 
-    if (
-      dashboardRefreshTimer
-    ) {
 
-      clearInterval(
-        dashboardRefreshTimer
+      openGuild(
+        guild
       );
 
     }
 
-    dashboardRefreshTimer =
-      setInterval(
+
+    /* =====================================================
+       OPEN GUILD
+    ===================================================== */
+
+    function openGuild(
+      guild
+    ) {
+
+      if (!guild) {
+        return;
+      }
+
+
+      const guildId =
+        getGuildId(
+          guild
+        );
+
+
+      if (!guildId) {
+
+        showToast(
+          'Identifiant du serveur invalide.',
+          'error'
+        );
+
+        return;
+
+      }
+
+
+      OMNIX.selectedGuild =
+        guild;
+
+
+      /*
+       * Navigation vers la configuration
+       * du serveur sélectionné.
+       *
+       * L'identifiant reste dans le chemin
+       * et non dans un token d'authentification.
+       */
+
+      window.location.href =
+        `/dashboard/${encodeURIComponent(
+          guildId
+        )}`;
+
+    }
+
+
+    /* =====================================================
+       LOAD STATS
+    ===================================================== */
+
+    async function refreshStats() {
+
+      try {
+
+        const data =
+          await apiRequest(
+            '/api/stats'
+          );
+
+
+        OMNIX.stats =
+          data;
+
+
+        /*
+         * Compatibilité avec plusieurs formes
+         * de réponse backend déjà utilisées
+         * par OMNIX.
+         */
+
+        const stats =
+          data?.stats ||
+          data?.data ||
+          data ||
+          {};
+
+
+        const bot =
+          stats?.bot ||
+          {};
+
+
+        const database =
+          stats?.database ||
+          {};
+
+
+        const servers =
+          stats?.servers ??
+          stats?.guilds ??
+          stats?.guildCount ??
+          bot?.guildsCount ??
+          0;
+
+
+        const members =
+          stats?.members ??
+          stats?.memberCount ??
+          stats?.membersCount ??
+          bot?.membersCount ??
+          database?.totalMembers ??
+          0;
+
+
+        const commands =
+          stats?.commands ??
+          stats?.commandsCount ??
+          bot?.commandsCount ??
+          0;
+
+
+        const ping =
+          stats?.ping ??
+          stats?.latency ??
+          bot?.ping ??
+          bot?.latency ??
+          null;
+
+
+        updateStat(
+          'stat-servers',
+          servers
+        );
+
+
+        updateStat(
+          'stat-members',
+          members
+        );
+
+
+        updateStat(
+          'stat-commands',
+          commands
+        );
+
+
+        updateStat(
+          'stat-ping',
+          ping,
+          ping !== null ? ' ms' : ''
+        );
+
+
+        updateConnectionStatus(
+          true
+        );
+
+
+        return stats;
+
+      } catch (error) {
+
+        console.error(
+          '[OMNIX] Erreur statistiques:',
+          error
+        );
+
+
+        updateConnectionStatus(
+          false
+        );
+
+
+        return null;
+
+      }
+
+    }
+
+
+    /* =====================================================
+       SEARCH EVENTS
+    ===================================================== */
+
+    function initializeServerSearch() {
+
+      const input =
+        document.getElementById(
+          'server-search'
+        );
+
+
+      if (!input) {
+        return;
+      }
+
+
+      input.addEventListener(
+        'input',
         () => {
 
-          if (
-            document.visibilityState !==
-            'visible'
-          ) {
+          renderGuilds();
 
-            return;
-
-          }
-
-          refreshDashboardStats();
-
-        },
-        30000
+        }
       );
-
-  }
-
-
-  /* =====================================================
-     SOCKET.IO REALTIME
-  ===================================================== */
-
-  function initializeRealtime() {
-
-    if (
-      typeof window.io !==
-      'function'
-    ) {
-
-      console.info(
-        '[OMNIX] Socket.IO non chargé.'
-      );
-
-      return;
 
     }
 
-    try {
 
-      const socket =
-        window.io(
-          {
-            transports: [
-              'websocket',
-              'polling'
-            ],
+    /* =====================================================
+       SOCKET.IO
+    ===================================================== */
 
-            withCredentials:
+    function initializeSocket() {
+
+      if (
+        typeof io !== 'function'
+      ) {
+
+        console.warn(
+          '[OMNIX] Socket.IO non disponible.'
+        );
+
+        return null;
+
+      }
+
+
+      try {
+
+        const socket =
+          io(
+            {
+              withCredentials:
+                true,
+
+              transports:
+                [
+                  'websocket',
+                  'polling'
+                ]
+            }
+          );
+
+
+        OMNIX.socket =
+          socket;
+
+
+        socket.on(
+          'connect',
+          () => {
+
+            console.info(
+              '[OMNIX] Socket.IO connecté:',
+              socket.id
+            );
+
+
+            updateConnectionStatus(
               true
+            );
+
           }
         );
 
-      OMNIX.socket =
-        socket;
 
-      socket.on(
-        'connect',
-        () => {
+        socket.on(
+          'disconnect',
+          reason => {
 
-          console.log(
-            '[OMNIX] Realtime connecté.'
-          );
+            console.warn(
+              '[OMNIX] Socket.IO déconnecté:',
+              reason
+            );
 
-          updateConnectionStatus(
-            true
-          );
 
-        }
-      );
-
-      socket.on(
-        'disconnect',
-        () => {
-
-          console.warn(
-            '[OMNIX] Realtime déconnecté.'
-          );
-
-          updateConnectionStatus(
-            navigator.onLine
-          );
-
-        }
-      );
-
-      socket.on(
-        'dashboard:update',
-        payload => {
-
-          if (
-            payload?.stats
-          ) {
-
-            OMNIX.stats =
-              payload.stats;
+            updateConnectionStatus(
+              false
+            );
 
           }
+        );
 
-          refreshDashboardStats();
 
-        }
-      );
+        socket.on(
+          'connect_error',
+          error => {
 
-      socket.on(
-        'stats:update',
-        () => {
+            console.error(
+              '[OMNIX] Socket.IO erreur:',
+              error
+            );
 
-          refreshDashboardStats();
 
-        }
-      );
+            updateConnectionStatus(
+              false
+            );
 
-      socket.on(
-        'guild:update',
-        () => {
+          }
+        );
 
-          refreshGuilds();
 
-        }
-      );
+        /*
+         * Mise à jour des statistiques
+         * envoyée par le serveur.
+         */
 
-    } catch (error) {
+        socket.on(
+          'stats:update',
+          payload => {
 
-      console.warn(
-        '[OMNIX] Socket.IO indisponible:',
-        error
+            if (!payload) {
+              return;
+            }
+
+
+            OMNIX.stats =
+              payload;
+
+
+            const stats =
+              payload?.stats ||
+              payload?.data ||
+              payload ||
+              {};
+
+
+            const bot =
+              stats?.bot ||
+              {};
+
+
+            const database =
+              stats?.database ||
+              {};
+
+
+            updateStat(
+              'stat-servers',
+              stats?.servers ??
+              stats?.guilds ??
+              bot?.guildsCount ??
+              0
+            );
+
+
+            updateStat(
+              'stat-members',
+              stats?.members ??
+              stats?.memberCount ??
+              bot?.membersCount ??
+              database?.totalMembers ??
+              0
+            );
+
+
+            updateStat(
+              'stat-commands',
+              stats?.commands ??
+              stats?.commandsCount ??
+              bot?.commandsCount ??
+              0
+            );
+
+
+            updateStat(
+              'stat-ping',
+              stats?.ping ??
+              stats?.latency ??
+              bot?.ping ??
+              bot?.latency ??
+              null,
+              ' ms'
+            );
+
+          }
+        );
+
+
+        /*
+         * Si le backend signale une modification
+         * des serveurs, on recharge la liste.
+         */
+
+        socket.on(
+          'guilds:update',
+          () => {
+
+            refreshGuilds();
+
+          }
+        );
+
+
+        socket.on(
+          'guild:update',
+          () => {
+
+            refreshGuilds();
+
+          }
+        );
+
+
+        return socket;
+
+      } catch (error) {
+
+        console.error(
+          '[OMNIX] Impossible d'initialiser Socket.IO:',
+          error
+        );
+
+
+        return null;
+
+      }
+
+    }
+
+
+    /* =====================================================
+       REFRESH EVERYTHING
+    ===================================================== */
+
+    async function refreshDashboard() {
+
+      await Promise.allSettled(
+        [
+          loadCurrentUser(),
+          refreshStats(),
+          refreshGuilds()
+        ]
       );
 
     }
 
-  }
+
+    /* =====================================================
+       INITIALIZATION
+    ===================================================== */
+
+    async function initializeDashboard() {
+
+      console.info(
+        '[OMNIX] Initialisation du dashboard...'
+      );
 
 
-  /* =====================================================
-     KEYBOARD SHORTCUTS
-  ===================================================== */
+      initializeSession();
 
-  function initializeKeyboard() {
+
+      initializeServerSearch();
+
+
+      initializeSocket();
+
+
+      /*
+       * Les données sont chargées uniquement
+       * après l'initialisation de la session.
+       */
+
+      const user =
+        await loadCurrentUser();
+
+
+      if (!user) {
+
+        return;
+
+      }
+
+
+      await Promise.allSettled(
+        [
+          refreshStats(),
+          refreshGuilds()
+        ]
+      );
+
+
+      console.info(
+        '[OMNIX] Dashboard initialisé.'
+      );
+
+    }
+
+
+    /* =====================================================
+       GLOBAL API
+    ===================================================== */
+
+    window.OMNIXDashboard =
+      {
+        ...window.OMNIXDashboard,
+
+        toggleSidebar:
+          toggleSidebar,
+
+        showToast:
+          showToast,
+
+        refreshStats:
+          refreshStats,
+
+        refreshGuilds:
+          refreshGuilds,
+
+        refreshDashboard:
+          refreshDashboard,
+
+        selectGuild:
+          selectGuild,
+
+        openGuild:
+          openGuild,
+
+        renderGuilds:
+          renderGuilds,
+
+        state:
+          OMNIX
+
+      };
+
+
+    /* =====================================================
+       DOM READY
+    ===================================================== */
+
+    if (
+      document.readyState ===
+      'loading'
+    ) {
+
+      document.addEventListener(
+        'DOMContentLoaded',
+        initializeDashboard,
+        {
+          once:
+            true
+        }
+      );
+
+    } else {
+
+      initializeDashboard();
+
+    }
+
+
+    /* =====================================================
+       WINDOW EVENTS
+    ===================================================== */
+
+    window.addEventListener(
+      'resize',
+      () => {
+
+        if (
+          window.innerWidth > 800
+        ) {
+
+          const sidebar =
+            document.getElementById(
+              'dashboard-sidebar'
+            );
+
+
+          if (sidebar) {
+
+            sidebar.classList.remove(
+              'open'
+            );
+
+          }
+
+        }
+
+      }
+    );
+
+
+    /* =====================================================
+       ESCAPE — CLOSE MOBILE SIDEBAR
+    ===================================================== */
 
     document.addEventListener(
       'keydown',
       event => {
 
-        /*
-         * ESC
-         */
-
         if (
-          event.key ===
-          'Escape'
+          event.key !== 'Escape'
         ) {
 
-          document
-            .getElementById(
-              'dashboard-sidebar'
-            )
-            ?.classList.remove(
-              'open'
-            );
+          return;
 
         }
 
-        /*
-         * R = refresh
-         */
-
-        if (
-          event.key.toLowerCase() ===
-            'r' &&
-          ![
-            'INPUT',
-            'TEXTAREA',
-            'SELECT'
-          ].includes(
-            document.activeElement?.tagName
-          )
-        ) {
-
-          event.preventDefault();
-
-          refreshDashboardStats();
-
-          refreshGuilds();
-
-        }
-
-      }
-    );
-
-  }
-
-
-  /* =====================================================
-     MOBILE SIDEBAR CLOSE
-  ===================================================== */
-
-  function initializeMobileSidebar() {
-
-    document.addEventListener(
-      'click',
-      event => {
 
         const sidebar =
           document.getElementById(
             'dashboard-sidebar'
           );
 
-        const menu =
-          document.querySelector(
-            '.mobile-menu'
+
+        if (sidebar) {
+
+          sidebar.classList.remove(
+            'open'
           );
 
-        if (
-          window.innerWidth > 800
-        ) {
-
-          return;
-
         }
-
-        if (
-          !sidebar?.classList.contains(
-            'open'
-          )
-        ) {
-
-          return;
-
-        }
-
-        if (
-          sidebar.contains(
-            event.target
-          )
-        ) {
-
-          return;
-
-        }
-
-        if (
-          menu?.contains(
-            event.target
-          )
-        ) {
-
-          return;
-
-        }
-
-        sidebar.classList.remove(
-          'open'
-        );
 
       }
     );
 
-  }
+  </script>
 
-
-  /* =====================================================
-     INITIALIZATION
-  ===================================================== */
-
-  async function initializeDashboard() {
-
-    console.log(
-      '[OMNIX] Initialisation du dashboard...'
-    );
-
-    /*
-     * Session locale.
-     */
-
-    const session =
-      initializeSession();
-
-    if (session) {
-
-      updateUserUI();
-
-    }
-
-    /*
-     * Profil serveur.
-     */
-
-    await loadCurrentUser();
-
-    /*
-     * Interface.
-     */
-
-    initializeServerSearch();
-
-    initializeNetworkMonitor();
-
-    initializeVisibilityRefresh();
-
-    initializeKeyboard();
-
-    initializeMobileSidebar();
-
-    /*
-     * Données.
-     */
-
-    await Promise.allSettled([
-      refreshDashboardStats(),
-      refreshGuilds()
-    ]);
-
-    /*
-     * Realtime.
-     */
-
-    initializeRealtime();
-
-    /*
-     * Refresh automatique.
-     */
-
-    startDashboardRefresh();
-
-    console.log(
-      '[OMNIX] Dashboard prêt.'
-    );
-
-  }
-
-
-  /* =====================================================
-     GLOBAL API
-  ===================================================== */
-
-  window.OMNIXDashboard = {
-
-    refreshStats:
-      refreshDashboardStats,
-
-    refreshGuilds:
-      refreshGuilds,
-
-    selectGuild:
-      selectGuild,
-
-    openGuild:
-      openGuild,
-
-    toggleSidebar:
-      toggleSidebar,
-
-    state:
-      OMNIX
-
-  };
-
-
-  /* =====================================================
-     START
-  ===================================================== */
-
-  if (
-    document.readyState ===
-    'loading'
-  ) {
-
-    document.addEventListener(
-      'DOMContentLoaded',
-      () => {
-
-        initializeDashboard();
-
-      },
-      {
-        once: true
-      }
-    );
-
-  } else {
-
-    initializeDashboard();
-
-  }
-
-</script>
 
 </body>
+
 </html>
