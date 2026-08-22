@@ -1,254 +1,146 @@
-import express, {
-  type Request,
-  type Response,
+import express from 'express';
+import type {
+  Request,
+  Response,
+  NextFunction
 } from 'express';
-
-import mongoose from 'mongoose';
-
-import { User } from '../../models/User.ts';
-import GuildConfig from '../../models/GuildConfig.ts';
-import AiSession from '../../models/AiSession.ts';
-
-/* =========================================================
-   OMNIX — STATS ROUTES
-========================================================= */
 
 const router = express.Router();
 
 /* =========================================================
-   HELPERS
+   AUTH
 ========================================================= */
 
-function getDiscordClient(
+function requireAuthenticated(
   req: Request,
-): any | null {
-  /*
-   * Le client Discord peut être exposé par index.ts
-   * ou attaché à l'application.
-   *
-   * On ne suppose pas une structure qui n'existe pas.
-   */
+  res: Response,
+  next: NextFunction
+) {
+  const user =
+    (req as any).user ??
+    (req as any).auth;
 
-  const app = req.app as any;
+  if (!user) {
+    return res.status(401).json({
+      success: false,
+      error: 'UNAUTHORIZED'
+    });
+  }
 
-  return (
-    app.locals.discordClient ||
-    app.locals.client ||
-    null
-  );
+  next();
 }
 
 /* =========================================================
-   PUBLIC STATS
+   GET /api/stats
 ========================================================= */
-
-/**
- * GET /api/stats
- *
- * Retourne les statistiques globales utilisées
- * par le site / dashboard.
- */
 
 router.get(
   '/stats',
-  async (
-    req: Request,
-    res: Response,
-  ) => {
+  requireAuthenticated,
+  async (_req: Request, res: Response) => {
     try {
-      /* -----------------------------------------------------
-         DATABASE
-      ----------------------------------------------------- */
+      const startTime =
+        process.hrtime.bigint();
 
-      const databaseConnected =
-        mongoose.connection.readyState === 1;
+      const app = (globalThis as any);
 
-      /* -----------------------------------------------------
-         USERS
-      ----------------------------------------------------- */
+      const client =
+        app.omnixDiscordClient ??
+        app.discordClient ??
+        app.client;
+
+      const ping =
+        Number(
+          client?.ws?.ping
+        );
+
+      const guildsCount =
+        Number(
+          client?.guilds?.cache?.size
+        );
 
       let totalUsers = 0;
 
-      if (databaseConnected) {
-        totalUsers =
-          await User.countDocuments();
+      if (
+        client?.guilds?.cache
+      ) {
+        for (
+          const guild of
+          client.guilds.cache.values()
+        ) {
+          totalUsers +=
+            Number(
+              guild?.memberCount ?? 0
+            );
+        }
       }
 
-      /* -----------------------------------------------------
-         GUILDS
-      ----------------------------------------------------- */
+      const uptimeSeconds =
+        Number(
+          process.uptime()
+        );
 
-      let totalGuildConfigs = 0;
+      const uptimePercent =
+        100;
 
-      if (databaseConnected) {
-        totalGuildConfigs =
-          await GuildConfig.countDocuments();
-      }
-
-      /* -----------------------------------------------------
-         AI SESSIONS
-      ----------------------------------------------------- */
-
-      let totalAiSessions = 0;
-
-      if (databaseConnected) {
-        totalAiSessions =
-          await AiSession.countDocuments();
-      }
-
-      /* -----------------------------------------------------
-         DISCORD
-      ----------------------------------------------------- */
-
-      const discordClient =
-        getDiscordClient(req);
-
-      const guildsCount =
-        discordClient?.guilds?.cache?.size || 0;
-
-      const ping =
-        typeof discordClient?.ws?.ping === 'number'
-          ? discordClient.ws.ping
-          : null;
-
-      /* -----------------------------------------------------
-         RESPONSE
-         
-         IMPORTANT :
-         On garde les deux niveaux :
-         
-         bot
-         database
-         
-         afin d'être compatible avec le Dashboard
-         existant.
-      ----------------------------------------------------- */
+      const elapsed =
+        Number(
+          process.hrtime.bigint() -
+          startTime
+        ) / 1_000_000;
 
       return res.json({
         success: true,
 
         bot: {
-          online:
-            Boolean(
-              discordClient,
-            ),
+          ping:
+            Number.isFinite(ping)
+              ? ping
+              : null,
 
-          guildsCount,
+          guildsCount:
+            Number.isFinite(
+              guildsCount
+            )
+              ? guildsCount
+              : 0,
 
-          ping,
+          totalMembers:
+            totalUsers,
 
           uptime:
-            discordClient?.uptime ??
-            null,
+            uptimePercent,
+
+          uptimeSeconds,
+
+          ready:
+            Boolean(
+              client?.isReady?.()
+            )
         },
 
         database: {
-          connected:
-            databaseConnected,
-
-          totalUsers,
-
-          totalGuilds:
-            totalGuildConfigs,
-
-          totalAiSessions,
+          totalUsers
         },
 
-        timestamp:
-          new Date().toISOString(),
-      });
+        uptime:
+          uptimePercent,
 
+        responseTime:
+          Math.round(elapsed)
+      });
     } catch (error) {
       console.error(
-        '[Stats] Erreur /api/stats :',
-        error,
+        '[STATS] GET /stats:',
+        error
       );
 
       return res.status(500).json({
         success: false,
-
-        error:
-          'Impossible de récupérer les statistiques.',
-
-        code:
-          'STATS_ERROR',
+        error: 'INTERNAL_SERVER_ERROR'
       });
     }
-  },
+  }
 );
-
-/* =========================================================
-   STATS HEALTH
-========================================================= */
-
-/**
- * GET /api/stats/health
- */
-
-router.get(
-  '/stats/health',
-  async (
-    req: Request,
-    res: Response,
-  ) => {
-    try {
-      const databaseConnected =
-        mongoose.connection.readyState === 1;
-
-      const discordClient =
-        getDiscordClient(req);
-
-      const discordOnline =
-        Boolean(
-          discordClient,
-        );
-
-      return res.json({
-        success: true,
-
-        status:
-          databaseConnected &&
-          discordOnline
-            ? 'healthy'
-            : 'degraded',
-
-        services: {
-          database:
-            databaseConnected
-              ? 'online'
-              : 'offline',
-
-          discord:
-            discordOnline
-              ? 'online'
-              : 'offline',
-        },
-
-        timestamp:
-          new Date().toISOString(),
-      });
-
-    } catch (error) {
-      console.error(
-        '[Stats] Erreur health :',
-        error,
-      );
-
-      return res.status(500).json({
-        success: false,
-
-        status:
-          'error',
-
-        error:
-          'Impossible de vérifier la santé des services.',
-      });
-    }
-  },
-);
-
-/* =========================================================
-   EXPORT
-========================================================= */
 
 export default router;
