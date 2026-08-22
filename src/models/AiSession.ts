@@ -1,11 +1,11 @@
 import mongoose, {
+  Document,
+  Model,
   Schema,
-  type Document,
-  type Model,
 } from 'mongoose';
 
 /* =========================================================
-   MESSAGE
+   TYPES
 ========================================================= */
 
 export type AiMessageRole =
@@ -15,23 +15,19 @@ export type AiMessageRole =
 
 export interface IAiMessage {
   role: AiMessageRole;
-
   content: string;
-
   createdAt: Date;
 }
-
-/* =========================================================
-   SESSION
-========================================================= */
 
 export interface IAiSession
   extends Document {
   userId: string;
 
-  /*
-   * Une session peut éventuellement être globale
-   * lorsqu'elle n'est pas liée à un serveur.
+  /**
+   * Discord server.
+   *
+   * Optional pour conserver la compatibilité
+   * avec les anciennes sessions globales.
    */
   guildId?: string | null;
 
@@ -40,15 +36,11 @@ export interface IAiSession
   messages: IAiMessage[];
 
   totalPromptTokens: number;
-
   totalCompletionTokens: number;
-
   totalTokens: number;
-
   totalRequests: number;
 
   createdAt: Date;
-
   updatedAt: Date;
 }
 
@@ -61,18 +53,20 @@ const AiMessageSchema =
     {
       role: {
         type: String,
+
         enum: [
           'user',
           'assistant',
           'system',
         ],
+
         required: true,
       },
 
       content: {
         type: String,
         required: true,
-        trim: false,
+        trim: true,
       },
 
       createdAt: {
@@ -81,12 +75,6 @@ const AiMessageSchema =
       },
     },
     {
-      /*
-       * Les messages sont des sous-documents.
-       *
-       * On n'a pas besoin d'un ObjectId MongoDB
-       * pour chaque message.
-       */
       _id: false,
     },
   );
@@ -99,7 +87,7 @@ const AiSessionSchema =
   new Schema<IAiSession>(
     {
       /*
-       * Discord User ID
+       * Discord user.
        */
       userId: {
         type: String,
@@ -109,9 +97,9 @@ const AiSessionSchema =
       },
 
       /*
-       * Discord Guild ID.
+       * Discord guild.
        *
-       * null = session globale OMNIX.
+       * Null = session globale.
        */
       guildId: {
         type: String,
@@ -121,20 +109,26 @@ const AiSessionSchema =
       },
 
       /*
-       * Nom de la conversation.
+       * Titre facultatif.
        */
       title: {
         type: String,
         default: null,
         trim: true,
-        maxlength: 150,
+        maxlength: 200,
       },
 
       /*
-       * Historique de conversation.
+       * Historique de session.
+       *
+       * La mémoire conversationnelle Discord
+       * détaillée est gérée par AIMemory.
        */
       messages: {
-        type: [AiMessageSchema],
+        type: [
+          AiMessageSchema,
+        ],
+
         default: [],
       },
 
@@ -165,14 +159,10 @@ const AiSessionSchema =
         min: 0,
       },
     },
+
     {
-      collection: 'ai_sessions',
-
       timestamps: true,
-
       versionKey: false,
-
-      minimize: false,
     },
   );
 
@@ -181,28 +171,47 @@ const AiSessionSchema =
 ========================================================= */
 
 /*
- * Recherche des sessions d'un utilisateur
- * sur un serveur.
+ * Une session principale par utilisateur + serveur.
+ *
+ * ATTENTION :
+ *
+ * guildId peut être null.
+ *
+ * MongoDB considère les valeurs nulles comme identiques
+ * pour un index unique.
+ *
+ * On utilise donc un index partiel afin de ne pas
+ * bloquer plusieurs sessions globales éventuelles.
+ */
+AiSessionSchema.index(
+  {
+    userId: 1,
+    guildId: 1,
+  },
+  {
+    unique: true,
+
+    partialFilterExpression: {
+      guildId: {
+        $type: 'string',
+      },
+    },
+  },
+);
+
+/*
+ * Recherche rapide des sessions d'un utilisateur.
  */
 AiSessionSchema.index({
   userId: 1,
-  guildId: 1,
   updatedAt: -1,
 });
 
 /*
- * Recherche rapide des sessions d'un serveur.
+ * Recherche des sessions d'un serveur.
  */
 AiSessionSchema.index({
   guildId: 1,
-  updatedAt: -1,
-});
-
-/*
- * Recherche globale d'un utilisateur.
- */
-AiSessionSchema.index({
-  userId: 1,
   updatedAt: -1,
 });
 
@@ -220,7 +229,5 @@ const AiSession: Model<IAiSession> =
 /* =========================================================
    EXPORT
 ========================================================= */
-
-export { AiSession };
 
 export default AiSession;
