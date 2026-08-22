@@ -77,6 +77,7 @@
       color: inherit;
     }
 
+
     /* =========================================================
        BACKGROUND
     ========================================================= */
@@ -97,13 +98,11 @@
           rgba(79, 70, 229, 0.14),
           transparent 42%
         ),
-
         radial-gradient(
           circle at 100% 50%,
           rgba(6, 182, 212, 0.05),
           transparent 35%
         ),
-
         #030712;
     }
 
@@ -130,7 +129,7 @@
         linear-gradient(
           to bottom,
           black 0%,
-          rgba(0,0,0,0.8) 45%,
+          rgba(0, 0, 0, 0.8) 45%,
           transparent 90%
         );
     }
@@ -172,6 +171,7 @@
         rgba(124, 58, 237, 0.10);
     }
 
+
     /* =========================================================
        HEADER
     ========================================================= */
@@ -211,6 +211,7 @@
 
       gap: 20px;
     }
+
 
     /* =========================================================
        LOGO
@@ -349,6 +350,7 @@
 
     }
 
+
     /* =========================================================
        HEADER AUTH
     ========================================================= */
@@ -485,6 +487,7 @@
       color: #f87171;
     }
 
+
     /* =========================================================
        BURGER
     ========================================================= */
@@ -532,6 +535,7 @@
       fill: currentColor;
     }
 
+
     /* =========================================================
        MAIN
     ========================================================= */
@@ -558,6 +562,7 @@
       }
 
     }
+
 
     /* =========================================================
        HERO
@@ -672,6 +677,7 @@
       line-height: 1.75;
     }
 
+
     /* =========================================================
        CTA
     ========================================================= */
@@ -782,6 +788,7 @@
 
       fill: currentColor;
     }
+
 
     /* =========================================================
        PRODUCT PREVIEW
@@ -1040,6 +1047,7 @@
       font-weight: 800;
     }
 
+
     /* =========================================================
        SECTION HEADINGS
     ========================================================= */
@@ -1076,6 +1084,7 @@
 
       letter-spacing: -0.8px;
     }
+
 
     /* =========================================================
        STATS
@@ -1189,6 +1198,7 @@
 
       text-align: center;
     }
+
 
     /* =========================================================
        TERMINAL
@@ -1334,6 +1344,7 @@
         transparent;
     }
 
+
     /* =========================================================
        FOOTER
     ========================================================= */
@@ -1358,6 +1369,7 @@
 
       font-size: 11px;
     }
+
 
     /* =========================================================
        DRAWER OVERLAY
@@ -1390,6 +1402,7 @@
       visibility: visible;
     }
 
+
     /* =========================================================
        ACCESSIBILITY
     ========================================================= */
@@ -1401,6 +1414,7 @@
 
       outline-offset: 3px;
     }
+
 
     /* =========================================================
        ANIMATIONS
@@ -1461,6 +1475,7 @@
     .terminal-wrapper {
       animation-delay: 0.22s;
     }
+
 
     /* =========================================================
        MOBILE
@@ -1533,6 +1548,7 @@
       }
 
     }
+
 
     /* =========================================================
        REDUCED MOTION
@@ -2011,9 +2027,7 @@
           class="terminal-screen"
           aria-live="polite"
         >
-
           [SYSTEM] Console de diagnostic prête.
-
         </div>
 
       </div>
@@ -2035,897 +2049,10 @@
     </p>
 
   </footer>
-
-
-  <!-- =======================================================
-       JAVASCRIPT — PARTIE 1
-  ======================================================== -->
-
-  <script>
-
-    /* =======================================================
-       LOG SYSTEM
-    ======================================================= */
-
-    function addLaunchLog(
-      type,
-      message
-    ) {
-
-      const screen =
-        document.getElementById(
-          'index-terminal-screen'
-        );
-
-      if (!screen) {
-        return;
-      }
-
-      const time =
-        new Date().toLocaleTimeString(
-          'fr-FR'
-        );
-
-      let color =
-        '#a3e635';
-
-      let label =
-        'INFO';
-
-      switch (type) {
-
-        case 'warn':
-
-          color = '#f59e0b';
-          label = 'WARN';
-
-          break;
-
-        case 'error':
-
-          color = '#ef4444';
-          label = 'ERROR';
-
-          break;
-
-        case 'debug':
-
-          color = '#38bdf8';
-          label = 'DEBUG';
-
-          break;
-
-        case 'success':
-
-          color = '#10b981';
-          label = 'SUCCESS';
-
-          break;
-
-        default:
-          break;
-
-      }
-
-      const line =
-        document.createElement(
-          'div'
-        );
-
-      line.style.color =
-        color;
-
-      line.style.marginBottom =
-        '4px';
-
-      /*
-       * IMPORTANT :
-       *
-       * textContent est utilisé afin
-       * d'empêcher l'injection HTML.
-       */
-
-      line.textContent =
-        `[${time}] [${label}] ${message}`;
-
-      screen.appendChild(
-        line
-      );
-
-      screen.scrollTop =
-        screen.scrollHeight;
-    }
-
-
-    /* =======================================================
-       ERREURS JAVASCRIPT
-    ======================================================= */
-
-    window.onerror =
-      function (
-        message,
-        source,
-        lineno,
-        colno
-      ) {
-
-        const filename =
-          source
-            ? source
-                .split('/')
-                .pop()
-            : 'Inconnu';
-
-        addLaunchLog(
-          'error',
-          `CRITICAL : ${message} (${filename}:${lineno}:${colno})`
-        );
-
-        return false;
-      };
-
-
-    /* =======================================================
-       LOGO FALLBACK
-    ======================================================= */
-
-    function setupLogoFallback() {
-
-      const image =
-        document.getElementById(
-          'logo-main-img'
-        );
-
-      const fallback =
-        document.getElementById(
-          'logo-fallback-box'
-        );
-
-      if (
-        !image ||
-        !fallback
-      ) {
-        return;
-      }
-
-      image.addEventListener(
-        'error',
-        function () {
-
-          image.style.display =
-            'none';
-
-          fallback.style.display =
-            'flex';
-
-        }
-      );
-
-      if (
-        image.complete &&
-        image.naturalWidth === 0
-      ) {
-
-        image.style.display =
-          'none';
-
-        fallback.style.display =
-          'flex';
-      }
-    }
-
-
-    /* =======================================================
-       DRAWER
-    ======================================================= */
-
-    function toggleDrawer(
-      open
-    ) {
-
-      const drawer =
-        document.querySelector(
-          '.drawer'
-        );
-
-      const overlay =
-        document.getElementById(
-          'drawer-overlay'
-        );
-
-      if (!drawer) {
-        return;
-      }
-
-      if (open) {
-
-        drawer.classList.add(
-          'open'
-        );
-
-        if (overlay) {
-
-          overlay.classList.add(
-            'open'
-          );
-
-        }
-
-        document.body.style.overflow =
-          'hidden';
-
-      } else {
-
-        drawer.classList.remove(
-          'open'
-        );
-
-        if (overlay) {
-
-          overlay.classList.remove(
-            'open'
-          );
-
-        }
-
-        document.body.style.overflow =
-          '';
-      }
-    }
-
-
-    /* =======================================================
-       SESSION
-    ======================================================= */
-
-    /**
-     * Le JWT reste uniquement côté serveur
-     * dans le cookie httpOnly.
-     *
-     * Aucun token n'est manipulé côté client.
-     */
-
-    async function getCurrentUser() {
-
-      try {
-
-        const response =
-          await fetch(
-            '/api/auth/me',
-            {
-              method:
-                'GET',
-
-              credentials:
-                'include',
-
-              cache:
-                'no-store',
-
-              headers: {
-                Accept:
-                  'application/json'
-              }
-            }
-          );
-
-        if (
-          response.status === 401
-        ) {
-
-          return null;
-        }
-
-        if (
-          !response.ok
-        ) {
-
-          throw new Error(
-            `HTTP ${response.status}`
-          );
-        }
-
-        const data =
-          await response.json();
-
-        if (
-          !data ||
-          !data.success ||
-          !data.user
-        ) {
-
-          return null;
-        }
-
-        return data.user;
-
-      } catch (error) {
-
-        const message =
-          error instanceof Error
-            ? error.message
-            : String(error);
-
-        addLaunchLog(
-          'warn',
-          `Impossible de vérifier la session : ${message}`
-        );
-
-        return null;
-      }
-    }
-
-
-    /* =======================================================
-       LOGOUT
-    ======================================================= */
-
-    function logout() {
-
-      addLaunchLog(
-        'warn',
-        'Déconnexion de la session OMNIX...'
-      );
-
-      /*
-       * Le serveur supprime le cookie.
-       */
-
-      window.location.href =
-        '/api/auth/logout';
-    }
-
-
-    /* =======================================================
-       DISCORD ICON
-    ======================================================= */
-
-    function discordIcon() {
-
-      return `
-        <svg
-          class="discord-svg"
-          viewBox="0 0 127.14 96.36"
-          aria-hidden="true"
-        >
-          <path
-            d="
-              M107.7,8.07
-              A105.15,105.15,0,0,0,77.26,0
-              a77.19,77.19,0,0,0-3.3,6.83
-              A96.67,96.67,0,0,0,53.22,6.83
-              A77.19,77.19,0,0,0,49.88,0
-              A105.15,105.15,0,0,0,19.44,8.07
-              C3.66,31.58,-1.86,54.65,1,77.53
-              A105.73,105.73,0,0,0,32,96.36
-              a77.7,77.7,0,0,0,6.63-10.85
-              a68.43,68.43,0,0,1-10.43-5
-              c.87-.64,1.71-1.32,2.51-2
-              a75.4,75.4,0,0,0,72.71,0
-              c.8.71,1.64,1.39,2.51,2
-              a68.17,68.17,0,0,1-10.43,5
-              a78.23,78.23,0,0,0,6.63,10.85
-              a105.73,105.73,0,0,0,31.54-18.83
-              C129,54.65,122.94,31.58,107.7,8.07ZM42.45,65.69
-              C36.18,65.69,31,60,31,53
-              S36.18,40.36,42.45,40.36
-              S53.92,46,53.92,53
-              S48.72,65.69,42.45,65.69Zm42.24,0
-              C78.41,65.69,73.24,60,73.24,53
-              S78.41,40.36,84.69,40.36
-              S96.15,46,96.15,53
-              S91,65.69,84.69,65.69Z
-            "
-          />
-        </svg>
-      `;
-    }
-
-
-    /* =======================================================
-       DYNAMIC BUTTONS
-    ======================================================= */
-
-    async function setupDynamicButtons() {
-
-      addLaunchLog(
-        'info',
-        'Vérification de la session OMNIX...'
-      );
-
-      const headerArea =
-        document.getElementById(
-          'auth-buttons-header'
-        );
-
-      const ctaArea =
-        document.getElementById(
-          'cta-action-area'
-        );
-
-      if (
-        !headerArea ||
-        !ctaArea
-      ) {
-
-        addLaunchLog(
-          'error',
-          'Impossible d\'initialiser les boutons dynamiques.'
-        );
-
-        return;
-      }
-
-      const user =
-        await getCurrentUser();
-
-
-      /* =====================================================
-         UTILISATEUR CONNECTÉ
-      ====================================================== */
-
-      if (user) {
-
-        const username =
-          user.username ||
-          'Utilisateur';
-
-        addLaunchLog(
-          'success',
-          `Session active : @${username}`
-        );
-
-        headerArea.innerHTML = `
-          <a
-            href="/dashboard"
-            class="header-button header-button-primary"
-          >
-            Dashboard
-          </a>
-
-          ${
-            user.isOwner
-              ? `
-                <a
-                  href="/ai-dev"
-                  class="header-button header-button-admin"
-                >
-                  Panel Admin
-                </a>
-              `
-              : ''
-          }
-
-          <button
-            type="button"
-            onclick="logout()"
-            class="btn-nav-logout"
-          >
-            Déconnexion
-          </button>
-        `;
-
-        ctaArea.innerHTML = `
-          <a
-            href="/dashboard"
-            class="cta-button cta-primary"
-          >
-            Accéder au Dashboard
-          </a>
-
-          <a
-            href="/pricing"
-            class="cta-button cta-secondary"
-          >
-            Découvrir les offres
-          </a>
-        `;
-
-        return;
-      }
-
-
-      /* =====================================================
-         VISITEUR
-      ====================================================== */
-
-      addLaunchLog(
-        'info',
-        'Aucune session active. Mode invité.'
-      );
-
-      /*
-       * IMPORTANT :
-       *
-       * Nous ne construisons pas l'URL OAuth
-       * Discord dans le navigateur.
-       *
-       * Le backend possède la configuration OAuth.
-       */
-
-      headerArea.innerHTML = `
-        <a
-          href="/api/auth/login"
-          class="header-button header-button-primary"
-        >
-          Se connecter
-        </a>
-      `;
-
-      ctaArea.innerHTML = `
-        <a
-          href="/api/auth/login"
-          class="cta-button cta-primary"
-        >
-          ${discordIcon()}
-          Entrer dans l'application
-        </a>
-
-        <a
-          href="/pricing"
-          class="cta-button cta-secondary"
-        >
-          Découvrir les offres
-        </a>
-      `;
-    }
-
-
-    /* =======================================================
-       ANIMATION STATISTICS
-    ======================================================= */
-
-    function animateValue(
-      element,
-      start,
-      end,
-      duration,
-      suffix = ''
-    ) {
-
-      if (!element) {
-        return;
-      }
-
-      const numericStart =
-        Number(start);
-
-      const numericEnd =
-        Number(end);
-
-      if (
-        !Number.isFinite(
-          numericEnd
-        )
-      ) {
-
-        element.textContent =
-          '--';
-
-        return;
-      }
-
-      let startTimestamp =
-        null;
-
-      function step(
-        timestamp
-      ) {
-
-        if (
-          startTimestamp === null
-        ) {
-
-          startTimestamp =
-            timestamp;
-        }
-
-        const progress =
-          Math.min(
-            (
-              timestamp -
-              startTimestamp
-            ) / duration,
-            1
-          );
-
-        const easedProgress =
-          1 -
-          Math.pow(
-            1 - progress,
-            3
-          );
-
-        const value =
-          Math.floor(
-            easedProgress *
-            (
-              numericEnd -
-              numericStart
-            ) +
-            numericStart
-          );
-
-        element.textContent =
-          value.toLocaleString(
-            'fr-FR'
-          ) +
-          suffix;
-
-        if (
-          progress < 1
-        ) {
-
-          window.requestAnimationFrame(
-            step
-          );
-
-        }
-
-      }
-
-      window.requestAnimationFrame(
-        step
-      );
-    }
-
-
-    /* =======================================================
-       STATS API
-    ======================================================= */
-
-    async function loadRealStats() {
-
-      addLaunchLog(
-        'info',
-        'Récupération des statistiques globales...'
-      );
-
-      const servers =
-        document.getElementById(
-          's-servers'
-        );
-
-      const users =
-        document.getElementById(
-          's-users'
-        );
-
-      const commands =
-        document.getElementById(
-          's-commands'
-        );
-
-      const uptime =
-        document.getElementById(
-          's-uptime'
-        );
-
-      const latency =
-        document.getElementById(
-          's-latency'
-        );
-
-      try {
-
-        const started =
-          performance.now();
-
-        const response =
-          await fetch(
-            '/api/stats',
-            {
-              method:
-                'GET',
-
-              credentials:
-                'include',
-
-              cache:
-                'no-store',
-
-              headers: {
-                Accept:
-                  'application/json'
-              }
-            }
-          );
-
-        const requestLatency =
-          Math.round(
-            performance.now() -
-            started
-          );
-
-        if (
-          !response.ok
-        ) {
-
-          throw new Error(
-            `HTTP ${response.status}`
-          );
-        }
-
-        const data =
-          await response.json();
-
-        if (
-          !data ||
-          !data.bot ||
-          !data.database
-        ) {
-
-          throw new Error(
-            'Structure de réponse API invalide.'
-          );
-        }
-
-        const guildCount =
-          Number(
-            data.bot.guildsCount
-          );
-
-        const userCount =
-          Number(
-            data.database.totalUsers
-          );
-
-        const commandCount =
-          Number(
-            data.commands
-          );
-
-        const uptimeValue =
-          Number(
-            data.bot.uptime
-          );
-
-        const apiPing =
-          Number(
-            data.bot.ping
-          );
-
-        /* -----------------------------------------------------
-           SERVEURS
-        ----------------------------------------------------- */
-
-        animateValue(
-          servers,
-          0,
-          Number.isFinite(
-            guildCount
-          )
-            ? guildCount
-            : 0,
-          850
-        );
-
-        /* -----------------------------------------------------
-           MEMBRES
-        ----------------------------------------------------- */
-
-        animateValue(
-          users,
-          0,
-          Number.isFinite(
-            userCount
-          )
-            ? userCount
-            : 0,
-          850
-        );
-
-        /* -----------------------------------------------------
-           COMMANDES
-        ----------------------------------------------------- */
-
-        animateValue(
-          commands,
-          0,
-          Number.isFinite(
-            commandCount
-          )
-            ? commandCount
-            : 0,
-          850
-        );
-
-        /* -----------------------------------------------------
-           UPTIME
-        ----------------------------------------------------- */
-
-        animateValue(
-          uptime,
-          0,
-          Number.isFinite(
-            uptimeValue
-          )
-            ? uptimeValue
-            : 100,
-          850,
-          '%'
-        );
-
-        /* -----------------------------------------------------
-           LATENCE
-        ----------------------------------------------------- */
-
-        const finalPing =
-          Number.isFinite(
-            apiPing
-          )
-            ? apiPing
-            : requestLatency;
-
-        animateValue(
-          latency,
-          0,
-          finalPing,
-          850,
-          ' ms'
-        );
-
-        addLaunchLog(
-          'success',
-          `Statistiques chargées : ${guildCount} serveurs / ${userCount} membres / ${commandCount} commandes / ${finalPing} ms`
-        );
-
-      } catch (error) {
-
-        const message =
-          error instanceof Error
-            ? error.message
-            : String(error);
-
-        console.error(
-          '[OMNIX Frontend Stats]',
-          error
-        );
-
-        addLaunchLog(
-          'error',
-          `Échec API statistiques : ${message}`
-        );
-
-        /*
-         * On n'affiche jamais de faux zéro.
-         *
-         * 0 = valeur réelle.
-         * -- = donnée indisponible.
-         */
-
-        if (servers) {
-          servers.textContent = '--';
-        }
-
-        if (users) {
-          users.textContent = '--';
-        }
-
-        if (commands) {
-          commands.textContent = '--';
-        }
-
-        if (uptime) {
-          uptime.textContent = '--';
-        }
-
-        if (latency) {
-          latency.textContent = '--';
-        }
-      }
-    }
-
-
-    /* =======================================================
-       PARTIE 1 — FIN
-    ======================================================= */
-    
-    <!-- =========================================================
+  <!-- =========================================================
      OMNIX — PARTIE 2/2
      JAVASCRIPT + FIN DU DOCUMENT
 ========================================================= -->
-
 
 <script>
 
@@ -2947,6 +2074,11 @@ function toggleDrawer(open) {
   const drawer =
     getDrawer();
 
+  const overlay =
+    document.getElementById(
+      'drawer-overlay'
+    );
+
   if (!drawer) {
 
     console.warn(
@@ -2956,15 +2088,27 @@ function toggleDrawer(open) {
     return;
   }
 
+
   if (open) {
 
     drawer.classList.add(
       'open'
     );
 
+    if (overlay) {
+
+      overlay.classList.add(
+        'open'
+      );
+
+    }
+
     document.body.classList.add(
       'drawer-open'
     );
+
+    document.body.style.overflow =
+      'hidden';
 
   } else {
 
@@ -2972,19 +2116,29 @@ function toggleDrawer(open) {
       'open'
     );
 
+    if (overlay) {
+
+      overlay.classList.remove(
+        'open'
+      );
+
+    }
+
     document.body.classList.remove(
       'drawer-open'
     );
+
+    document.body.style.overflow =
+      '';
 
   }
 
 }
 
 
-/*
- * Permet aussi de fermer le menu
- * avec la touche Escape.
- */
+/* =========================================================
+   FERMETURE DU DRAWER — ESCAPE
+========================================================= */
 
 document.addEventListener(
   'keydown',
@@ -3002,10 +2156,9 @@ document.addEventListener(
 );
 
 
-/*
- * Fermeture lorsqu'on clique
- * sur un lien du menu.
- */
+/* =========================================================
+   FERMETURE DU DRAWER — LIENS
+========================================================= */
 
 document.addEventListener(
   'click',
@@ -3029,7 +2182,7 @@ document.addEventListener(
 
 
 /* =========================================================
-   LOGS
+   LOG SYSTEM
 ========================================================= */
 
 function addLaunchLog(
@@ -3046,16 +2199,19 @@ function addLaunchLog(
     return;
   }
 
+
   const time =
     new Date().toLocaleTimeString(
       'fr-FR'
     );
+
 
   let label =
     'INFO';
 
   let color =
     '#a3e635';
+
 
   switch (type) {
 
@@ -3069,6 +2225,7 @@ function addLaunchLog(
 
       break;
 
+
     case 'warn':
 
       label =
@@ -3078,6 +2235,7 @@ function addLaunchLog(
         '#f59e0b';
 
       break;
+
 
     case 'error':
 
@@ -3089,6 +2247,7 @@ function addLaunchLog(
 
       break;
 
+
     case 'debug':
 
       label =
@@ -3099,12 +2258,19 @@ function addLaunchLog(
 
       break;
 
+
+    default:
+
+      break;
+
   }
+
 
   const line =
     document.createElement(
       'div'
     );
+
 
   line.style.color =
     color;
@@ -3112,12 +2278,20 @@ function addLaunchLog(
   line.style.marginBottom =
     '4px';
 
+
+  /*
+   * textContent volontairement utilisé
+   * afin d'éviter toute injection HTML.
+   */
+
   line.textContent =
     `[${time}] [${label}] ${message}`;
+
 
   screen.appendChild(
     line
   );
+
 
   screen.scrollTop =
     screen.scrollHeight;
@@ -3135,7 +2309,35 @@ window.addEventListener(
 
     addLaunchLog(
       'error',
-      `Erreur JavaScript : ${event.message || 'Erreur inconnue'}`
+      `Erreur JavaScript : ${
+        event.message ||
+        'Erreur inconnue'
+      }`
+    );
+
+  }
+);
+
+
+/* =========================================================
+   ERREURS PROMESSES NON GÉRÉES
+========================================================= */
+
+window.addEventListener(
+  'unhandledrejection',
+  function(event) {
+
+    const reason =
+      event.reason instanceof Error
+        ? event.reason.message
+        : String(
+            event.reason ||
+            'Erreur inconnue'
+          );
+
+    addLaunchLog(
+      'error',
+      `Promise rejetée : ${reason}`
     );
 
   }
@@ -3146,6 +2348,13 @@ window.addEventListener(
    SESSION UTILISATEUR
 ========================================================= */
 
+/**
+ * Le JWT n'est jamais manipulé côté client.
+ *
+ * La session est conservée par le serveur
+ * dans un cookie httpOnly.
+ */
+
 async function getCurrentUser() {
 
   try {
@@ -3154,6 +2363,7 @@ async function getCurrentUser() {
       'debug',
       'Requête /api/auth/me...'
     );
+
 
     const response =
       await fetch(
@@ -3177,7 +2387,7 @@ async function getCurrentUser() {
 
 
     /*
-     * Pas connecté.
+     * 401 = visiteur non connecté.
      */
 
     if (
@@ -3224,10 +2434,12 @@ async function getCurrentUser() {
         ? error.message
         : String(error);
 
+
     addLaunchLog(
       'warn',
       `Session impossible à vérifier : ${message}`
     );
+
 
     return null;
 
@@ -3246,6 +2458,12 @@ function logout() {
     'warn',
     'Déconnexion OMNIX...'
   );
+
+
+  /*
+   * Le serveur détruit le cookie
+   * de session.
+   */
 
   window.location.href =
     '/api/auth/logout';
@@ -3282,9 +2500,21 @@ async function setupDynamicButtons() {
   }
 
 
+  if (!ctaArea) {
+
+    addLaunchLog(
+      'error',
+      'Zone cta-action-area introuvable.'
+    );
+
+    return;
+
+  }
+
+
   addLaunchLog(
     'info',
-    'Vérification de la session...'
+    'Vérification de la session OMNIX...'
   );
 
 
@@ -3306,18 +2536,19 @@ async function setupDynamicButtons() {
 
     addLaunchLog(
       'success',
-      `Connecté : @${username}`
+      `Session active : @${username}`
     );
 
+
+    /*
+     * HEADER CONNECTÉ
+     */
 
     headerArea.innerHTML = `
 
       <a
         href="/dashboard"
-        class="btn-nav-login"
-        style="
-          background:#059669;
-        "
+        class="header-button header-button-primary"
       >
         Dashboard
       </a>
@@ -3327,10 +2558,7 @@ async function setupDynamicButtons() {
           ? `
             <a
               href="/ai-dev"
-              class="btn-nav-login"
-              style="
-                background:#7c3aed;
-              "
+              class="header-button header-button-admin"
             >
               Panel Admin
             </a>
@@ -3349,27 +2577,27 @@ async function setupDynamicButtons() {
     `;
 
 
-    if (ctaArea) {
+    /*
+     * CTA CONNECTÉ
+     */
 
-      ctaArea.innerHTML = `
+    ctaArea.innerHTML = `
 
-        <a
-          href="/dashboard"
-          class="btn-primary"
-        >
-          Accéder au Dashboard
-        </a>
+      <a
+        href="/dashboard"
+        class="cta-button cta-primary"
+      >
+        Accéder au Dashboard
+      </a>
 
-        <a
-          href="/pricing"
-          class="btn-secondary"
-        >
-          Voir les abonnements
-        </a>
+      <a
+        href="/pricing"
+        class="cta-button cta-secondary"
+      >
+        Découvrir les offres
+      </a>
 
-      `;
-
-    }
+    `;
 
 
     return;
@@ -3387,11 +2615,18 @@ async function setupDynamicButtons() {
   );
 
 
+  /*
+   * Le navigateur ne construit pas
+   * l'URL OAuth Discord.
+   *
+   * Le backend gère entièrement OAuth.
+   */
+
   headerArea.innerHTML = `
 
     <a
       href="/api/auth/login"
-      class="btn-nav-login"
+      class="header-button header-button-primary"
     >
       Se connecter
     </a>
@@ -3399,67 +2634,27 @@ async function setupDynamicButtons() {
   `;
 
 
-  if (ctaArea) {
+  ctaArea.innerHTML = `
 
-    ctaArea.innerHTML = `
+    <a
+      href="/api/auth/login"
+      class="cta-button cta-primary"
+    >
 
-      <a
-        href="/api/auth/login"
-        class="btn-primary"
-      >
+      ${discordIcon()}
 
-        <svg
-          class="discord-svg"
-          viewBox="0 0 127.14 96.36"
-          aria-hidden="true"
-        >
+      Entrer dans l'application
 
-          <path
-            d="
-              M107.7,8.07
-              A105.15,105.15,0,0,0,77.26,0
-              a77.19,77.19,0,0,0-3.3,6.83
-              A96.67,96.67,0,0,0,53.22,6.83
-              A77.19,77.19,0,0,0,49.88,0
-              A105.15,105.15,0,0,0,19.44,8.07
-              C3.66,31.58,-1.86,54.65,1,77.53
-              A105.73,105.73,0,0,0,32,96.36
-              a77.7,77.7,0,0,0,6.63-10.85
-              a68.43,68.43,0,0,1-10.43-5
-              c.87-.64,1.71-1.32,2.51-2
-              a75.4,75.4,0,0,0,72.71,0
-              c.8.71,1.64,1.39,2.51,2
-              a68.17,68.17,0,0,1-10.43,5
-              a78.23,78.23,0,0,0,6.63,10.85
-              a105.73,105.73,0,0,0,31.54-18.83
-              C129,54.65,122.94,31.58,107.7,8.07ZM42.45,65.69
-              C36.18,65.69,31,60,31,53
-              S36.18,40.36,42.45,40.36
-              S53.92,46,53.92,53
-              S48.72,65.69,42.45,65.69Zm42.24,0
-              C78.41,65.69,73.24,60,73.24,53
-              S78.41,40.36,84.69,40.36
-              S96.15,46,96.15,53
-              S91,65.69,84.69,65.69Z
-            "
-          />
+    </a>
 
-        </svg>
+    <a
+      href="/pricing"
+      class="cta-button cta-secondary"
+    >
+      Découvrir les offres
+    </a>
 
-        Entrer dans l'application
-
-      </a>
-
-      <a
-        href="/pricing"
-        class="btn-secondary"
-      >
-        Découvrir OMNIX
-      </a>
-
-    `;
-
-  }
+  `;
 
 }
 
@@ -3481,6 +2676,9 @@ function animateValue(
   }
 
 
+  const numericStart =
+    Number(start);
+
   const numericEnd =
     Number(end);
 
@@ -3492,15 +2690,12 @@ function animateValue(
   ) {
 
     element.textContent =
-      '—';
+      '--';
 
     return;
 
   }
 
-
-  const startValue =
-    Number(start) || 0;
 
   let startTimestamp =
     null;
@@ -3529,14 +2724,26 @@ function animateValue(
       );
 
 
+    /*
+     * Easing cubic-out.
+     */
+
+    const easedProgress =
+      1 -
+      Math.pow(
+        1 - progress,
+        3
+      );
+
+
     const value =
       Math.floor(
-        startValue +
+        easedProgress *
         (
           numericEnd -
-          startValue
-        ) *
-        progress
+          numericStart
+        ) +
+        numericStart
       );
 
 
@@ -3551,7 +2758,7 @@ function animateValue(
       progress < 1
     ) {
 
-      requestAnimationFrame(
+      window.requestAnimationFrame(
         step
       );
 
@@ -3560,7 +2767,7 @@ function animateValue(
   }
 
 
-  requestAnimationFrame(
+  window.requestAnimationFrame(
     step
   );
 
@@ -3661,8 +2868,13 @@ async function loadRealStats() {
 
 
     /*
-     * On accepte les structures
-     * déjà utilisées par OMNIX.
+     * Structure attendue par OMNIX :
+     *
+     * data.bot.guildsCount
+     * data.bot.uptime
+     * data.bot.ping
+     * data.database.totalUsers
+     * data.commands
      */
 
     const bot =
@@ -3709,9 +2921,9 @@ async function loadRealStats() {
       );
 
 
-    /*
-     * SERVEURS
-     */
+    /* =====================================================
+       SERVEURS
+    ====================================================== */
 
     if (
       Number.isFinite(
@@ -3729,14 +2941,14 @@ async function loadRealStats() {
     } else if (servers) {
 
       servers.textContent =
-        '—';
+        '--';
 
     }
 
 
-    /*
-     * MEMBRES
-     */
+    /* =====================================================
+       MEMBRES
+    ====================================================== */
 
     if (
       Number.isFinite(
@@ -3754,14 +2966,14 @@ async function loadRealStats() {
     } else if (users) {
 
       users.textContent =
-        '—';
+        '--';
 
     }
 
 
-    /*
-     * COMMANDES
-     */
+    /* =====================================================
+       COMMANDES
+    ====================================================== */
 
     if (
       Number.isFinite(
@@ -3779,14 +2991,14 @@ async function loadRealStats() {
     } else if (commands) {
 
       commands.textContent =
-        '—';
+        '--';
 
     }
 
 
-    /*
-     * UPTIME
-     */
+    /* =====================================================
+       UPTIME
+    ====================================================== */
 
     if (
       Number.isFinite(
@@ -3805,14 +3017,14 @@ async function loadRealStats() {
     } else if (uptime) {
 
       uptime.textContent =
-        '—';
+        '--';
 
     }
 
 
-    /*
-     * LATENCE
-     */
+    /* =====================================================
+       LATENCE
+    ====================================================== */
 
     const finalPing =
       Number.isFinite(
@@ -3837,7 +3049,21 @@ async function loadRealStats() {
 
     addLaunchLog(
       'success',
-      `OMNIX en temps réel : ${Number.isFinite(guildCount) ? guildCount : '—'} serveurs / ${Number.isFinite(userCount) ? userCount : '—'} membres / ${Number.isFinite(commandCount) ? commandCount : '—'} commandes`
+      `OMNIX en temps réel : ${
+        Number.isFinite(guildCount)
+          ? guildCount
+          : '--'
+      } serveurs / ${
+        Number.isFinite(userCount)
+          ? userCount
+          : '--'
+      } membres / ${
+        Number.isFinite(commandCount)
+          ? commandCount
+          : '--'
+      } commandes / ${
+        finalPing
+      } ms`
     );
 
 
@@ -3862,12 +3088,10 @@ async function loadRealStats() {
 
 
     /*
-     * Surtout :
+     * IMPORTANT :
      *
-     * On ne met PAS 0.
-     *
-     * On indique que la donnée
-     * n'est pas disponible.
+     * Une donnée indisponible n'est jamais
+     * remplacée artificiellement par 0.
      */
 
     [
@@ -3882,7 +3106,7 @@ async function loadRealStats() {
         if (element) {
 
           element.textContent =
-            '—';
+            '--';
 
         }
 
@@ -3895,7 +3119,7 @@ async function loadRealStats() {
 
 
 /* =========================================================
-   RAFRAÎCHISSEMENT STATS
+   RAFRAÎCHISSEMENT AUTOMATIQUE DES STATS
 ========================================================= */
 
 let statsRefreshTimer =
@@ -3916,7 +3140,7 @@ function startStatsRefresh() {
 
 
   /*
-   * Mise à jour toutes les
+   * Actualisation toutes les
    * 30 secondes.
    */
 
@@ -3924,7 +3148,7 @@ function startStatsRefresh() {
     window.setInterval(
       function() {
 
-        loadRealStats();
+        void loadRealStats();
 
       },
       30000
@@ -3946,8 +3170,8 @@ async function bootIndex() {
 
 
   /*
-   * Auth et statistiques
-   * sont lancées en parallèle.
+   * Authentification et statistiques
+   * sont chargées en parallèle.
    */
 
   await Promise.allSettled([
@@ -3957,7 +3181,8 @@ async function bootIndex() {
 
 
   /*
-   * Actualisation automatique.
+   * Activation du rafraîchissement
+   * automatique des statistiques.
    */
 
   startStatsRefresh();
@@ -3984,6 +3209,8 @@ if (
     'DOMContentLoaded',
     function() {
 
+      setupLogoFallback();
+
       void bootIndex();
 
     },
@@ -3993,6 +3220,8 @@ if (
   );
 
 } else {
+
+  setupLogoFallback();
 
   void bootIndex();
 
