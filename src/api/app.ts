@@ -16,6 +16,7 @@ import authRouter, {
 import guildRoutes from './routes/guild.routes.ts';
 import statsRouter from './routes/stats.routes.ts';
 import adminRouter from './routes/admin.routes.ts';
+import pricingRoutes from "./routes/pricing.routes.ts";
 /* =========================================================
    OMNIX — EXPRESS APPLICATION
 ========================================================= */
@@ -225,6 +226,9 @@ app.use(
 /* =========================================================
    BODY PARSERS
 ========================================================= */
+
+app.use("/api/pricing", pricingRoutes);
+
 app.use(
   express.json({
     limit:
