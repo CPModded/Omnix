@@ -19,19 +19,36 @@ export interface IUser extends Document {
 
   tokenExpiresAt?: Date;
 
+  /**
+   * Administrateur de la plateforme OMNIX.
+   *
+   * IMPORTANT :
+   * Ce champ ne donne pas automatiquement
+   * les droits Owner.
+   */
+  isAdmin: boolean;
+
+  /**
+   * Licence Premium personnelle.
+   */
+  isPremium: boolean;
+
+  /**
+   * Serveurs Discord accessibles à l'utilisateur.
+   */
   guilds: Array<{
     id: string;
     name: string;
     icon?: string | null;
     owner?: boolean;
     permissions?: string;
+    features?: string[];
   }>;
 
   createdAt: Date;
 
   updatedAt: Date;
 }
-
 
 const UserSchema =
   new Schema<IUser>(
@@ -58,13 +75,11 @@ const UserSchema =
 
       accessToken: {
         type: String,
-
         select: false,
       },
 
       refreshToken: {
         type: String,
-
         select: false,
       },
 
@@ -72,33 +87,72 @@ const UserSchema =
         type: Date,
       },
 
+      /*
+       * =====================================================
+       * OMNIX PLATFORM PERMISSIONS
+       * =====================================================
+       */
+
+      isAdmin: {
+        type: Boolean,
+        default: false,
+        index: true,
+      },
+
+      isPremium: {
+        type: Boolean,
+        default: false,
+        index: true,
+      },
+
+      /*
+       * =====================================================
+       * DISCORD GUILDS
+       * =====================================================
+       */
+
       guilds: [
         {
-          id: String,
+          id: {
+            type: String,
+          },
 
-          name: String,
+          name: {
+            type: String,
+          },
 
-          icon: String,
+          icon: {
+            type: String,
+          },
 
-          owner: Boolean,
+          owner: {
+            type: Boolean,
+            default: false,
+          },
 
-          permissions: String,
+          permissions: {
+            type: String,
+            default: '0',
+          },
+
+          features: {
+            type: [String],
+            default: [],
+          },
         },
       ],
     },
 
     {
       timestamps: true,
-    }
+    },
   );
-
 
 export const User: Model<IUser> =
   mongoose.models.User ||
   mongoose.model<IUser>(
     'User',
-    UserSchema
+    UserSchema,
   );
-
 
 export default User;
