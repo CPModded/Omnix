@@ -7,7 +7,7 @@ import type {
   AuthenticatedRequest,
 } from './auth.ts';
 
-import { User } from '../../models/User.ts';
+import { User } from './User.ts';
 
 /* =========================================================
    OMNIX — GUILD AUTHENTICATION
