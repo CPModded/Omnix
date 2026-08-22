@@ -9,94 +9,144 @@ import type {
 
 import { GuildConfig } from '../../models/GuildConfig.ts';
 
-import { CONFIG } from '../../config/index.ts';
+/* =========================================================
+   OMNIX — PREMIUM CHECK
+========================================================= */
+
+/**
+ * Vérifie si une fonctionnalité Premium est accessible.
+ *
+ * Ordre d'autorisation :
+ *
+ * 1. Owner OMNIX
+ * 2. Admin OMNIX
+ * 3. Premium personnel
+ * 4. Premium serveur
+ *
+ * Prérequis :
+ *
+ * - isAuthenticated
+ * - req.user
+ * - req.params.guildId
+ */
 
 export async function requirePremium(
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction,
 ): Promise<void> {
-  const guildId =
-    String(
-      req.params.guildId || '',
-    ).trim();
-
-  const user =
-    req.user;
-
   try {
-    /*
-     * =========================================================
-     * OWNER OMNIX
-     * =========================================================
-     */
+    /* -----------------------------------------------------
+       AUTHENTIFICATION
+    ----------------------------------------------------- */
 
-    if (
-      user?.discordId &&
-      CONFIG.OWNER_IDS.includes(
-        user.discordId,
-      )
-    ) {
-      next();
-      return;
-    }
+    const user = req.user;
 
-    /*
-     * =========================================================
-     * PREMIUM UTILISATEUR
-     * =========================================================
-     */
-
-    if (
-      user?.isPremium === true ||
-      user?.isAdmin === true
-    ) {
-      console.log(
-        `[Premium Check] 💎 Accès Premium utilisateur : ${user.username}`,
-      );
-
-      next();
-
-      return;
-    }
-
-    /*
-     * =========================================================
-     * GUILD ID
-     * =========================================================
-     */
-
-    if (
-      !/^\d{17,20}$/.test(
-        guildId,
-      )
-    ) {
-      res.status(400).json({
+    if (!user?.discordId) {
+      res.status(401).json({
         success: false,
-        error:
-          'Identifiant de serveur invalide.',
-        code:
-          'INVALID_GUILD_ID',
+        error: 'Authentification requise.',
+        code: 'AUTH_REQUIRED',
       });
 
       return;
     }
 
-    /*
-     * =========================================================
-     * PREMIUM GUILD
-     * =========================================================
-     */
+    /* -----------------------------------------------------
+       GUILD ID
+    ----------------------------------------------------- */
 
-    const config =
+    const guildId =
+      String(
+        req.params.guildId || '',
+      ).trim();
+
+    if (!guildId) {
+      res.status(400).json({
+        success: false,
+        error: 'Guild ID manquant.',
+        code: 'GUILD_ID_REQUIRED',
+      });
+
+      return;
+    }
+
+    /* -----------------------------------------------------
+       OWNER OMNIX
+       
+       Le statut isOwner provient du JWT.
+    ----------------------------------------------------- */
+
+    if (user.isOwner) {
+      console.log(
+        `[Premium Check] 👑 Accès Owner accordé : ${user.discordId}`,
+      );
+
+      next();
+      return;
+    }
+
+    /* -----------------------------------------------------
+       ADMIN OMNIX
+    ----------------------------------------------------- */
+
+    if (user.isAdmin) {
+      console.log(
+        `[Premium Check] 🛡️ Accès Admin accordé : ${user.discordId}`,
+      );
+
+      next();
+      return;
+    }
+
+    /* -----------------------------------------------------
+       PREMIUM PERSONNEL
+    ----------------------------------------------------- */
+
+    if (user.isPremium) {
+      console.log(
+        `[Premium Check] 💎 Premium utilisateur accordé : ${user.discordId}`,
+      );
+
+      next();
+      return;
+    }
+
+    /* -----------------------------------------------------
+       PREMIUM SERVEUR
+    ----------------------------------------------------- */
+
+    const guildConfig =
       await GuildConfig.findOne({
         guildId,
       }).lean();
 
+    if (!guildConfig) {
+      console.warn(
+        `[Premium Check] 🚫 Configuration serveur introuvable : ${guildId}`,
+      );
+
+      res.status(403).json({
+        success: false,
+        error: 'Fonctionnalité Premium.',
+        code: 'PREMIUM_REQUIRED',
+        message:
+          'Ce serveur ne possède pas de licence Premium active.',
+      });
+
+      return;
+    }
+
+    /* -----------------------------------------------------
+       CHECK PREMIUM
+    ----------------------------------------------------- */
+
+    const premium =
+      (guildConfig as any).premium;
+
     const isGuildPremium =
       Boolean(
-        (config as any)?.premium
-          ?.isPremium,
+        premium?.isPremium,
       );
 
     if (!isGuildPremium) {
@@ -106,26 +156,27 @@ export async function requirePremium(
 
       res.status(403).json({
         success: false,
-        error:
-          'Fonctionnalité Premium.',
-        code:
-          'PREMIUM_REQUIRED',
+        error: 'Fonctionnalité Premium.',
+        code: 'PREMIUM_REQUIRED',
         message:
-          'Cette fonctionnalité nécessite une licence Premium active.',
+          'Ce serveur ne possède pas de licence Premium active.',
       });
 
       return;
     }
 
+    /* -----------------------------------------------------
+       ACCESS GRANTED
+    ----------------------------------------------------- */
+
     console.log(
-      `[Premium Check] 💎 Premium serveur confirmé : ${guildId}`,
+      `[Premium Check] 💎 Premium serveur accordé : ${guildId}`,
     );
 
     next();
-
   } catch (error) {
     console.error(
-      '[Premium Check] ❌ Erreur :',
+      '[Premium Check] Erreur :',
       error,
     );
 
@@ -133,8 +184,7 @@ export async function requirePremium(
       success: false,
       error:
         'Erreur lors de la validation du statut Premium.',
-      code:
-        'PREMIUM_CHECK_ERROR',
+      code: 'PREMIUM_CHECK_ERROR',
     });
   }
 }
