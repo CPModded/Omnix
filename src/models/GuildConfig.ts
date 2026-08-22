@@ -1,261 +1,219 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import type {
+  Response,
+  NextFunction,
+} from 'express';
+
+import type {
+  AuthenticatedRequest,
+} from './auth.ts';
+
+import { User } from '../../models/User.ts';
 
 /* =========================================================
-   TYPES
+   OMNIX — GUILD AUTHENTICATION
 ========================================================= */
 
-export interface IModuleConfig {
-  enabled: boolean;
-  [key: string]: any;
-}
-
-export interface IGuildModules {
-  moderation: IModuleConfig;
-  tickets: IModuleConfig;
-  giveaways: IModuleConfig;
-  suggestions: IModuleConfig;
-  logs: IModuleConfig;
-  welcome: IModuleConfig;
-  goodbye: IModuleConfig;
-  autoRole: IModuleConfig;
-  antiRaid: IModuleConfig;
-  antiSpam: IModuleConfig;
-  antiLink: IModuleConfig;
-  autoMod: IModuleConfig;
-  levels: IModuleConfig;
-  economy: IModuleConfig;
-  music: IModuleConfig;
-  ai: IModuleConfig;
-  counting: IModuleConfig;
-  autoReactions: IModuleConfig;
-  scheduledMessages: IModuleConfig;
-  polls: IModuleConfig;
-  verification: IModuleConfig;
-  backups: IModuleConfig;
-  customCommands: IModuleConfig;
-  statistics: IModuleConfig;
-  ping: IModuleConfig;
-  honeypot: IModuleConfig;
-
-  [key: string]: IModuleConfig;
-}
-
-export interface IGuildPremium {
-  isPremium: boolean;
-  tier: string;
-  expiresAt: Date | null;
-}
-
-export interface IGuildConfig extends Document {
-  guildId: string;
-
-  prefix: string;
-  language: string;
-
-  premium: IGuildPremium;
-
-  modules: IGuildModules;
-
-  createdAt: Date;
-  updatedAt: Date;
+export interface GuildAuthenticatedRequest
+  extends AuthenticatedRequest {
+  guildId?: string;
 }
 
 /* =========================================================
-   DEFAULT MODULES
+   DISCORD PERMISSION
 ========================================================= */
 
-const defaultModules: Record<string, any> = {
-  moderation: {
-    enabled: true,
-  },
-
-  tickets: {
-    enabled: false,
-    categoryId: null,
-    supportRoleId: null,
-  },
-
-  giveaways: {
-    enabled: false,
-  },
-
-  suggestions: {
-    enabled: false,
-  },
-
-  logs: {
-    enabled: false,
-    channelId: null,
-  },
-
-  welcome: {
-    enabled: false,
-    channelId: null,
-    message: null,
-  },
-
-  goodbye: {
-    enabled: false,
-    channelId: null,
-    message: null,
-  },
-
-  autoRole: {
-    enabled: false,
-    roleId: null,
-  },
-
-  antiRaid: {
-    enabled: false,
-  },
-
-  antiSpam: {
-    enabled: false,
-  },
-
-  antiLink: {
-    enabled: false,
-  },
-
-  autoMod: {
-    enabled: false,
-  },
-
-  levels: {
-    enabled: false,
-  },
-
-  economy: {
-    enabled: false,
-  },
-
-  music: {
-    enabled: false,
-  },
-
-  ai: {
-    enabled: false,
-    systemPrompt:
-      'Tu es OMNIX, un assistant intelligent pour un serveur Discord. Réponds clairement, utilement et en français.',
-  },
-
-  counting: {
-    enabled: false,
-    channelId: null,
-  },
-
-  autoReactions: {
-    enabled: false,
-  },
-
-  scheduledMessages: {
-    enabled: false,
-  },
-
-  polls: {
-    enabled: false,
-  },
-
-  verification: {
-    enabled: false,
-  },
-
-  backups: {
-    enabled: false,
-  },
-
-  customCommands: {
-    enabled: false,
-  },
-
-  statistics: {
-    enabled: false,
-  },
-
-  ping: {
-    enabled: true,
-  },
-
-  honeypot: {
-    enabled: false,
-    channelId: null,
-  },
-};
-
-/* =========================================================
-   SCHEMA
-========================================================= */
-
-const GuildConfigSchema = new Schema<IGuildConfig>(
-  {
-    guildId: {
-      type: String,
-      required: true,
-      unique: true,
-      index: true,
-    },
-
-    prefix: {
-      type: String,
-      default: '!cm-',
-    },
-
-    language: {
-      type: String,
-      default: 'fr',
-    },
-
-    premium: {
-      isPremium: {
-        type: Boolean,
-        default: false,
-      },
-
-      tier: {
-        type: String,
-        default: 'free',
-      },
-
-      expiresAt: {
-        type: Date,
-        default: null,
-      },
-    },
-
-    modules: {
-      type: Schema.Types.Mixed,
-      default: defaultModules,
-    },
-  },
-  {
-    timestamps: true,
-    minimize: false,
+function hasAdministratorPermission(
+  permissions?: string,
+): boolean {
+  if (!permissions) {
+    return false;
   }
-);
+
+  try {
+    const value = BigInt(
+      String(permissions),
+    );
+
+    return (
+      (value & 0x8n) ===
+      0x8n
+    );
+  } catch {
+    return false;
+  }
+}
 
 /* =========================================================
-   MODEL
+   GUILD ACCESS
 ========================================================= */
 
-/*
- * IMPORTANT :
+/**
+ * Vérifie que l'utilisateur peut gérer le serveur.
  *
- * On exporte les DEUX formes :
+ * Autorisation :
  *
- * import GuildConfig from ...
+ * 1. Owner OMNIX
+ * 2. Propriétaire Discord du serveur
+ * 3. Administrateur Discord du serveur
  *
- * ET
- *
- * import { GuildConfig } from ...
- *
- * Cela évite les erreurs actuelles dans tes commandes/events.
+ * La simple présence du serveur dans `user.guilds`
+ * ne suffit PAS.
  */
 
-export const GuildConfig =
-  mongoose.models.GuildConfig ||
-  mongoose.model<IGuildConfig>(
-    'GuildConfig',
-    GuildConfigSchema
-  );
+export async function canManageGuild(
+  req: GuildAuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    /* -----------------------------------------------------
+       AUTHENTICATION
+    ----------------------------------------------------- */
 
-export default GuildConfig;
+    if (!req.user?.discordId) {
+      res.status(401).json({
+        success: false,
+        error: 'Authentification requise.',
+        code: 'AUTH_REQUIRED',
+      });
+
+      return;
+    }
+
+    /* -----------------------------------------------------
+       GUILD ID
+    ----------------------------------------------------- */
+
+    const guildId =
+      String(
+        req.params.guildId || '',
+      ).trim();
+
+    if (!guildId) {
+      res.status(400).json({
+        success: false,
+        error: 'Guild ID manquant.',
+        code: 'GUILD_ID_REQUIRED',
+      });
+
+      return;
+    }
+
+    /* -----------------------------------------------------
+       OMNIX OWNER
+       
+       Owner du bot = accès complet.
+    ----------------------------------------------------- */
+
+    if (req.user.isOwner) {
+      req.guildId = guildId;
+
+      next();
+      return;
+    }
+
+    /* -----------------------------------------------------
+       GET USER
+    ----------------------------------------------------- */
+
+    const user =
+      await User.findOne({
+        discordId:
+          req.user.discordId,
+      }).lean();
+
+    if (!user) {
+      res.status(403).json({
+        success: false,
+        error:
+          'Utilisateur OMNIX introuvable.',
+        code: 'USER_NOT_FOUND',
+      });
+
+      return;
+    }
+
+    /* -----------------------------------------------------
+       FIND GUILD
+    ----------------------------------------------------- */
+
+    const guilds =
+      Array.isArray(user.guilds)
+        ? user.guilds
+        : [];
+
+    const guild =
+      guilds.find(
+        (item) =>
+          String(item?.id) ===
+          guildId,
+      );
+
+    if (!guild) {
+      res.status(403).json({
+        success: false,
+        error:
+          'Vous ne pouvez pas gérer ce serveur.',
+        code: 'GUILD_ACCESS_DENIED',
+      });
+
+      return;
+    }
+
+    /* -----------------------------------------------------
+       DISCORD OWNER
+    ----------------------------------------------------- */
+
+    if (guild.owner === true) {
+      req.guildId = guildId;
+
+      next();
+      return;
+    }
+
+    /* -----------------------------------------------------
+       DISCORD ADMINISTRATOR
+    ----------------------------------------------------- */
+
+    if (
+      hasAdministratorPermission(
+        guild.permissions,
+      )
+    ) {
+      req.guildId = guildId;
+
+      next();
+      return;
+    }
+
+    /* -----------------------------------------------------
+       ACCESS DENIED
+    ----------------------------------------------------- */
+
+    console.warn(
+      `[GuildAuth] 🚫 Accès refusé : ${req.user.discordId} → ${guildId}`,
+    );
+
+    res.status(403).json({
+      success: false,
+      error:
+        'Vous devez être propriétaire ou administrateur de ce serveur.',
+      code: 'GUILD_MANAGE_REQUIRED',
+    });
+
+  } catch (error) {
+    console.error(
+      '[GuildAuth] Erreur :',
+      error,
+    );
+
+    res.status(500).json({
+      success: false,
+      error:
+        'Erreur lors de la vérification du serveur.',
+      code: 'GUILD_AUTH_ERROR',
+    });
+  }
+}
+
+export default canManageGuild;
