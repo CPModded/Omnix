@@ -1421,5 +1421,3 @@ export default GuildConfig;
 /* =========================================================
    DEFAULT MODULE CONFIG EXPORT
 ========================================================= */
-
-export { defaultModules };
