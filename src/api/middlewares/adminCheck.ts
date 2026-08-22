@@ -2,6 +2,14 @@
  * ====================================================================
  * OMNIX — ADMIN / OWNER CHECK
  * ====================================================================
+ *
+ * Autorisation :
+ *
+ * 1. Owner OMNIX
+ * 2. Administrateur OMNIX
+ *
+ * Le statut Owner est toujours recalculé depuis
+ * CONFIG.OWNER_IDS et ne dépend pas uniquement du JWT.
  */
 
 import type {
@@ -15,7 +23,13 @@ import type {
 
 import { User } from '../../models/User.ts';
 
-import { CONFIG } from '../../config/index.ts';
+import {
+  isOwner,
+} from '../routes/auth.routes.ts';
+
+/* =========================================================
+   ADMIN CHECK
+========================================================= */
 
 export async function adminCheck(
   req: AuthenticatedRequest,
@@ -28,11 +42,9 @@ export async function adminCheck(
   const isApiRequest =
     req.path.startsWith('/api');
 
-  /*
-   * =========================================================
-   * AUTHENTIFICATION
-   * =========================================================
-   */
+  /* ---------------------------------------------------------
+     AUTHENTIFICATION
+  --------------------------------------------------------- */
 
   if (!discordId) {
     console.warn(
@@ -47,13 +59,11 @@ export async function adminCheck(
         code:
           'AUTH_REQUIRED',
       });
-
-      return;
+    } else {
+      res.redirect(
+        '/?error=unauthorized',
+      );
     }
-
-    res.redirect(
-      '/?error=unauthorized',
-    );
 
     return;
   }
@@ -64,35 +74,33 @@ export async function adminCheck(
     );
 
     console.log(
-      `[OMNIX Security] 🛡️ Vérification Admin/Owner : @${req.user?.username} (${discordId})`,
+      `[OMNIX Security] 🛡️ Vérification admin : @${req.user?.username} (${discordId})`,
     );
 
-    /*
-     * =========================================================
-     * 1. OWNER OMNIX
-     * =========================================================
-     *
-     * SOURCE DE VÉRITÉ :
-     *
-     * CONFIG.OWNER_IDS
-     *
-     * On ne dépend PAS de MongoDB pour le Owner.
-     */
+    /* ---------------------------------------------------------
+       OWNER OMNIX
+       
+       IMPORTANT :
+       On recalcule le statut depuis OWNER_IDS.
+       On ne fait pas confiance uniquement au JWT.
+    --------------------------------------------------------- */
 
-    const isOwner =
-      CONFIG.OWNER_IDS.includes(
+    const owner =
+      isOwner(
         discordId,
       );
 
     console.log(
-      `[OMNIX Security] 👑 Owner : ${
-        isOwner ? '✅ Oui' : '❌ Non'
+      `[OMNIX Security] 👑 Owner OMNIX : ${
+        owner
+          ? '✅ Oui'
+          : '❌ Non'
       }`,
     );
 
-    if (isOwner) {
+    if (owner) {
       console.log(
-        '[OMNIX Security] ✅ Accès accordé : Owner OMNIX.',
+        '[OMNIX Security] ✅ Accès accordé : Owner.',
       );
 
       console.log(
@@ -104,28 +112,65 @@ export async function adminCheck(
       return;
     }
 
-    /*
-     * =========================================================
-     * 2. ADMIN OMNIX
-     * =========================================================
-     */
+    /* ---------------------------------------------------------
+       USER DATABASE
+    --------------------------------------------------------- */
 
-    const userDb =
+    const user =
       await User.findOne({
         discordId,
       }).lean();
 
     console.log(
-      `[OMNIX Security] 👤 Utilisateur MongoDB : ${
-        userDb ? '✅ Trouvé' : '❌ Introuvable'
+      `[OMNIX Security] 🔍 Utilisateur DB : ${
+        user
+          ? '✅ Trouvé'
+          : '❌ Introuvable'
       }`,
     );
 
-    if (
-      userDb?.isAdmin === true
-    ) {
+    if (!user) {
+      console.warn(
+        `[OMNIX Security] 🚨 Utilisateur introuvable : ${discordId}`,
+      );
+
+      if (isApiRequest) {
+        res.status(403).json({
+          success: false,
+          error:
+            'Utilisateur OMNIX introuvable.',
+          code:
+            'USER_NOT_FOUND',
+        });
+      } else {
+        res.redirect(
+          '/?error=forbidden',
+        );
+      }
+
+      return;
+    }
+
+    /* ---------------------------------------------------------
+       OMNIX ADMIN
+    --------------------------------------------------------- */
+
+    const admin =
+      Boolean(
+        user.isAdmin,
+      );
+
+    console.log(
+      `[OMNIX Security] 🛡️ Admin OMNIX : ${
+        admin
+          ? '✅ Oui'
+          : '❌ Non'
+      }`,
+    );
+
+    if (admin) {
       console.log(
-        '[OMNIX Security] ✅ Accès accordé : Admin OMNIX.',
+        '[OMNIX Security] ✅ Accès accordé : Administrateur.',
       );
 
       console.log(
@@ -137,11 +182,9 @@ export async function adminCheck(
       return;
     }
 
-    /*
-     * =========================================================
-     * 3. REFUS
-     * =========================================================
-     */
+    /* ---------------------------------------------------------
+       ACCESS DENIED
+    --------------------------------------------------------- */
 
     console.warn(
       `[OMNIX Security] 🚨 Accès refusé : @${req.user?.username} (${discordId})`,
@@ -159,35 +202,31 @@ export async function adminCheck(
         code:
           'ADMIN_ACCESS_DENIED',
       });
-
-      return;
+    } else {
+      res.redirect(
+        '/?error=forbidden',
+      );
     }
 
-    res.redirect(
-      '/?error=forbidden',
-    );
-
-  } catch (error: any) {
+  } catch (error) {
     console.error(
-      '[OMNIX Security] ❌ Erreur :',
-      error?.message || error,
+      '[OMNIX AdminCheck] Erreur :',
+      error,
     );
 
     if (isApiRequest) {
       res.status(500).json({
         success: false,
         error:
-          "Erreur interne lors de la vérification des autorisations.",
+          'Erreur interne lors de la vérification des autorisations.',
         code:
           'ADMIN_CHECK_ERROR',
       });
-
-      return;
+    } else {
+      res.redirect(
+        '/?error=server_error',
+      );
     }
-
-    res.redirect(
-      '/?error=server_error',
-    );
   }
 }
 
