@@ -20,7 +20,7 @@
 import { Events } from 'discord.js';
 import type { Guild } from 'discord.js';
 
-import { GuildConfig } from '../../models/GuildConfig.ts';
+import GuildConfig from '../../models/GuildConfig.ts';
 import { User } from '../../models/User.ts';
 
 export default {
