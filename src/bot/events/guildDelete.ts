@@ -1,5 +1,5 @@
 import { Events, type Guild } from 'discord.js';
-import { GuildConfig } from '../../models/GuildConfig.ts';
+import GuildConfig from '../../models/GuildConfig.ts';
 
 export default {
   name: Events.GuildDelete,
