@@ -1,7 +1,16 @@
 import express from 'express';
-import type { Request, Response, NextFunction } from 'express';
+import type {
+  Request,
+  Response,
+  NextFunction,
+} from 'express';
 import fs from 'fs';
 import path from 'path';
+
+import {
+  getRequestToken,
+  verifyJwt,
+} from './auth.routes.ts';
 
 import { askOpenRouter } from '../../ai/openrouter.ts';
 
@@ -15,36 +24,50 @@ const router = express.Router();
    CONFIGURATION
 ========================================================= */
 
-const PROJECT_ROOT = process.cwd();
+const PROJECT_ROOT = path.resolve(process.cwd());
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 Mo
 const MAX_SEARCH_RESULTS = 500;
 
+const MAX_CHAT_MESSAGE_LENGTH = 30_000;
+const MAX_CONTEXT_LENGTH = 50_000;
+
+const MAX_SELECTED_FILES = 10;
+const MAX_TOTAL_FILE_CONTEXT = 120_000;
+
 const AI_MODEL =
   'nvidia/nemotron-3-ultra-550b-a55b:free';
 
-/*
- * OWNER_IDS doit être configuré dans PteroEternodes :
- *
- * OWNER_IDS=TON_DISCORD_ID
- *
- * Plusieurs propriétaires :
- *
- * OWNER_IDS=ID1,ID2
- */
+/* =========================================================
+   OWNER IDS
+========================================================= */
 
-const OWNER_IDS = (
-  process.env.OWNER_IDS ||
-  process.env.OWNER_ID ||
-  ''
-)
-  .split(',')
-  .map((id) => id.trim())
-  .filter(Boolean);
+function loadOwnerIds(): string[] {
+  return (
+    process.env.OWNER_IDS ??
+    process.env.OWNER_ID ??
+    ''
+  )
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
+}
 
 /* =========================================================
    TYPES
 ========================================================= */
+
+interface OmnixAuthenticatedUser {
+  id?: string;
+  discordId?: string;
+  sub?: string;
+  userId?: string;
+}
+
+interface AuthenticatedRequest
+  extends Request {
+  user?: OmnixAuthenticatedUser;
+}
 
 interface AIUsage {
   promptTokens: number;
@@ -56,30 +79,30 @@ interface AIUsage {
 }
 
 /* =========================================================
-   OUTILS
+   TOKEN ESTIMATION
 ========================================================= */
 
-/**
- * Estimation simple du nombre de tokens.
- *
- * Ce n'est pas le tokenizer exact du modèle.
- * Cela sert uniquement à afficher une estimation
- * dans le Dashboard.
- */
-function estimateTokens(text: string): number {
+function estimateTokens(
+  text: string
+): number {
   if (!text) {
     return 0;
   }
 
-  return Math.ceil(text.length / 4);
+  return Math.ceil(
+    text.length / 4
+  );
 }
 
-/**
- * Vérifie si un fichier est protégé.
- */
-function isForbiddenFile(filePath: string): boolean {
-  const basename = path.basename(filePath);
-  const lowerName = basename.toLowerCase();
+/* =========================================================
+   SECRET PROTECTION
+========================================================= */
+
+function isForbiddenFile(
+  filePath: string
+): boolean {
+  const basename =
+    path.basename(filePath).toLowerCase();
 
   const forbiddenNames = [
     '.env',
@@ -96,11 +119,18 @@ function isForbiddenFile(filePath: string): boolean {
     'authorized_keys',
   ];
 
-  if (forbiddenNames.includes(lowerName)) {
+  if (
+    forbiddenNames.includes(
+      basename
+    )
+  ) {
     return true;
   }
 
-  const extension = path.extname(lowerName);
+  const extension =
+    path.extname(
+      basename
+    );
 
   const forbiddenExtensions = [
     '.pem',
@@ -109,57 +139,87 @@ function isForbiddenFile(filePath: string): boolean {
     '.pfx',
   ];
 
-  return forbiddenExtensions.includes(extension);
+  return forbiddenExtensions.includes(
+    extension
+  );
 }
 
-/**
- * Vérifie qu'un chemin reste dans le projet.
- */
-function resolveSafePath(requestedPath: string): string {
-  if (!requestedPath) {
-    throw new Error('Chemin de fichier manquant.');
+/* =========================================================
+   SAFE PATH
+========================================================= */
+
+function resolveSafePath(
+  requestedPath: string
+): string {
+  if (
+    typeof requestedPath !==
+      'string' ||
+    !requestedPath.trim()
+  ) {
+    throw new Error(
+      'Chemin de fichier manquant.'
+    );
   }
 
-  const normalized = requestedPath
-    .replace(/\\/g, '/')
-    .replace(/^\/+/g, '');
+  const normalized =
+    requestedPath
+      .replace(/\\/g, '/')
+      .replace(/^\/+/, '')
+      .trim();
 
-  const absolutePath = path.resolve(
-    PROJECT_ROOT,
-    normalized
-  );
+  const absolutePath =
+    path.resolve(
+      PROJECT_ROOT,
+      normalized
+    );
 
-  const relativePath = path.relative(
-    PROJECT_ROOT,
-    absolutePath
-  );
+  const relativePath =
+    path.relative(
+      PROJECT_ROOT,
+      absolutePath
+    );
 
   /*
-   * Empêche :
+   * Protection contre :
    *
    * ../../etc/passwd
    * /etc/passwd
+   * chemins sortant du projet
    */
   if (
-    relativePath.startsWith('..') ||
-    path.isAbsolute(relativePath)
+    relativePath === '..' ||
+    relativePath.startsWith(
+      `..${path.sep}`
+    ) ||
+    path.isAbsolute(
+      relativePath
+    )
   ) {
-    throw new Error('Accès au chemin interdit.');
+    throw new Error(
+      'Accès au chemin interdit.'
+    );
   }
 
-  if (isForbiddenFile(absolutePath)) {
-    throw new Error('Ce fichier est protégé.');
+  if (
+    isForbiddenFile(
+      absolutePath
+    )
+  ) {
+    throw new Error(
+      'Ce fichier est protégé.'
+    );
   }
 
   return absolutePath;
 }
 
-/**
- * Vérifie si le contenu ressemble à un secret.
- *
- * On ne transmet pas les secrets à l'IA.
- */
-function sanitizeContent(content: string): string {
+/* =========================================================
+   SANITIZE SECRETS
+========================================================= */
+
+function sanitizeContent(
+  content: string
+): string {
   const secretPatterns = [
     /sk-[A-Za-z0-9_-]+/g,
 
@@ -182,11 +242,17 @@ function sanitizeContent(content: string): string {
     /JWT_SECRET\s*=\s*[^\n]+/gi,
 
     /STRIPE_SECRET_KEY\s*=\s*[^\n]+/gi,
+
+    /CLIENT_SECRET\s*=\s*[^\n]+/gi,
+
+    /DISCORD_CLIENT_SECRET\s*=\s*[^\n]+/gi,
   ];
 
   let result = content;
 
-  for (const pattern of secretPatterns) {
+  for (
+    const pattern of secretPatterns
+  ) {
     result = result.replace(
       pattern,
       '[SECRET REDACTED]'
@@ -197,7 +263,7 @@ function sanitizeContent(content: string): string {
 }
 
 /* =========================================================
-   SCAN DU PROJET
+   PROJECT SCANNER
 ========================================================= */
 
 function scanDirectory(
@@ -218,17 +284,20 @@ function scanDirectory(
   let entries: fs.Dirent[];
 
   try {
-    entries = fs.readdirSync(
-      directory,
-      {
-        withFileTypes: true,
-      }
-    );
+    entries =
+      fs.readdirSync(
+        directory,
+        {
+          withFileTypes: true,
+        }
+      );
   } catch {
     return results;
   }
 
-  for (const entry of entries) {
+  for (
+    const entry of entries
+  ) {
     if (
       ignoredDirectories.includes(
         entry.name
@@ -237,25 +306,39 @@ function scanDirectory(
       continue;
     }
 
-    const fullPath = path.join(
-      directory,
-      entry.name
-    );
+    const fullPath =
+      path.join(
+        directory,
+        entry.name
+      );
 
-    if (isForbiddenFile(fullPath)) {
+    if (
+      isForbiddenFile(
+        fullPath
+      )
+    ) {
       continue;
     }
 
-    if (entry.isDirectory()) {
+    if (
+      entry.isDirectory()
+    ) {
       scanDirectory(
         fullPath,
         results
       );
-    } else {
-      const relativePath = path.relative(
-        PROJECT_ROOT,
-        fullPath
-      );
+
+      continue;
+    }
+
+    if (
+      entry.isFile()
+    ) {
+      const relativePath =
+        path.relative(
+          PROJECT_ROOT,
+          fullPath
+        );
 
       results.push(
         relativePath.replace(
@@ -270,78 +353,162 @@ function scanDirectory(
 }
 
 /* =========================================================
-   PROPRIÉTAIRE UNIQUEMENT
+   AUTHENTICATION
+========================================================= */
+
+/**
+ * Récupère l'utilisateur depuis la session OMNIX.
+ *
+ * Source unique :
+ *
+ * Authorization Bearer
+ *        OU
+ * cookie jwt_token
+ *
+ * Le parsing JWT reste centralisé dans auth.routes.ts.
+ */
+function authenticateRequest(
+  req: AuthenticatedRequest
+): boolean {
+  const token =
+    getRequestToken(req);
+
+  if (!token) {
+    return false;
+  }
+
+  const payload =
+    verifyJwt(token);
+
+  if (!payload) {
+    return false;
+  }
+
+  req.user =
+    payload as OmnixAuthenticatedUser;
+
+  return true;
+}
+
+/* =========================================================
+   USER ID
 ========================================================= */
 
 function getAuthenticatedUserId(
-  req: Request
+  req: AuthenticatedRequest
 ): string | null {
-  /*
-   * Cette partie s'adapte à ton système
-   * d'authentification existant.
-   */
+  const user =
+    req.user;
 
-  const user = (req as any).user;
-
-  if (user?.id) {
-    return String(user.id);
+  if (!user) {
+    return null;
   }
 
-  if (user?.discordId) {
-    return String(user.discordId);
+  const id =
+    user.id ??
+    user.discordId ??
+    user.userId ??
+    user.sub;
+
+  if (!id) {
+    return null;
   }
 
-  /*
-   * Compatibilité temporaire avec
-   * un éventuel cookie Discord.
-   */
-  const cookieId =
-    req.cookies?.discord_user_id;
-
-  if (cookieId) {
-    return String(cookieId);
-  }
-
-  return null;
+  return String(id);
 }
 
+/* =========================================================
+   OWNER CHECK
+========================================================= */
+
 function isOwner(
-  req: Request
+  req: AuthenticatedRequest
 ): boolean {
+  const ownerIds =
+    loadOwnerIds();
+
+  if (
+    ownerIds.length === 0
+  ) {
+    return false;
+  }
+
   const userId =
-    getAuthenticatedUserId(req);
+    getAuthenticatedUserId(
+      req
+    );
 
   if (!userId) {
     return false;
   }
 
-  return OWNER_IDS.includes(userId);
+  return ownerIds.includes(
+    userId
+  );
 }
 
+/* =========================================================
+   OWNER MIDDLEWARE
+========================================================= */
+
 function ownerOnly(
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): void {
-  if (OWNER_IDS.length === 0) {
+  /*
+   * Auth OMNIX obligatoire.
+   */
+  if (
+    !authenticateRequest(req)
+  ) {
+    res.status(401).json({
+      success: false,
+      error:
+        'Authentification requise.',
+      code:
+        'AUTH_REQUIRED',
+    });
+
+    return;
+  }
+
+  const ownerIds =
+    loadOwnerIds();
+
+  /*
+   * Mauvaise configuration serveur.
+   */
+  if (
+    ownerIds.length === 0
+  ) {
     console.error(
-      '[AI DEV] OWNER_IDS n\'est pas configuré.'
+      '[AI DEV] OWNER_IDS / OWNER_ID n\'est pas configuré.'
     );
 
     res.status(500).json({
       success: false,
       error:
         'La protection propriétaire n\'est pas configurée.',
+      code:
+        'OWNER_CONFIG_MISSING',
     });
 
     return;
   }
 
-  if (!isOwner(req)) {
+  /*
+   * Utilisateur connecté mais pas propriétaire.
+   */
+  if (
+    !isOwner(req)
+  ) {
     res.status(403).json({
       success: false,
       error:
         'Accès refusé. Cette console est réservée au propriétaire d\'OMNIX.',
+      code:
+        'OWNER_ONLY',
     });
 
     return;
@@ -351,13 +518,16 @@ function ownerOnly(
 }
 
 /* =========================================================
-   PAGE D'INFORMATIONS
+   STATUS
 ========================================================= */
 
 router.get(
   '/status',
   ownerOnly,
-  async (_req: Request, res: Response) => {
+  async (
+    _req: AuthenticatedRequest,
+    res: Response
+  ) => {
     try {
       const files =
         scanDirectory(
@@ -368,19 +538,33 @@ router.get(
         success: true,
 
         project: {
-          root: PROJECT_ROOT,
-          files: files.length,
+          root:
+            PROJECT_ROOT,
+
+          files:
+            files.length,
         },
 
         ai: {
-          provider: 'OpenRouter',
-          model: AI_MODEL,
-          status: 'online',
+          provider:
+            'OpenRouter',
+
+          model:
+            AI_MODEL,
+
+          status:
+            'online',
         },
 
         security: {
-          ownerOnly: true,
-          secretsProtected: true,
+          ownerOnly:
+            true,
+
+          secretsProtected:
+            true,
+
+          pathProtection:
+            true,
         },
       });
     } catch (error) {
@@ -399,22 +583,35 @@ router.get(
 );
 
 /* =========================================================
-   LISTE DES FICHIERS
+   FILES
 ========================================================= */
 
 router.get(
   '/files',
   ownerOnly,
-  async (_req: Request, res: Response) => {
+  async (
+    _req: AuthenticatedRequest,
+    res: Response
+  ) => {
     try {
       const files =
         scanDirectory(
           PROJECT_ROOT
         );
 
+      files.sort(
+        (a, b) =>
+          a.localeCompare(
+            b
+          )
+      );
+
       return res.json({
         success: true,
-        count: files.length,
+
+        count:
+          files.length,
+
         files,
       });
     } catch (error) {
@@ -433,17 +630,20 @@ router.get(
 );
 
 /* =========================================================
-   LIRE UN FICHIER
+   READ FILE
 ========================================================= */
 
 router.get(
   '/file',
   ownerOnly,
-  async (req: Request, res: Response) => {
+  async (
+    req: AuthenticatedRequest,
+    res: Response
+  ) => {
     try {
       const requestedPath =
         String(
-          req.query.path || ''
+          req.query.path ?? ''
         );
 
       const filePath =
@@ -460,6 +660,8 @@ router.get(
           success: false,
           error:
             'Fichier introuvable.',
+          code:
+            'FILE_NOT_FOUND',
         });
       }
 
@@ -468,11 +670,15 @@ router.get(
           filePath
         );
 
-      if (!stat.isFile()) {
+      if (
+        !stat.isFile()
+      ) {
         return res.status(400).json({
           success: false,
           error:
             'Ce chemin n\'est pas un fichier.',
+          code:
+            'NOT_A_FILE',
         });
       }
 
@@ -484,6 +690,8 @@ router.get(
           success: false,
           error:
             'Fichier trop volumineux. Limite : 2 Mo.',
+          code:
+            'FILE_TOO_LARGE',
         });
       }
 
@@ -520,29 +728,46 @@ router.get(
         error
       );
 
-      return res.status(500).json({
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Erreur lors de la lecture.';
+
+      const status =
+        message.includes(
+          'interdit'
+        ) ||
+        message.includes(
+          'protégé'
+        )
+          ? 403
+          : 400;
+
+      return res.status(
+        status
+      ).json({
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : 'Erreur lors de la lecture.',
+        error: message,
       });
     }
   }
 );
 
 /* =========================================================
-   RECHERCHE DANS LE PROJET
+   SEARCH
 ========================================================= */
 
 router.get(
   '/search',
   ownerOnly,
-  async (req: Request, res: Response) => {
+  async (
+    req: AuthenticatedRequest,
+    res: Response
+  ) => {
     try {
       const query =
         String(
-          req.query.q || ''
+          req.query.q ?? ''
         ).trim();
 
       if (!query) {
@@ -553,7 +778,9 @@ router.get(
         });
       }
 
-      if (query.length > 200) {
+      if (
+        query.length > 200
+      ) {
         return res.status(400).json({
           success: false,
           error:
@@ -572,6 +799,9 @@ router.get(
         content: string;
       }[] = [];
 
+      const lowerQuery =
+        query.toLowerCase();
+
       for (
         const relativeFile of files
       ) {
@@ -582,13 +812,10 @@ router.get(
           break;
         }
 
-        /*
-         * On recherche surtout dans
-         * les fichiers texte/code.
-         */
         if (
-          !/\.(ts|tsx|js|jsx|json|ejs|html|css|scss|md|txt|yml|yaml)$/i
-            .test(relativeFile)
+          !/\.(ts|tsx|js|jsx|json|ejs|html|css|scss|md|txt|yml|yaml)$/i.test(
+            relativeFile
+          )
         ) {
           continue;
         }
@@ -613,8 +840,9 @@ router.get(
             );
 
           if (
+            !stat.isFile() ||
             stat.size >
-            MAX_FILE_SIZE
+              MAX_FILE_SIZE
           ) {
             continue;
           }
@@ -642,7 +870,7 @@ router.get(
             lines[i]
               .toLowerCase()
               .includes(
-                query.toLowerCase()
+                lowerQuery
               )
           ) {
             results.push({
@@ -692,23 +920,31 @@ router.get(
 );
 
 /* =========================================================
-   CHAT IA
+   CHAT
 ========================================================= */
 
 router.post(
   '/chat',
   ownerOnly,
-  async (req: Request, res: Response) => {
+  async (
+    req: AuthenticatedRequest,
+    res: Response
+  ) => {
     try {
       const {
         message,
         context,
         files,
-      } = req.body;
+      } = req.body ?? {};
+
+      /* -----------------------------------------------
+         MESSAGE
+      ------------------------------------------------ */
 
       if (
-        !message ||
-        typeof message !== 'string'
+        typeof message !==
+          'string' ||
+        !message.trim()
       ) {
         return res.status(400).json({
           success: false,
@@ -719,7 +955,7 @@ router.post(
 
       if (
         message.length >
-        30000
+        MAX_CHAT_MESSAGE_LENGTH
       ) {
         return res.status(413).json({
           success: false,
@@ -728,151 +964,213 @@ router.post(
         });
       }
 
-      /*
-       * Contexte fourni par le Dashboard.
-       */
+      /* -----------------------------------------------
+         CONTEXT
+      ------------------------------------------------ */
+
       let safeContext =
-        typeof context === 'string'
+        typeof context ===
+        'string'
           ? context
           : '';
 
-      /*
-       * On protège également le contexte
-       * envoyé par le frontend.
-       */
       safeContext =
         sanitizeContent(
           safeContext
         );
 
-      /*
-       * Si des fichiers sont sélectionnés,
-       * on les lit côté serveur.
-       */
+      if (
+        safeContext.length >
+        MAX_CONTEXT_LENGTH
+      ) {
+        safeContext =
+          safeContext.slice(
+            0,
+            MAX_CONTEXT_LENGTH
+          ) +
+          '\n\n[CONTEXTE TRONQUÉ]';
+      }
+
+      /* -----------------------------------------------
+         FILE CONTEXT
+      ------------------------------------------------ */
+
       let filesContext = '';
 
-      if (
-        Array.isArray(files)
-      ) {
-        const selectedFiles =
-          files.slice(
-            0,
-            10
-          );
+      let totalFileContext =
+        0;
 
-        for (
-          const requestedFile
-          of selectedFiles
+      const selectedFiles =
+        Array.isArray(files)
+          ? files
+              .filter(
+                (
+                  file
+                ): file is string =>
+                  typeof file ===
+                  'string'
+              )
+              .slice(
+                0,
+                MAX_SELECTED_FILES
+              )
+          : [];
+
+      for (
+        const requestedFile of selectedFiles
+      ) {
+        if (
+          totalFileContext >=
+          MAX_TOTAL_FILE_CONTEXT
         ) {
+          break;
+        }
+
+        try {
+          const filePath =
+            resolveSafePath(
+              requestedFile
+            );
+
           if (
-            typeof requestedFile !==
-            'string'
+            !fs.existsSync(
+              filePath
+            )
           ) {
             continue;
           }
 
-          try {
-            const filePath =
-              resolveSafePath(
-                requestedFile
-              );
+          const stat =
+            fs.statSync(
+              filePath
+            );
 
-            if (
-              !fs.existsSync(
-                filePath
-              )
-            ) {
-              continue;
-            }
-
-            const stat =
-              fs.statSync(
-                filePath
-              );
-
-            if (
-              !stat.isFile() ||
-              stat.size >
+          if (
+            !stat.isFile() ||
+            stat.size >
               MAX_FILE_SIZE
-            ) {
-              continue;
-            }
-
-            const raw =
-              fs.readFileSync(
-                filePath,
-                'utf8'
-              );
-
-            const content =
-              sanitizeContent(
-                raw
-              );
-
-            filesContext +=
-              `\n\n===== ${requestedFile} =====\n\n` +
-              content;
-          } catch {
+          ) {
             continue;
           }
+
+          const raw =
+            fs.readFileSync(
+              filePath,
+              'utf8'
+            );
+
+          let content =
+            sanitizeContent(
+              raw
+            );
+
+          const remaining =
+            MAX_TOTAL_FILE_CONTEXT -
+            totalFileContext;
+
+          if (
+            content.length >
+            remaining
+          ) {
+            content =
+              content.slice(
+                0,
+                remaining
+              ) +
+              '\n\n[CONTENU TRONQUÉ]';
+          }
+
+          filesContext +=
+            `\n\n===== ${requestedFile} =====\n\n` +
+            content;
+
+          totalFileContext +=
+            content.length;
+        } catch {
+          continue;
         }
       }
+
+      /* -----------------------------------------------
+         SYSTEM PROMPT
+      ------------------------------------------------ */
 
       const systemPrompt = `
 Tu es OMNIX AI DEV.
 
 Tu es l'assistant privé de développement
-du propriétaire de la plateforme OMNIX.
+de la plateforme OMNIX.
 
-Tu aides à développer, analyser,
-corriger, tester et améliorer OMNIX.
+Tu aides le propriétaire à analyser,
+corriger, tester, maintenir et améliorer
+le projet OMNIX existant.
 
 =============================
 RÈGLES DE SÉCURITÉ
 =============================
 
-- Tu ne dois jamais révéler de secrets.
-- Tu ne dois jamais afficher une clé API.
-- Tu ne dois jamais afficher un token Discord.
-- Tu ne dois jamais afficher un mot de passe.
-- Les secrets éventuellement présents
-  dans les fichiers sont masqués.
-- Tu ne dois jamais prétendre avoir modifié
-  un fichier si aucune modification réelle
-  n'a été effectuée.
-- Tu dois signaler clairement ce que tu sais
-  et ce que tu ne sais pas.
-- Analyse toujours le code fourni avant
-  de proposer une modification.
+- Ne révèle jamais de secret.
+- Ne révèle jamais de clé API.
+- Ne révèle jamais de token Discord.
+- Ne révèle jamais de mot de passe.
+- Les secrets présents dans les fichiers
+  sont masqués avant ton analyse.
+- Ne prétends jamais avoir modifié un fichier
+  si aucune modification réelle n'a été effectuée.
+- Ne prétends jamais avoir exécuté un test
+  si aucun test n'a réellement été exécuté.
+- N'invente aucune API, route, fonction,
+  fichier ou dépendance.
+- Analyse le code réellement fourni.
+- Préserve les fonctionnalités existantes.
+- Ne propose pas une réécriture complète
+  lorsque le problème peut être corrigé
+  localement.
 
 =============================
-RÈGLES DE DÉVELOPPEMENT
+RÈGLES OMNIX
 =============================
 
-Lorsque tu proposes une modification,
-indique :
+OMNIX est un projet existant.
 
-1. Le fichier concerné.
-2. Le problème actuel.
-3. La modification proposée.
-4. Le code à modifier.
-5. Les éventuelles conséquences.
-6. Les tests à effectuer.
+Tu dois donc :
 
-Ne détruis jamais une fonctionnalité existante
-sans expliquer pourquoi.
+1. Comprendre l'architecture actuelle.
+2. Identifier le fichier réellement concerné.
+3. Identifier la cause du problème.
+4. Proposer une correction compatible
+   avec le code existant.
+5. Préserver les systèmes déjà fonctionnels.
+6. Signaler les dépendances entre fichiers.
+
+Lorsqu'une modification est nécessaire,
+présente :
+
+1. Fichier concerné.
+2. Problème.
+3. Cause.
+4. Correction.
+5. Code.
+6. Impact.
+7. Tests à effectuer.
 
 =============================
 CONTEXTE
 =============================
 
-${safeContext || 'Aucun contexte supplémentaire.'}
+${
+  safeContext ||
+  'Aucun contexte supplémentaire.'
+}
 
 =============================
 FICHIERS FOURNIS
 =============================
 
-${filesContext || 'Aucun fichier sélectionné.'}
+${
+  filesContext ||
+  'Aucun fichier sélectionné.'
+}
 `;
 
       const prompt = `
@@ -882,15 +1180,16 @@ ${systemPrompt}
 DEMANDE DU PROPRIÉTAIRE
 =============================
 
-${message}
+${message.trim()}
 `;
+
+      /* -----------------------------------------------
+         AI CALL
+      ------------------------------------------------ */
 
       const startTime =
         Date.now();
 
-      /*
-       * Estimation avant appel.
-       */
       const promptTokens =
         estimateTokens(
           prompt
@@ -905,25 +1204,22 @@ ${message}
         Date.now() -
         startTime;
 
-      /*
-       * Estimation de sortie.
-       */
+      const safeAnswer =
+        typeof answer ===
+        'string'
+          ? sanitizeContent(
+              answer
+            )
+          : String(answer);
+
       const completionTokens =
         estimateTokens(
-          answer
+          safeAnswer
         );
 
       const totalTokens =
         promptTokens +
         completionTokens;
-
-      /*
-       * Le modèle FREE est normalement
-       * sans coût API, mais on garde le champ
-       * pour le Dashboard.
-       */
-      const estimatedCost =
-        0;
 
       const usage: AIUsage = {
         promptTokens,
@@ -932,7 +1228,8 @@ ${message}
 
         totalTokens,
 
-        estimatedCost,
+        estimatedCost:
+          0,
 
         duration,
 
@@ -943,7 +1240,8 @@ ${message}
       return res.json({
         success: true,
 
-        answer,
+        answer:
+          safeAnswer,
 
         usage,
       });
@@ -966,13 +1264,16 @@ ${message}
 );
 
 /* =========================================================
-   ANALYSE DE L'ARCHITECTURE
+   ARCHITECTURE
 ========================================================= */
 
 router.get(
   '/architecture',
   ownerOnly,
-  async (_req: Request, res: Response) => {
+  async (
+    _req: AuthenticatedRequest,
+    res: Response
+  ) => {
     try {
       const files =
         scanDirectory(
@@ -983,7 +1284,7 @@ router.get(
         typescript:
           files.filter(
             (file) =>
-              /\.(ts|tsx)$/.test(
+              /\.(ts|tsx)$/i.test(
                 file
               )
           ).length,
@@ -991,7 +1292,7 @@ router.get(
         javascript:
           files.filter(
             (file) =>
-              /\.(js|jsx)$/.test(
+              /\.(js|jsx)$/i.test(
                 file
               )
           ).length,
@@ -999,7 +1300,7 @@ router.get(
         views:
           files.filter(
             (file) =>
-              /\.(ejs|html)$/.test(
+              /\.(ejs|html)$/i.test(
                 file
               )
           ).length,
@@ -1007,7 +1308,7 @@ router.get(
         styles:
           files.filter(
             (file) =>
-              /\.(css|scss)$/.test(
+              /\.(css|scss)$/i.test(
                 file
               )
           ).length,
@@ -1015,7 +1316,7 @@ router.get(
         json:
           files.filter(
             (file) =>
-              /\.json$/.test(
+              /\.json$/i.test(
                 file
               )
           ).length,
