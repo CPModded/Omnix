@@ -4,98 +4,149 @@ import express, {
   type Response,
   type NextFunction,
 } from 'express';
+
 import path from 'node:path';
 import fs from 'node:fs';
+
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+
 import authRouter, {
   getRequestToken,
   verifyJwt,
   isOwner,
 } from './routes/auth.routes.ts';
+
 import guildRoutes from './routes/guild.routes.ts';
 import statsRouter from './routes/stats.routes.ts';
 import adminRouter from './routes/admin.routes.ts';
-import pricingRoutes from "./routes/pricing.routes.ts";
+import pricingRoutes from './routes/pricing.routes.ts';
 import aiDevRoutes from './routes/ai-dev.routes.ts';
 import backupRoutes from './routes/backup.routes.ts';
 import guildConfigRoutes from './routes/guildConfig.routes.ts';
 import paymentRoutes from './routes/payment.routes.ts';
 import licenseRoutes from './routes/license.routes.ts';
+
 import { isAuthenticated } from './middlewares/auth.ts';
-/* =========================================================
-   OMNIX — EXPRESS APPLICATION
-========================================================= */
-/* =========================================================
-   PROJECT PATH
-========================================================= */
+
+/*
+ * =========================================================
+ * OMNIX — EXPRESS APPLICATION
+ * =========================================================
+ *
+ * AUTHENTIFICATION :
+ *
+ *     jwt_token
+ *
+ * Le JWT est stocké uniquement dans le cookie httpOnly.
+ *
+ * Les pages WEB utilisent :
+ *
+ *     requireAuthentication()
+ *
+ * Les API utilisent :
+ *
+ *     isAuthenticated()
+ *
+ * Les deux utilisent exactement le même système de session.
+ * =========================================================
+ */
+
+const app: Express = express();
+
+/*
+ * =========================================================
+ * PROJECT ROOT
+ * =========================================================
+ */
+
 const PROJECT_ROOT =
   process.cwd();
-/* =========================================================
-   POSSIBLE VIEWS DIRECTORIES
-========================================================= */
+
+/*
+ * =========================================================
+ * POSSIBLE VIEWS DIRECTORIES
+ * =========================================================
+ */
+
 const POSSIBLE_VIEWS = [
   path.join(
     PROJECT_ROOT,
     'views',
   ),
+
   path.join(
     PROJECT_ROOT,
     'src',
     'dashboard',
     'views',
   ),
+
   path.join(
     PROJECT_ROOT,
     'dist',
     'dashboard',
     'views',
   ),
+
   path.join(
     PROJECT_ROOT,
     'src',
     'views',
   ),
+
   path.join(
     PROJECT_ROOT,
     'dist',
     'views',
   ),
 ];
-/* =========================================================
-   POSSIBLE PUBLIC DIRECTORIES
-========================================================= */
+
+/*
+ * =========================================================
+ * POSSIBLE PUBLIC DIRECTORIES
+ * =========================================================
+ */
+
 const POSSIBLE_PUBLIC = [
   path.join(
     PROJECT_ROOT,
     'public',
   ),
+
   path.join(
     PROJECT_ROOT,
     'src',
     'dashboard',
     'public',
   ),
+
   path.join(
     PROJECT_ROOT,
     'dist',
     'dashboard',
     'public',
   ),
+
   path.join(
     PROJECT_ROOT,
     'src',
     'public',
   ),
+
   path.join(
     PROJECT_ROOT,
     'dist',
     'public',
   ),
 ];
-/* =========================================================
-   FIND EXISTING DIRECTORY
-========================================================= */
+
+/*
+ * =========================================================
+ * FIND EXISTING DIRECTORY
+ * =========================================================
+ */
+
 function findExistingDirectory(
   directories: string[],
 ): string {
@@ -117,11 +168,16 @@ function findExistingDirectory(
       // Ignore inaccessible directories.
     }
   }
+
   return directories[0];
 }
-/* =========================================================
-   FIND VIEW
-========================================================= */
+
+/*
+ * =========================================================
+ * FIND VIEW
+ * =========================================================
+ */
+
 function findView(
   viewName: string,
 ): string | null {
@@ -129,15 +185,8 @@ function findView(
     viewName.endsWith('.ejs')
       ? viewName
       : `${viewName}.ejs`;
-  const viewsDirectory =
-    findExistingDirectory(
-      POSSIBLE_VIEWS,
-    );
+
   const possiblePaths = [
-    path.join(
-      viewsDirectory,
-      normalized,
-    ),
     ...POSSIBLE_VIEWS.map(
       (directory) =>
         path.join(
@@ -146,6 +195,7 @@ function findView(
         ),
     ),
   ];
+
   for (
     const viewPath of possiblePaths
   ) {
@@ -164,11 +214,16 @@ function findView(
       // Ignore invalid paths.
     }
   }
+
   return null;
 }
-/* =========================================================
-   FIND PUBLIC FILE
-========================================================= */
+
+/*
+ * =========================================================
+ * FIND PUBLIC FILE
+ * =========================================================
+ */
+
 function findPublicFile(
   fileName: string,
 ): string | null {
@@ -176,6 +231,7 @@ function findPublicFile(
     fileName
       .replace(/^\/+/, '')
       .replace(/\.\./g, '');
+
   for (
     const directory of POSSIBLE_PUBLIC
   ) {
@@ -184,6 +240,7 @@ function findPublicFile(
         directory,
         cleanName,
       );
+
     try {
       if (
         fs.existsSync(
@@ -199,41 +256,49 @@ function findPublicFile(
       // Ignore.
     }
   }
+
   return null;
 }
-/* =========================================================
-   EXPRESS
-========================================================= */
-const app: Express =
-  express();
-/* =========================================================
-   BASIC CONFIGURATION
-========================================================= */
+
+/*
+ * =========================================================
+ * BASIC CONFIGURATION
+ * =========================================================
+ */
+
 app.set(
   'trust proxy',
   1,
 );
+
 app.disable(
   'x-powered-by',
 );
-/* =========================================================
-   SECURITY
-========================================================= */
+
+/*
+ * =========================================================
+ * SECURITY
+ * =========================================================
+ */
+
 app.use(
   helmet({
     contentSecurityPolicy:
       false,
+
     crossOriginEmbedderPolicy:
       false,
+
     crossOriginResourcePolicy:
       false,
   }),
 );
-/* =========================================================
-   BODY PARSERS
-========================================================= */
 
-app.use("/api/pricing", pricingRoutes);
+/*
+ * =========================================================
+ * BODY PARSERS
+ * =========================================================
+ */
 
 app.use(
   express.json({
@@ -241,38 +306,69 @@ app.use(
       '10mb',
   }),
 );
+
 app.use(
   express.urlencoded({
     extended:
       true,
+
     limit:
       '10mb',
   }),
 );
-/* =========================================================
-   COOKIES
-========================================================= */
+
+/*
+ * =========================================================
+ * COOKIES
+ * =========================================================
+ *
+ * IMPORTANT :
+ *
+ * cookieParser() doit être chargé AVANT
+ * toutes les routes qui utilisent req.cookies.
+ *
+ * Cela est indispensable pour :
+ *
+ *     /api/auth/me
+ *     /api/auth/guilds
+ *     /api/ai-dev
+ *     /dashboard
+ *     /admin
+ *
+ * =========================================================
+ */
+
 app.use(
   cookieParser(),
 );
-/* =========================================================
-   EJS
-========================================================= */
+
+/*
+ * =========================================================
+ * EJS
+ * =========================================================
+ */
+
 const viewsDirectory =
   findExistingDirectory(
     POSSIBLE_VIEWS,
   );
+
 app.set(
   'view engine',
   'ejs',
 );
+
 app.set(
   'views',
   viewsDirectory,
 );
-/* =========================================================
-   STATIC FILES
-========================================================= */
+
+/*
+ * =========================================================
+ * STATIC FILES
+ * =========================================================
+ */
+
 for (
   const publicDirectory of POSSIBLE_PUBLIC
 ) {
@@ -294,6 +390,7 @@ for (
               'production'
                 ? '1h'
                 : 0,
+
             fallthrough:
               true,
           },
@@ -301,17 +398,16 @@ for (
       );
     }
   } catch {
-    // Ignore invalid public directories.
+    // Ignore invalid directories.
   }
 }
-/* =========================================================
-   LOGO FALLBACK
-========================================================= */
+
 /*
- * Permet à /logo.png de fonctionner même si
- * le fichier est situé dans un des différents
- * dossiers utilisés par OMNIX.
+ * =========================================================
+ * LOGO FALLBACK
+ * =========================================================
  */
+
 app.get(
   '/logo.png',
   (
@@ -323,17 +419,23 @@ app.get(
       findPublicFile(
         'logo.png',
       );
+
     if (!logo) {
       return next();
     }
+
     return res.sendFile(
       logo,
     );
   },
 );
-/* =========================================================
-   API CACHE CONTROL
-========================================================= */
+
+/*
+ * =========================================================
+ * API CACHE CONTROL
+ * =========================================================
+ */
+
 app.use(
   '/api',
   (
@@ -345,97 +447,179 @@ app.use(
       'Cache-Control',
       'no-store, no-cache, must-revalidate, proxy-revalidate',
     );
+
     res.setHeader(
       'Pragma',
       'no-cache',
     );
+
     res.setHeader(
       'Expires',
       '0',
     );
+
     next();
   },
 );
-/* =========================================================
-   AUTH MIDDLEWARE
-========================================================= */
-/**
- * Vérifie uniquement que l'utilisateur possède
- * une session OMNIX valide.
+
+/*
+ * =========================================================
+ * WEB AUTHENTICATION
+ * =========================================================
+ *
+ * IMPORTANT FIX
+ *
+ * L'ancien système redirigeait systématiquement
+ * vers "/" lorsqu'une page protégée ne trouvait
+ * pas le JWT.
+ *
+ * Maintenant :
+ *
+ *     /dashboard
+ *     /admin
+ *     /mon-espace
+ *
+ * redirigent vers :
+ *
+ *     /api/auth/login
+ *
+ * et non vers la page d'accueil.
+ *
+ * =========================================================
  */
+
 function requireAuthentication(
   req: Request,
   res: Response,
   next: NextFunction,
 ) {
   const token =
-    getRequestToken(
-      req,
-    );
+    getRequestToken(req);
+
+  /*
+   * Pas de session.
+   */
+
   if (!token) {
+    console.warn(
+      `[Auth] Session absente : ${req.method} ${req.originalUrl}`,
+    );
+
     /*
      * API → JSON
      */
+
     if (
-      req.path.startsWith(
-        '/api',
-      )
+      req.path.startsWith('/api')
     ) {
       return res
         .status(401)
         .json({
           success:
             false,
+
           error:
             'Authentification requise.',
+
           code:
             'AUTH_REQUIRED',
         });
     }
+
+    /*
+     * Page web → connexion Discord
+     */
+
     return res.redirect(
-      '/',
+      '/api/auth/login',
     );
   }
+
+  /*
+   * Vérification JWT.
+   */
+
   const payload =
-    verifyJwt(
-      token,
-    );
+    verifyJwt(token);
+
   if (!payload) {
+    console.warn(
+      `[Auth] JWT invalide : ${req.method} ${req.originalUrl}`,
+    );
+
+    /*
+     * API → JSON
+     */
+
     if (
-      req.path.startsWith(
-        '/api',
-      )
+      req.path.startsWith('/api')
     ) {
       return res
         .status(401)
         .json({
           success:
             false,
+
           error:
             'Session invalide ou expirée.',
+
           code:
             'AUTH_INVALID',
         });
     }
+
+    /*
+     * Session invalide :
+     * on supprime le cookie.
+     */
+
+    res.clearCookie(
+      'jwt_token',
+      {
+        httpOnly:
+          true,
+
+        secure:
+          process.env.NODE_ENV ===
+          'production',
+
+        sameSite:
+          'lax',
+
+        path:
+          '/',
+      },
+    );
+
+    /*
+     * Puis nouvelle connexion Discord.
+     */
+
     return res.redirect(
-      '/',
+      '/api/auth/login',
     );
   }
+
   /*
-   * On expose l'utilisateur
-   * au reste de la requête.
+   * Expose le JWT décodé à la requête.
    */
+
   (
     req as Request & {
       user?: typeof payload;
     }
   ).user =
     payload;
+
   return next();
 }
-/* =========================================================
-   GUILD ACCESS MIDDLEWARE
-========================================================= */
+
+/*
+ * =========================================================
+ * GUILD ACCESS
+ * =========================================================
+ */
+
 async function requireGuildAccess(
   req: Request,
   res: Response,
@@ -450,72 +634,84 @@ async function requireGuildAccess(
           };
         }
       ).user;
-    if (!user?.discordId) {
+
+    if (
+      !user?.discordId
+    ) {
       return res.redirect(
-        '/',
+        '/api/auth/login',
       );
     }
+
     const guildId =
       String(
         req.params.guildId ||
         '',
       ).trim();
+
     if (!guildId) {
       return res.redirect(
         '/dashboard',
       );
     }
+
     /*
-     * Pour les routes de page,
-     * on utilise le router guilds / User
-     * indirectement via l'API.
-     *
-     * Ici on vérifie simplement que le JWT
-     * appartient bien à un utilisateur OMNIX.
+     * Import dynamique pour éviter
+     * les dépendances circulaires.
      */
+
     const { User } =
       await import(
         '../models/User.ts'
       );
+
     const dbUser =
       await User.findOne({
         discordId:
           user.discordId,
       }).lean();
+
     if (!dbUser) {
       return res.redirect(
-        '/',
+        '/api/auth/login',
       );
     }
+
     const guilds =
       Array.isArray(
         (dbUser as any).guilds,
       )
         ? (dbUser as any).guilds
         : [];
+
     const guild =
       guilds.find(
         (item: any) =>
-          String(item.id) ===
+          String(item?.id) ===
           guildId,
       );
+
     if (!guild) {
-      return res.status(
-        403,
-      ).send(
-        'Vous n’avez pas accès à ce serveur.',
-      );
+      return res
+        .status(403)
+        .send(
+          'Vous n’avez pas accès à ce serveur.',
+        );
     }
+
     /*
-     * Administrateur ou propriétaire.
+     * Discord Administrator.
      */
+
     const permissions =
       String(
         guild.permissions ||
         '0',
       );
+
     let administrator =
       false;
+
     try {
       administrator =
         (
@@ -531,6 +727,12 @@ async function requireGuildAccess(
       administrator =
         false;
     }
+
+    /*
+     * Owner du serveur
+     * OU owner OMNIX.
+     */
+
     const owner =
       Boolean(
         guild.owner,
@@ -538,38 +740,46 @@ async function requireGuildAccess(
       isOwner(
         user.discordId,
       );
+
     if (
       !administrator &&
       !owner
     ) {
-      return res.status(
-        403,
-      ).send(
-        'Vous devez être propriétaire ou administrateur de ce serveur.',
-      );
+      return res
+        .status(403)
+        .send(
+          'Vous devez être propriétaire ou administrateur de ce serveur.',
+        );
     }
+
     (
       req as Request & {
         guild?: any;
       }
     ).guild =
       guild;
+
     return next();
   } catch (error) {
     console.error(
       '[Web] Erreur accès guild :',
       error,
     );
-    return res.status(
-      500,
-    ).send(
-      'Impossible de vérifier l’accès au serveur.',
-    );
+
+    return res
+      .status(500)
+      .send(
+        'Impossible de vérifier l’accès au serveur.',
+      );
   }
 }
-/* =========================================================
-   HEALTH
-========================================================= */
+
+/*
+ * =========================================================
+ * HEALTH
+ * =========================================================
+ */
+
 app.get(
   '/health',
   (
@@ -579,75 +789,142 @@ app.get(
     return res.json({
       success:
         true,
+
       service:
         'OMNIX',
+
       status:
         'online',
+
       timestamp:
         new Date().toISOString(),
     });
   },
 );
-/* =========================================================
-   API ROUTES
-========================================================= */
+
 /*
- * AUTH
+ * =========================================================
+ * AUTH ROUTES
+ * =========================================================
  *
- * /api/auth/...
+ * /api/auth/login
+ * /api/auth/callback
+ * /api/auth/me
+ * /api/auth/guilds
+ * /api/auth/logout
+ *
+ * IMPORTANT :
+ *
+ * authRouter est monté AVANT les routes
+ * qui nécessitent une authentification.
+ *
+ * =========================================================
  */
+
 app.use(
   '/api/auth',
   authRouter,
 );
+
 /*
- * GUILDS
- *
- * /api/guilds
- * /api/guilds/:guildId
- * /api/guilds/:guildId/channels
- * /api/guilds/:guildId/roles
- * /api/guilds/:guildId/invite
+ * =========================================================
+ * GUILD API
+ * =========================================================
  */
+
 app.use(
   '/api/guilds',
   guildRoutes,
 );
+
 /*
- * STATS
- *
- * stats.routes.ts :
- *
- * /stats
- * /stats/health
- *
- * Monté sur /api :
- *
- * /api/stats
- * /api/stats/health
+ * =========================================================
+ * STATS API
+ * =========================================================
  */
+
 app.use(
   '/api',
   statsRouter,
 );
+
 /*
+ * =========================================================
  * ADMIN API
+ * =========================================================
  */
+
 app.use(
   '/api/admin',
   adminRouter,
 );
-/* =========================================================
-   ADDITIONAL API ROUTES
-========================================================= */
-app.use('/api/ai-dev', isAuthenticated as any, aiDevRoutes);
-app.use('/api/guilds', backupRoutes);
-app.use('/api/guilds', guildConfigRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/licenses', licenseRoutes);
-/* =========================================================
-   HOME
-========================================================= */
+
+/*
+ * =========================================================
+ * PRICING API
+ * =========================================================
+ */
+
+app.use(
+  '/api/pricing',
+  pricingRoutes,
+);
+
+/*
+ * =========================================================
+ * AI DEV API
+ * =========================================================
+ *
+ * IMPORTANT FIX
+ *
+ * L'API AI-DEV utilise le même middleware
+ * d'authentification que le reste d'OMNIX.
+ *
+ * Cookie :
+ *
+ *     jwt_token
+ *
+ * =========================================================
+ */
+
+app.use(
+  '/api/ai-dev',
+  isAuthenticated as any,
+  aiDevRoutes,
+);
+
+/*
+ * =========================================================
+ * ADDITIONAL API ROUTES
+ * =========================================================
+ */
+
+app.use(
+  '/api/guilds',
+  backupRoutes,
+);
+
+app.use(
+  '/api/guilds',
+  guildConfigRoutes,
+);
+
+app.use(
+  '/api/payments',
+  paymentRoutes,
+);
+
+app.use(
+  '/api/licenses',
+  licenseRoutes,
+);
+
+/*
+ * =========================================================
+ * HOME
+ * =========================================================
+ */
+
 app.get(
   '/',
   (
@@ -658,13 +935,15 @@ app.get(
       findView(
         'index',
       );
+
     if (!view) {
-      return res.status(
-        500,
-      ).send(
-        'La page d’accueil OMNIX est introuvable.',
-      );
+      return res
+        .status(500)
+        .send(
+          'La page d’accueil OMNIX est introuvable.',
+        );
     }
+
     try {
       return res.render(
         'index',
@@ -674,17 +953,22 @@ app.get(
         '[Web] Erreur rendu / :',
         error,
       );
-      return res.status(
-        500,
-      ).send(
-        'Erreur lors du chargement de la page.',
-      );
+
+      return res
+        .status(500)
+        .send(
+          'Erreur lors du chargement de la page.',
+        );
     }
   },
 );
-/* =========================================================
-   DASHBOARD
-========================================================= */
+
+/*
+ * =========================================================
+ * DASHBOARD
+ * =========================================================
+ */
+
 app.get(
   '/dashboard',
   requireAuthentication,
@@ -697,22 +981,26 @@ app.get(
         findView(
           'dashboard',
         );
+
       if (!view) {
-        return res.status(
-          500,
-        ).send(
-          'La page Dashboard OMNIX est introuvable.',
-        );
+        return res
+          .status(500)
+          .send(
+            'La page Dashboard OMNIX est introuvable.',
+          );
       }
+
       const user =
         (
           req as Request & {
             user?: any;
           }
         ).user;
+
       console.log(
-        '[Web] GET /dashboard',
+        `[Web] GET /dashboard | user=${user?.discordId ?? 'unknown'}`,
       );
+
       return res.render(
         'dashboard',
         {
@@ -724,17 +1012,22 @@ app.get(
         '[Web] Erreur rendu /dashboard :',
         error,
       );
-      return res.status(
-        500,
-      ).send(
-        'Erreur lors du chargement du Dashboard OMNIX.',
-      );
+
+      return res
+        .status(500)
+        .send(
+          'Erreur lors du chargement du Dashboard OMNIX.',
+        );
     }
   },
 );
-/* =========================================================
-   DASHBOARD — GUILD
-========================================================= */
+
+/*
+ * =========================================================
+ * DASHBOARD — GUILD
+ * =========================================================
+ */
+
 app.get(
   '/dashboard/:guildId',
   requireAuthentication,
@@ -748,37 +1041,44 @@ app.get(
         findView(
           'dashboard',
         );
+
       if (!view) {
-        return res.status(
-          500,
-        ).send(
-          'La page Dashboard OMNIX est introuvable.',
-        );
+        return res
+          .status(500)
+          .send(
+            'La page Dashboard OMNIX est introuvable.',
+          );
       }
+
       const user =
         (
           req as Request & {
             user?: any;
           }
         ).user;
+
       const guildId =
         String(
           req.params.guildId,
         );
+
+      const guild =
+        (
+          req as Request & {
+            guild?: any;
+          }
+        ).guild;
+
       console.log(
-        `[Web] GET /dashboard/${guildId}`,
+        `[Web] GET /dashboard/${guildId} | user=${user?.discordId ?? 'unknown'}`,
       );
+
       return res.render(
         'dashboard',
         {
           user,
           guildId,
-          guild:
-            (
-              req as Request & {
-                guild?: any;
-              }
-            ).guild,
+          guild,
         },
       );
     } catch (error) {
@@ -786,17 +1086,131 @@ app.get(
         '[Web] Erreur dashboard guild :',
         error,
       );
-      return res.status(
-        500,
-      ).send(
-        'Erreur lors du chargement de la configuration serveur.',
-      );
+
+      return res
+        .status(500)
+        .send(
+          'Erreur lors du chargement de la configuration serveur.',
+        );
     }
   },
 );
-/* =========================================================
-   PREMIUM
-========================================================= */
+
+/*
+ * =========================================================
+ * MON ESPACE
+ * =========================================================
+ *
+ * OMNIX peut utiliser plusieurs noms de route
+ * côté frontend.
+ *
+ * Toutes ces routes utilisent maintenant
+ * le même système de session.
+ *
+ * =========================================================
+ */
+
+const renderAccountPage = (
+  req: Request,
+  res: Response,
+) => {
+  const viewCandidates = [
+    'account',
+    'mon-espace',
+    'my-space',
+    'profile',
+  ];
+
+  let viewName:
+    string | null = null;
+
+  for (
+    const candidate of viewCandidates
+  ) {
+    if (
+      findView(candidate)
+    ) {
+      viewName =
+        candidate;
+      break;
+    }
+  }
+
+  /*
+   * Si aucune vue spécifique n'existe,
+   * on utilise le dashboard.
+   *
+   * Cela évite le retour silencieux vers "/".
+   */
+
+  if (!viewName) {
+    viewName =
+      'dashboard';
+  }
+
+  try {
+    const user =
+      (
+        req as Request & {
+          user?: any;
+        }
+      ).user;
+
+    return res.render(
+      viewName,
+      {
+        user,
+      },
+    );
+  } catch (error) {
+    console.error(
+      '[Web] Erreur Mon Espace :',
+      error,
+    );
+
+    return res
+      .status(500)
+      .send(
+        'Erreur lors du chargement de votre espace OMNIX.',
+      );
+  }
+};
+
+/*
+ * Plusieurs aliases sont volontairement
+ * supportés pour ne pas casser le frontend.
+ */
+
+app.get(
+  '/mon-espace',
+  requireAuthentication,
+  renderAccountPage,
+);
+
+app.get(
+  '/my-space',
+  requireAuthentication,
+  renderAccountPage,
+);
+
+app.get(
+  '/account',
+  requireAuthentication,
+  renderAccountPage,
+);
+
+app.get(
+  '/profile',
+  requireAuthentication,
+  renderAccountPage,
+);
+
+/*
+ * =========================================================
+ * PREMIUM
+ * =========================================================
+ */
+
 app.get(
   '/premium',
   (
@@ -807,6 +1221,7 @@ app.get(
       findView(
         'premium',
       );
+
     if (!view) {
       return res
         .status(404)
@@ -814,14 +1229,19 @@ app.get(
           'Page Premium indisponible.',
         );
     }
+
     return res.render(
       'premium',
     );
   },
 );
-/* =========================================================
-   PRICING
-========================================================= */
+
+/*
+ * =========================================================
+ * PRICING
+ * =========================================================
+ */
+
 app.get(
   '/pricing',
   (
@@ -832,6 +1252,7 @@ app.get(
       findView(
         'pricing',
       );
+
     if (!view) {
       return res
         .status(404)
@@ -839,14 +1260,19 @@ app.get(
           'Page Pricing indisponible.',
         );
     }
+
     return res.render(
       'pricing',
     );
   },
 );
-/* =========================================================
-   SUPPORT
-========================================================= */
+
+/*
+ * =========================================================
+ * SUPPORT
+ * =========================================================
+ */
+
 app.get(
   '/support',
   (
@@ -857,6 +1283,7 @@ app.get(
       findView(
         'support',
       );
+
     if (!view) {
       return res
         .status(404)
@@ -864,14 +1291,19 @@ app.get(
           'Page Support indisponible.',
         );
     }
+
     return res.render(
       'support',
     );
   },
 );
-/* =========================================================
-   FOUNDER
-========================================================= */
+
+/*
+ * =========================================================
+ * FOUNDER
+ * =========================================================
+ */
+
 app.get(
   '/founder',
   (
@@ -882,6 +1314,7 @@ app.get(
       findView(
         'founder',
       );
+
     if (!view) {
       return res
         .status(404)
@@ -889,21 +1322,31 @@ app.get(
           'Page Founder indisponible.',
         );
     }
+
     return res.render(
       'founder',
       {
         founder: {
-          name: 'OMNIX',
-          description: 'Créateur et développeur de la plateforme OMNIX.',
-          officialServer: 'https://discord.gg/naBuatEBJ5',
+          name:
+            'OMNIX',
+
+          description:
+            'Créateur et développeur de la plateforme OMNIX.',
+
+          officialServer:
+            'https://discord.gg/naBuatEBJ5',
         },
       },
     );
   },
 );
-/* =========================================================
-   LEARN MORE
-========================================================= */
+
+/*
+ * =========================================================
+ * LEARN MORE
+ * =========================================================
+ */
+
 app.get(
   '/learn-more',
   (
@@ -914,6 +1357,7 @@ app.get(
       findView(
         'learn-more',
       );
+
     if (!view) {
       return res
         .status(404)
@@ -921,23 +1365,32 @@ app.get(
           'Page indisponible.',
         );
     }
+
     return res.render(
       'learn-more',
     );
   },
 );
-/* =========================================================
-   AI DEV
-========================================================= */
+
 /*
- * IMPORTANT :
+ * =========================================================
+ * AI DEV PAGE
+ * =========================================================
  *
- * Si ai-dev.ejs n'existe pas,
- * on ne fait PAS un res.render()
- * qui déclenche une erreur globale.
+ * La page elle-même reste accessible.
+ *
+ * Les appels à :
+ *
+ *     /api/ai-dev/*
+ *
+ * sont protégés séparément.
+ *
+ * =========================================================
  */
+
 app.get(
   '/ai-dev',
+  requireAuthentication,
   (
     req: Request,
     res: Response,
@@ -946,6 +1399,7 @@ app.get(
       findView(
         'ai-dev',
       );
+
     if (!view) {
       return res
         .status(404)
@@ -953,15 +1407,27 @@ app.get(
           'La page AI Dev n’est pas disponible sur cette version d’OMNIX.',
         );
     }
+
     try {
+      const user =
+        (
+          req as Request & {
+            user?: any;
+          }
+        ).user;
+
       return res.render(
         'ai-dev',
+        {
+          user,
+        },
       );
     } catch (error) {
       console.error(
         '[Web] Erreur /ai-dev :',
         error,
       );
+
       return res
         .status(500)
         .send(
@@ -970,13 +1436,13 @@ app.get(
     }
   },
 );
-/* =========================================================
-   ADMIN PAGE
-========================================================= */
+
 /*
- * Le panneau Admin est distinct de
- * /api/admin.
+ * =========================================================
+ * ADMIN PAGE
+ * =========================================================
  */
+
 app.get(
   '/admin',
   requireAuthentication,
@@ -990,6 +1456,7 @@ app.get(
           user?: any;
         }
       ).user;
+
     if (
       !user ||
       (
@@ -1000,16 +1467,18 @@ app.get(
         )
       )
     ) {
-      return res.status(
-        403,
-      ).send(
-        'Accès administrateur refusé.',
-      );
+      return res
+        .status(403)
+        .send(
+          'Accès administrateur refusé.',
+        );
     }
+
     const view =
       findView(
         'admin',
       );
+
     if (!view) {
       return res
         .status(404)
@@ -1017,6 +1486,7 @@ app.get(
           'Page Admin indisponible.',
         );
     }
+
     try {
       return res.render(
         'admin',
@@ -1029,6 +1499,7 @@ app.get(
         '[Web] Erreur /admin :',
         error,
       );
+
       return res
         .status(500)
         .send(
@@ -1037,9 +1508,13 @@ app.get(
     }
   },
 );
-/* =========================================================
-   API 404
-========================================================= */
+
+/*
+ * =========================================================
+ * API 404
+ * =========================================================
+ */
+
 app.use(
   '/api',
   (
@@ -1049,30 +1524,37 @@ app.use(
     console.warn(
       `[API] 404 : ${req.method} ${req.originalUrl}`,
     );
+
     return res
       .status(404)
       .json({
         success:
           false,
+
         error:
           'Route API introuvable.',
+
         path:
           req.originalUrl,
       });
   },
 );
-/* =========================================================
-   WEB 404
-========================================================= */
+
+/*
+ * =========================================================
+ * WEB 404
+ * =========================================================
+ */
+
 app.use(
   (
     req: Request,
     res: Response,
   ) => {
     /*
-     * Les assets inconnus ne doivent pas provoquer
-     * une page HTML inutile.
+     * Assets inconnus.
      */
+
     if (
       req.path.startsWith(
         '/assets/',
@@ -1100,13 +1582,16 @@ app.use(
         .status(404)
         .send();
     }
+
     console.warn(
       `[Web] 404 : ${req.method} ${req.originalUrl}`,
     );
+
     const errorView =
       findView(
         '404',
       );
+
     if (!errorView) {
       return res
         .status(404)
@@ -1114,6 +1599,7 @@ app.use(
           'Page introuvable.',
         );
     }
+
     try {
       return res
         .status(404)
@@ -1129,9 +1615,13 @@ app.use(
     }
   },
 );
-/* =========================================================
-   GLOBAL ERROR HANDLER
-========================================================= */
+
+/*
+ * =========================================================
+ * GLOBAL ERROR HANDLER
+ * =========================================================
+ */
+
 app.use(
   (
     error: any,
@@ -1143,6 +1633,7 @@ app.use(
       '[Web] Erreur globale :',
       error,
     );
+
     if (
       res.headersSent
     ) {
@@ -1150,6 +1641,7 @@ app.use(
         error,
       );
     }
+
     if (
       req.path.startsWith(
         '/api',
@@ -1160,10 +1652,12 @@ app.use(
         .json({
           success:
             false,
+
           error:
             'Erreur interne du serveur.',
         });
     }
+
     return res
       .status(500)
       .send(
@@ -1171,13 +1665,15 @@ app.use(
       );
   },
 );
-/* =========================================================
-   EXPORT
-========================================================= */
+
+/*
+ * =========================================================
+ * EXPORT
+ * =========================================================
+ */
+
 export default app;
-/* =========================================================
-   FACTORY
-========================================================= */
+
 export function createApp(): Express {
   return app;
 }
