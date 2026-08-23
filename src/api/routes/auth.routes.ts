@@ -2,93 +2,66 @@ import express, {
   type Request,
   type Response,
 } from 'express';
-
 import axios from 'axios';
 import jwt from 'jsonwebtoken';
-
 import { User } from '../../models/User.ts';
 import { CONFIG } from '../../config/index.ts';
-
 /*
  * =========================================================
  * OMNIX — AUTHENTICATION ROUTES
  * =========================================================
  *
- * Responsibilities:
- *
- * - Discord OAuth2 login
- * - Discord OAuth2 callback
- * - JWT creation
- * - JWT verification
- * - httpOnly session cookie
- * - current user (/me)
- * - user guilds (/guilds)
- * - logout
- *
- * IMPORTANT:
- *
- * OMNIX uses ONE official session cookie:
+ * ONE official session:
  *
  *     jwt_token
  *
- * We do NOT use:
- *
+ * No:
  *     omnix_token
- *     localStorage
+ *     localStorage JWT
  *     ?token=...
  *
- * The JWT stays inside the httpOnly cookie.
+ * Authentication flow:
+ *
+ * Discord OAuth
+ *      ↓
+ * /api/auth/callback
+ *      ↓
+ * Discord user
+ *      ↓
+ * MongoDB
+ *      ↓
+ * JWT
+ *      ↓
+ * httpOnly cookie: jwt_token
+ *      ↓
+ * /dashboard
  *
  * =========================================================
  */
-
 const router = express.Router();
-
-
-function discordAvatarUrl(discordId: string, avatar: any): string | null {
-  if (!avatar) return null;
-  const value = String(avatar);
-  if (/^https?:\/\//i.test(value)) return value;
-  return `https://cdn.discordapp.com/avatars/${discordId}/${value}.png?size=128`;
-}
-
-function discordGuildIconUrl(guildId: string, icon: any): string | null {
-  if (!icon) return null;
-  const value = String(icon);
-  if (/^https?:\/\//i.test(value)) return value;
-  return `https://cdn.discordapp.com/icons/${guildId}/${value}.png?size=128`;
-}
-
 /*
  * =========================================================
  * DISCORD API
  * =========================================================
  */
-
 const DISCORD_API =
   'https://discord.com/api/v10';
-
 const DISCORD_OAUTH_TOKEN_URL =
   'https://discord.com/api/oauth2/token';
-
 /*
  * =========================================================
- * SESSION CONFIGURATION
+ * SESSION
  * =========================================================
  */
-
 export const SESSION_COOKIE =
   'jwt_token';
-
 const SESSION_MAX_AGE =
   7 * 24 * 60 * 60 * 1000;
-
 /*
  * =========================================================
  * DISCORD TYPES
  * =========================================================
  */
-
 interface DiscordTokenResponse {
   access_token: string;
   token_type: string;
@@ -96,7 +69,6 @@ interface DiscordTokenResponse {
   refresh_token?: string;
   scope: string;
 }
-
 interface DiscordUser {
   id: string;
   username: string;
@@ -104,7 +76,6 @@ interface DiscordUser {
   avatar?: string | null;
   discriminator?: string;
 }
-
 interface DiscordGuild {
   id: string;
   name: string;
@@ -113,42 +84,79 @@ interface DiscordGuild {
   permissions?: string;
   features?: string[];
 }
-
+/*
+ * =========================================================
+ * DISCORD IMAGE HELPERS
+ * =========================================================
+ */
+function discordAvatarUrl(
+  discordId: string,
+  avatar: unknown,
+): string | null {
+  if (!avatar) {
+    return null;
+  }
+  const value = String(avatar);
+  if (/^https?:\/\//i.test(value)) {
+    return value;
+  }
+  return `https://cdn.discordapp.com/avatars/${discordId}/${value}.png?size=128`;
+}
+function discordGuildIconUrl(
+  guildId: string,
+  icon: unknown,
+): string | null {
+  if (!icon) {
+    return null;
+  }
+  const value = String(icon);
+  if (/^https?:\/\//i.test(value)) {
+    return value;
+  }
+  return `https://cdn.discordapp.com/icons/${guildId}/${value}.png?size=128`;
+}
+/*
+ * =========================================================
+ * CONFIG HELPERS
+ * =========================================================
+ */
+function getDiscordClientId(): string | null {
+  const value =
+    process.env.DISCORD_CLIENT_ID ||
+    (CONFIG as any).DISCORD?.CLIENT_ID;
+  return value
+    ? String(value).trim()
+    : null;
+}
+function getDiscordClientSecret(): string | null {
+  const value =
+    process.env.DISCORD_CLIENT_SECRET ||
+    (CONFIG as any).DISCORD?.CLIENT_SECRET;
+  return value
+    ? String(value).trim()
+    : null;
+}
+function getDiscordRedirectUri(): string | null {
+  const value =
+    process.env.DISCORD_REDIRECT_URI ||
+    (CONFIG as any).DISCORD?.REDIRECT_URI;
+  return value
+    ? String(value).trim()
+    : null;
+}
 /*
  * =========================================================
  * OWNER IDS
  * =========================================================
- *
- * We support both:
- *
- * CONFIG.OWNER_IDS
- *
- * and:
- *
- * process.env.OWNER_IDS
- *
- * Environment variables are especially important on Render.
  */
-
 export function getOwnerIds(): string[] {
   const configured =
     (CONFIG as any).OWNER_IDS;
-
-  /*
-   * CONFIG.OWNER_IDS is already an array.
-   */
-
   if (Array.isArray(configured)) {
     return configured
-      .map((id) => String(id))
-      .map((id) => id.trim())
+      .map((id) => String(id).trim())
       .filter(Boolean);
   }
-
-  /*
-   * Fallback to environment variable.
-   */
-
   return (
     process.env.OWNER_IDS || ''
   )
@@ -156,13 +164,11 @@ export function getOwnerIds(): string[] {
     .map((id) => id.trim())
     .filter(Boolean);
 }
-
 /*
  * =========================================================
  * OWNER CHECK
  * =========================================================
  */
-
 export function isOwner(
   discordId: string,
 ): boolean {
@@ -170,60 +176,46 @@ export function isOwner(
     String(discordId).trim(),
   );
 }
-
 /*
  * =========================================================
  * JWT PAYLOAD
  * =========================================================
  */
-
 export interface OmnixJwtPayload {
   discordId: string;
   username: string;
   avatar: string | null;
-
   isAdmin: boolean;
   isOwner: boolean;
   isPremium: boolean;
-
   iat?: number;
   exp?: number;
 }
-
 /*
  * =========================================================
  * CREATE JWT
  * =========================================================
  */
-
 export function createJwt(
   user: DiscordUser,
   premium = false,
 ): string {
   const owner =
     isOwner(user.id);
-
   const payload: OmnixJwtPayload = {
-    discordId:
-      String(user.id),
-
+    discordId: String(user.id),
     username:
       user.global_name ||
       user.username,
-
     avatar:
       user.avatar || null,
-
     isAdmin:
       owner,
-
     isOwner:
       owner,
-
     isPremium:
       premium,
   };
-
   return jwt.sign(
     payload,
     CONFIG.JWT_SECRET,
@@ -232,63 +224,54 @@ export function createJwt(
     },
   );
 }
-
 /*
  * =========================================================
- * COOKIE OPTIONS
+ * COOKIE SECURITY
+ * =========================================================
+ *
+ * Render terminates HTTPS before forwarding traffic
+ * to the Node application.
+ *
+ * Express trust proxy is configured in app.ts.
+ *
+ * We therefore enable Secure in production.
+ *
+ * SameSite=Lax is intentional:
+ *
+ * Discord OAuth redirects back to the same OMNIX site,
+ * and Lax allows the OAuth top-level navigation.
+ *
  * =========================================================
  */
-
 export function getSessionCookieOptions() {
+  const isProduction =
+    process.env.NODE_ENV ===
+      'production' ||
+    process.env.RENDER === 'true';
   return {
     httpOnly: true,
-
-    /*
-     * Render production = HTTPS.
-     *
-     * Local development = HTTP.
-     */
-
     secure:
-      process.env.NODE_ENV ===
-      'production',
-
-    /*
-     * The dashboard and OAuth callback are
-     * on the same site.
-     */
-
+      isProduction,
     sameSite:
       'lax' as const,
-
     maxAge:
       SESSION_MAX_AGE,
-
     path: '/',
   };
 }
-
 /*
  * =========================================================
  * EXTRACT BEARER TOKEN
  * =========================================================
- *
- * Bearer is kept for API compatibility.
- *
- * The browser itself should normally use
- * the httpOnly cookie.
  */
-
 export function extractBearerToken(
   req: Request,
 ): string | null {
   const authorization =
     req.headers.authorization;
-
   if (!authorization) {
     return null;
   }
-
   if (
     !authorization
       .toLowerCase()
@@ -296,15 +279,12 @@ export function extractBearerToken(
   ) {
     return null;
   }
-
   const token =
     authorization
       .substring(7)
       .trim();
-
   return token || null;
 }
-
 /*
  * =========================================================
  * GET REQUEST TOKEN
@@ -312,58 +292,41 @@ export function extractBearerToken(
  *
  * Priority:
  *
- * 1. Authorization: Bearer ...
+ * 1. Authorization Bearer
  * 2. jwt_token cookie
  *
- * IMPORTANT:
+ * Never:
  *
- * We do NOT read:
- *
- * ?token=...
+ * - URL token
+ * - localStorage token
  *
  * =========================================================
  */
-
 export function getRequestToken(
   req: Request,
 ): string | null {
-  /*
-   * 1. Bearer
-   */
-
   const bearer =
     extractBearerToken(req);
-
   if (bearer) {
     return bearer;
   }
-
-  /*
-   * 2. Official OMNIX cookie
-   */
-
   const cookieToken =
     req.cookies?.[
       SESSION_COOKIE
     ];
-
   if (
-    typeof cookieToken ===
-      'string' &&
+    typeof cookieToken === 'string' &&
     cookieToken.trim()
   ) {
     return cookieToken.trim();
   }
-
   return null;
 }
-
 /*
  * =========================================================
  * VERIFY JWT
  * =========================================================
  */
-
 export function verifyJwt(
   token: string,
 ): OmnixJwtPayload | null {
@@ -373,58 +336,32 @@ export function verifyJwt(
         token,
         CONFIG.JWT_SECRET,
       );
-
     if (
-      typeof decoded !==
-      'object' ||
+      typeof decoded !== 'object' ||
       decoded === null
     ) {
       return null;
     }
-
     const payload =
       decoded as Partial<OmnixJwtPayload>;
-
-    if (
-      !payload.discordId
-    ) {
+    if (!payload.discordId) {
       return null;
     }
-
     return {
       discordId:
-        String(
-          payload.discordId,
-        ),
-
+        String(payload.discordId),
       username:
-        String(
-          payload.username ||
-          '',
-        ),
-
+        String(payload.username || ''),
       avatar:
-        payload.avatar ||
-        null,
-
+        payload.avatar || null,
       isAdmin:
-        Boolean(
-          payload.isAdmin,
-        ),
-
+        Boolean(payload.isAdmin),
       isOwner:
-        Boolean(
-          payload.isOwner,
-        ),
-
+        Boolean(payload.isOwner),
       isPremium:
-        Boolean(
-          payload.isPremium,
-        ),
-
+        Boolean(payload.isPremium),
       iat:
         payload.iat,
-
       exp:
         payload.exp,
     };
@@ -432,7 +369,6 @@ export function verifyJwt(
     return null;
   }
 }
-
 /*
  * =========================================================
  * DISCORD LOGIN
@@ -442,9 +378,8 @@ export function verifyJwt(
  *
  * /api/auth/login
  *
- * Redirects the user to Discord.
+ * =========================================================
  */
-
 router.get(
   '/login',
   (
@@ -452,71 +387,50 @@ router.get(
     res: Response,
   ) => {
     const clientId =
-      process.env.DISCORD_CLIENT_ID ||
-      (CONFIG as any).DISCORD
-        ?.CLIENT_ID;
-
+      getDiscordClientId();
     const redirectUri =
-      process.env.DISCORD_REDIRECT_URI ||
-      (CONFIG as any).DISCORD
-        ?.REDIRECT_URI;
-
-    /*
-     * Configuration validation.
-     */
-
+      getDiscordRedirectUri();
     if (!clientId) {
+      console.error(
+        '[OAuth] DISCORD_CLIENT_ID manquant.',
+      );
       return res
         .status(500)
         .send(
           'DISCORD_CLIENT_ID est manquant.',
         );
     }
-
     if (!redirectUri) {
+      console.error(
+        '[OAuth] DISCORD_REDIRECT_URI manquant.',
+      );
       return res
         .status(500)
         .send(
           'DISCORD_REDIRECT_URI est manquant.',
         );
     }
-
-    /*
-     * Discord OAuth parameters.
-     */
-
     const params =
       new URLSearchParams({
         client_id:
           clientId,
-
         redirect_uri:
           redirectUri,
-
         response_type:
           'code',
-
-        /*
-         * identify:
-         * user information
-         *
-         * guilds:
-         * servers the user belongs to
-         */
-
         scope:
           'identify guilds',
       });
-
     const discordUrl =
       `https://discord.com/oauth2/authorize?${params.toString()}`;
-
+    console.log(
+      `[OAuth] Redirection Discord → redirect_uri=${redirectUri}`,
+    );
     return res.redirect(
       discordUrl,
     );
   },
 );
-
 /*
  * =========================================================
  * DISCORD CALLBACK
@@ -526,33 +440,8 @@ router.get(
  *
  * /api/auth/callback
  *
- * Flow:
- *
- * Discord
- *    ↓
- * OAuth code
- *    ↓
- * Discord token
- *    ↓
- * Discord user
- *    ↓
- * Discord guilds
- *    ↓
- * MongoDB
- *    ↓
- * JWT
- *    ↓
- * jwt_token httpOnly cookie
- *    ↓
- * /dashboard
- *
- * IMPORTANT:
- *
- * The JWT is NEVER placed in the URL.
- *
  * =========================================================
  */
-
 router.get(
   '/callback',
   async (
@@ -565,42 +454,36 @@ router.get(
        * OAUTH CODE
        * -----------------------------------------------------
        */
-
       const code =
         typeof req.query.code ===
         'string'
-          ? req.query.code
-          : null;
-
+          ? req.query.code.trim()
+          : '';
       if (!code) {
+        console.error(
+          '[OAuth] Code OAuth Discord manquant.',
+          {
+            query:
+              req.query,
+          },
+        );
         return res
           .status(400)
           .send(
             'Code OAuth Discord manquant.',
           );
       }
-
       /*
        * -----------------------------------------------------
        * DISCORD CONFIGURATION
        * -----------------------------------------------------
        */
-
       const clientId =
-        process.env.DISCORD_CLIENT_ID ||
-        (CONFIG as any).DISCORD
-          ?.CLIENT_ID;
-
+        getDiscordClientId();
       const clientSecret =
-        process.env.DISCORD_CLIENT_SECRET ||
-        (CONFIG as any).DISCORD
-          ?.CLIENT_SECRET;
-
+        getDiscordClientSecret();
       const redirectUri =
-        process.env.DISCORD_REDIRECT_URI ||
-        (CONFIG as any).DISCORD
-          ?.REDIRECT_URI;
-
+        getDiscordRedirectUri();
       if (
         !clientId ||
         !clientSecret ||
@@ -608,378 +491,397 @@ router.get(
       ) {
         console.error(
           '[OAuth] Configuration Discord incomplète.',
+          {
+            clientId:
+              Boolean(clientId),
+            clientSecret:
+              Boolean(clientSecret),
+            redirectUri:
+              Boolean(redirectUri),
+          },
         );
-
         return res
           .status(500)
           .send(
             'Configuration OAuth Discord incomplète.',
           );
       }
-
       /*
        * -----------------------------------------------------
        * CODE → ACCESS TOKEN
        * -----------------------------------------------------
        */
-
-      const tokenResponse =
-        await axios.post<DiscordTokenResponse>(
-          DISCORD_OAUTH_TOKEN_URL,
-
-          new URLSearchParams({
-            client_id:
-              clientId,
-
-            client_secret:
-              clientSecret,
-
-            grant_type:
-              'authorization_code',
-
-            code,
-
-            redirect_uri:
-              redirectUri,
-          }).toString(),
-
-          {
-            headers: {
-              'Content-Type':
-                'application/x-www-form-urlencoded',
+      let tokenResponse;
+      try {
+        tokenResponse =
+          await axios.post<DiscordTokenResponse>(
+            DISCORD_OAUTH_TOKEN_URL,
+            new URLSearchParams({
+              client_id:
+                clientId,
+              client_secret:
+                clientSecret,
+              grant_type:
+                'authorization_code',
+              code,
+              redirect_uri:
+                redirectUri,
+            }).toString(),
+            {
+              headers: {
+                'Content-Type':
+                  'application/x-www-form-urlencoded',
+              },
+              timeout:
+                15000,
             },
-
-            timeout: 10000,
+          );
+      } catch (error: any) {
+        console.error(
+          '[OAuth] Échec échange code → token Discord.',
+          {
+            status:
+              error?.response?.status,
+            data:
+              error?.response?.data,
+            message:
+              error?.message,
           },
         );
-
+        throw new Error(
+          'Échange du code OAuth Discord impossible.',
+        );
+      }
       const accessToken =
         tokenResponse.data
-          .access_token;
-
+          ?.access_token;
       if (!accessToken) {
         throw new Error(
           'Discord n’a pas retourné d’access_token.',
         );
       }
-
       /*
        * -----------------------------------------------------
        * GET DISCORD USER
        * -----------------------------------------------------
        */
-
-      const userResponse =
-        await axios.get<DiscordUser>(
-          `${DISCORD_API}/users/@me`,
-          {
-            headers: {
-              Authorization:
-                `Bearer ${accessToken}`,
+      let userResponse;
+      try {
+        userResponse =
+          await axios.get<DiscordUser>(
+            `${DISCORD_API}/users/@me`,
+            {
+              headers: {
+                Authorization:
+                  `Bearer ${accessToken}`,
+              },
+              timeout:
+                15000,
             },
-
-            timeout: 10000,
+          );
+      } catch (error: any) {
+        console.error(
+          '[OAuth] Impossible de récupérer /users/@me.',
+          {
+            status:
+              error?.response?.status,
+            data:
+              error?.response?.data,
+            message:
+              error?.message,
           },
         );
-
+        throw new Error(
+          'Impossible de récupérer le compte Discord.',
+        );
+      }
       const discordUser =
         userResponse.data;
-
-      if (
-        !discordUser?.id
-      ) {
+      if (!discordUser?.id) {
         throw new Error(
           'Discord a retourné un utilisateur invalide.',
         );
       }
-
       /*
        * -----------------------------------------------------
        * GET DISCORD GUILDS
        * -----------------------------------------------------
        */
-
-      const guildResponse =
-        await axios.get<
-          DiscordGuild[]
-        >(
-          `${DISCORD_API}/users/@me/guilds`,
-          {
-            headers: {
-              Authorization:
-                `Bearer ${accessToken}`,
+      let guilds: DiscordGuild[] = [];
+      try {
+        const guildResponse =
+          await axios.get<
+            DiscordGuild[]
+          >(
+            `${DISCORD_API}/users/@me/guilds`,
+            {
+              headers: {
+                Authorization:
+                  `Bearer ${accessToken}`,
+              },
+              timeout:
+                15000,
             },
-
-            timeout: 10000,
+          );
+        guilds =
+          Array.isArray(
+            guildResponse.data,
+          )
+            ? guildResponse.data
+            : [];
+      } catch (error: any) {
+        /*
+         * Guilds are useful but should not
+         * prevent authentication if Discord
+         * temporarily refuses this endpoint.
+         */
+        console.error(
+          '[OAuth] Impossible de récupérer les guilds Discord.',
+          {
+            status:
+              error?.response?.status,
+            data:
+              error?.response?.data,
+            message:
+              error?.message,
           },
         );
-
-      const guilds =
-        guildResponse.data || [];
-
+        guilds = [];
+      }
       /*
        * -----------------------------------------------------
-       * SERVERS MANAGEABLE BY USER
+       * MANAGEABLE GUILDS
        * -----------------------------------------------------
-       *
-       * Owner = true
-       *
-       * OR
-       *
-       * Administrator permission.
        */
-
       const manageableGuilds =
         guilds.filter(
           (guild) => {
-            /*
-             * Server owner
-             */
-
             if (guild.owner) {
               return true;
             }
-
-            /*
-             * Administrator permission
-             */
-
             if (
-              typeof guild.permissions ===
+              typeof guild.permissions !==
               'string'
             ) {
-              try {
-                const permissions =
-                  BigInt(
-                    guild.permissions,
-                  );
-
-                const ADMINISTRATOR =
-                  0x8n;
-
-                return (
-                  (
-                    permissions &
-                    ADMINISTRATOR
-                  ) ===
-                  ADMINISTRATOR
-                );
-              } catch {
-                return false;
-              }
+              return false;
             }
-
-            return false;
+            try {
+              const permissions =
+                BigInt(
+                  guild.permissions,
+                );
+              const ADMINISTRATOR =
+                0x8n;
+              return (
+                (
+                  permissions &
+                  ADMINISTRATOR
+                ) ===
+                ADMINISTRATOR
+              );
+            } catch {
+              return false;
+            }
           },
         );
-
       /*
        * -----------------------------------------------------
-       * NORMALIZED GUILD DATA
+       * NORMALIZED GUILDS
        * -----------------------------------------------------
        */
-
       const guildData =
         manageableGuilds.map(
           (guild) => ({
             id:
               guild.id,
-
             name:
               guild.name,
-
             icon:
               guild.icon,
-
             owner:
               Boolean(
                 guild.owner,
               ),
-
             permissions:
               guild.permissions ||
               '0',
           }),
         );
-
       /*
        * -----------------------------------------------------
-       * OWNER STATUS
+       * OWNER
        * -----------------------------------------------------
        */
-
       const owner =
         isOwner(
           discordUser.id,
         );
-
       /*
        * -----------------------------------------------------
-       * EXISTING OMNIX USER
+       * EXISTING USER
        * -----------------------------------------------------
        */
-
       const existingUser =
         await User.findOne({
           discordId:
             discordUser.id,
         });
-
       /*
-       * Keep an existing premium subscription.
+       * -----------------------------------------------------
+       * PREMIUM
+       * -----------------------------------------------------
+       *
+       * We keep the existing subscription state.
+       *
+       * Support both historical fields:
+       *
+       * isPremium
+       * premium
+       *
+       * -----------------------------------------------------
        */
-
       const isPremium =
         Boolean(
           existingUser &&
           (
             (existingUser as any)
-              .isPremium ||
-
+              .isPremium === true ||
             (existingUser as any)
-              .premium
+              .premium === true
           ),
         );
-
       /*
        * -----------------------------------------------------
        * UPSERT USER
        * -----------------------------------------------------
        */
-
       await User.findOneAndUpdate(
         {
           discordId:
             discordUser.id,
         },
-
         {
-          discordId:
-            discordUser.id,
-
-          username:
-            discordUser.username,
-
-          globalName:
-            discordUser.global_name ||
-            discordUser.username,
-
-          avatar:
-            discordUser.avatar ||
-            null,
-
-          guilds:
-            guildData,
-
-          isPremium,
-
-          isAdmin:
-            owner,
-
-          lastLogin:
-            new Date(),
+          $set: {
+            discordId:
+              discordUser.id,
+            username:
+              discordUser.username,
+            globalName:
+              discordUser.global_name ||
+              discordUser.username,
+            avatar:
+              discordUser.avatar ||
+              null,
+            guilds:
+              guildData,
+            isPremium,
+            isAdmin:
+              owner,
+            lastLogin:
+              new Date(),
+          },
         },
-
         {
           upsert:
             true,
-
           new:
             true,
-
           setDefaultsOnInsert:
             true,
         },
       );
-
       /*
        * -----------------------------------------------------
-       * CREATE OMNIX JWT
+       * CREATE JWT
        * -----------------------------------------------------
        */
-
       const token =
         createJwt(
           discordUser,
           isPremium,
         );
-
       /*
        * -----------------------------------------------------
-       * CREATE SESSION COOKIE
+       * SET SESSION COOKIE
        * -----------------------------------------------------
-       *
-       * IMPORTANT:
-       *
-       * httpOnly = JavaScript cannot read it.
-       *
-       * This is intentional.
-       *
-       * The frontend does NOT need to know
-       * the JWT.
        */
-
+      const cookieOptions =
+        getSessionCookieOptions();
       res.cookie(
         SESSION_COOKIE,
         token,
-        getSessionCookieOptions(),
+        cookieOptions,
       );
-
       /*
        * -----------------------------------------------------
-       * LOG
+       * AUTH LOG
        * -----------------------------------------------------
        */
-
       console.log(
-        `[OAuth] Connexion réussie : ${discordUser.id} | owner=${owner} | guilds=${guildData.length}`,
+        '[OAuth] Connexion Discord réussie.',
+        {
+          discordId:
+            discordUser.id,
+          username:
+            discordUser.username,
+          owner,
+          premium:
+            isPremium,
+          guilds:
+            guildData.length,
+          secureCookie:
+            cookieOptions.secure,
+          sameSite:
+            cookieOptions.sameSite,
+          path:
+            cookieOptions.path,
+          maxAge:
+            cookieOptions.maxAge,
+        },
       );
-
       /*
        * -----------------------------------------------------
        * REDIRECT
        * -----------------------------------------------------
        *
-       * NO:
+       * JWT is ONLY in the cookie.
+       *
+       * Never:
        *
        * /dashboard?token=...
        *
-       * YES:
-       *
-       * /dashboard
+       * -----------------------------------------------------
        */
-
       return res.redirect(
         '/dashboard',
       );
     } catch (error: any) {
       console.error(
-        '[OAuth Discord] Erreur :',
-        error?.response?.data ||
-          error?.message ||
-          error,
+        '[OAuth Discord] ÉCHEC COMPLET.',
+        {
+          message:
+            error?.message,
+          status:
+            error?.response?.status,
+          discord:
+            error?.response?.data,
+        },
       );
-
       return res
         .status(500)
         .send(`
           <!DOCTYPE html>
-
           <html lang="fr">
-
           <head>
             <meta charset="UTF-8">
-
             <meta
               name="viewport"
               content="width=device-width, initial-scale=1.0"
             >
-
             <title>
               Erreur OAuth — OMNIX
             </title>
           </head>
-
           <body
             style="
               background:#030712;
@@ -992,7 +894,6 @@ router.get(
               margin:0;
             "
           >
-
             <div
               style="
                 background:#0f172a;
@@ -1003,16 +904,13 @@ router.get(
                 text-align:center;
               "
             >
-
               <h1>
                 Connexion impossible
               </h1>
-
               <p>
                 Une erreur est survenue
                 pendant la connexion Discord.
               </p>
-
               <a
                 href="/"
                 style="
@@ -1022,35 +920,24 @@ router.get(
               >
                 Retour à OMNIX
               </a>
-
             </div>
-
           </body>
-
           </html>
         `);
     }
   },
 );
-
 /*
  * =========================================================
- * GET USER GUILDS
+ * CURRENT USER GUILDS
  * =========================================================
  *
  * GET:
  *
  * /api/auth/guilds
  *
- * Authentication:
- *
- * - jwt_token cookie
- * OR
- * - Authorization Bearer token
- *
  * =========================================================
  */
-
 router.get(
   '/guilds',
   async (
@@ -1058,99 +945,71 @@ router.get(
     res: Response,
   ) => {
     try {
-      /*
-       * Get session token.
-       */
-
       const token =
         getRequestToken(req);
-
       if (!token) {
         return res
           .status(401)
           .json({
             success:
               false,
-
             error:
               'Session inexistante.',
           });
       }
-
-      /*
-       * Verify JWT.
-       */
-
       const payload =
         verifyJwt(token);
-
-      if (
-        !payload?.discordId
-      ) {
+      if (!payload?.discordId) {
         return res
           .status(401)
           .json({
             success:
               false,
-
             error:
               'Session invalide ou expirée.',
           });
       }
-
-      /*
-       * Get OMNIX user.
-       */
-
       const user =
         await User.findOne({
           discordId:
             payload.discordId,
         }).lean();
-
       if (!user) {
         return res
           .status(404)
           .json({
             success:
               false,
-
             error:
               'Utilisateur OMNIX introuvable.',
           });
       }
-
-      /*
-       * Return guilds.
-       */
-
       return res.json({
         success:
           true,
-
         guilds:
-          (user as any)
-            .guilds || [],
+          Array.isArray(
+            (user as any).guilds,
+          )
+            ? (user as any).guilds
+            : [],
       });
     } catch (error) {
       console.error(
         '[Auth /guilds]',
         error,
       );
-
       return res
         .status(500)
         .json({
           success:
             false,
-
           error:
             'Impossible de récupérer les serveurs.',
         });
     }
   },
 );
-
 /*
  * =========================================================
  * CURRENT USER
@@ -1160,12 +1019,8 @@ router.get(
  *
  * /api/auth/me
  *
- * This is the main endpoint used by the frontend
- * to determine whether the visitor is connected.
- *
  * =========================================================
  */
-
 router.get(
   '/me',
   async (
@@ -1173,144 +1028,100 @@ router.get(
     res: Response,
   ) => {
     try {
-      /*
-       * Get session.
-       */
-
       const token =
         getRequestToken(req);
-
       if (!token) {
         return res
           .status(401)
           .json({
             success:
               false,
-
             error:
               'Utilisateur non connecté.',
           });
       }
-
-      /*
-       * Verify session.
-       */
-
       const payload =
         verifyJwt(token);
-
-      if (
-        !payload?.discordId
-      ) {
+      if (!payload?.discordId) {
         return res
           .status(401)
           .json({
             success:
               false,
-
             error:
               'Session expirée.',
           });
       }
-
-      /*
-       * Get current user from MongoDB.
-       */
-
       const user =
         await User.findOne({
           discordId:
             payload.discordId,
         }).lean();
-
       if (!user) {
         return res
           .status(404)
           .json({
             success:
               false,
-
             error:
               'Utilisateur introuvable.',
           });
       }
-
-      /*
-       * Recalculate owner status.
-       *
-       * We deliberately do NOT rely only on the JWT.
-       *
-       * This means changing OWNER_IDS on Render
-       * can immediately affect the authorization
-       * after the next request.
-       */
-
       const owner =
         isOwner(
           String(
-            (user as any)
-              .discordId,
+            (user as any).discordId,
           ),
         );
-
-      /*
-       * Return safe public user information.
-       *
-       * NEVER return:
-       *
-       * - JWT
-       * - Discord OAuth access token
-       * - Discord OAuth refresh token
-       */
-
       return res.json({
         success:
           true,
-
         user: {
           discordId:
-            (user as any)
-              .discordId,
-
+            (user as any).discordId,
           username:
-            (user as any)
-              .username,
-
+            (user as any).username,
           globalName:
-            (user as any)
-              .globalName,
-
+            (user as any).globalName,
           avatar:
             discordAvatarUrl(
-              String((user as any).discordId),
-              (user as any).avatar,
+              String(
+                (user as any)
+                  .discordId,
+              ),
+              (user as any)
+                .avatar,
             ),
-
           isAdmin:
             owner ||
             Boolean(
               (user as any)
                 .isAdmin,
             ),
-
           isOwner:
             owner,
-
           isPremium:
             Boolean(
               (user as any)
                 .isPremium,
             ),
-
           guilds:
-            Array.isArray((user as any).guilds)
-              ? (user as any).guilds.map((guild: any) => ({
-                  ...guild,
-                  icon: discordGuildIconUrl(
-                    String(guild?.id || ''),
-                    guild?.icon,
-                  ),
-                }))
+            Array.isArray(
+              (user as any).guilds,
+            )
+              ? (user as any).guilds.map(
+                  (guild: any) => ({
+                    ...guild,
+                    icon:
+                      discordGuildIconUrl(
+                        String(
+                          guild?.id ||
+                          '',
+                        ),
+                        guild?.icon,
+                      ),
+                  }),
+                )
               : [],
         },
       });
@@ -1319,68 +1130,53 @@ router.get(
         '[Auth /me]',
         error,
       );
-
       return res
         .status(401)
         .json({
           success:
             false,
-
           error:
             'Session invalide.',
         });
     }
   },
 );
-
 /*
  * =========================================================
  * LOGOUT
  * =========================================================
- *
- * GET:
- *
- * /api/auth/logout
- *
- * Deletes the official OMNIX session cookie.
- *
- * =========================================================
  */
-
 router.get(
   '/logout',
   (
     req: Request,
     res: Response,
   ) => {
+    const isProduction =
+      process.env.NODE_ENV ===
+        'production' ||
+      process.env.RENDER === 'true';
     res.clearCookie(
       SESSION_COOKIE,
       {
         httpOnly:
           true,
-
         secure:
-          process.env.NODE_ENV ===
-          'production',
-
+          isProduction,
         sameSite:
           'lax',
-
         path:
           '/',
       },
     );
-
     return res.redirect(
       '/',
     );
   },
 );
-
 /*
  * =========================================================
  * EXPORT
  * =========================================================
  */
-
 export default router;
