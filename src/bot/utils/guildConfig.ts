@@ -1,4 +1,4 @@
-import GuildConfig from '../../models/GuildConfig.ts';
+import GuildConfig, { defaultModules } from '../../models/GuildConfig.ts';
 import type { IGuildConfig } from '../../models/GuildConfig.ts';
 /* =========================================================
    CONSTANTES
@@ -22,97 +22,12 @@ type ModulesConfig = Record<
    MODULES PAR DÉFAUT
 ========================================================= */
 export function createDefaultModules(): ModulesConfig {
-  return {
-    moderation: {
-      enabled: true,
-    },
-    tickets: {
-      enabled: false,
-      categoryId: undefined,
-      supportRoleId: undefined,
-    },
-    giveaways: {
-      enabled: false,
-    },
-    suggestions: {
-      enabled: false,
-    },
-    logs: {
-      enabled: false,
-      channelId: undefined,
-    },
-    welcome: {
-      enabled: false,
-      channelId: undefined,
-      message: undefined,
-    },
-    goodbye: {
-      enabled: false,
-      channelId: undefined,
-      message: undefined,
-    },
-    autoRole: {
-      enabled: false,
-      roleId: undefined,
-    },
-    antiRaid: {
-      enabled: false,
-    },
-    antiSpam: {
-      enabled: false,
-    },
-    antiLink: {
-      enabled: false,
-    },
-    autoMod: {
-      enabled: false,
-    },
-    levels: {
-      enabled: false,
-    },
-    economy: {
-      enabled: false,
-    },
-    music: {
-      enabled: false,
-    },
-    ai: {
-      enabled: false,
-      systemPrompt: DEFAULT_AI_PROMPT,
-    },
-    counting: {
-      enabled: false,
-      channelId: undefined,
-    },
-    autoReactions: {
-      enabled: false,
-    },
-    scheduledMessages: {
-      enabled: false,
-    },
-    polls: {
-      enabled: false,
-    },
-    verification: {
-      enabled: false,
-    },
-    backups: {
-      enabled: false,
-    },
-    customCommands: {
-      enabled: false,
-    },
-    statistics: {
-      enabled: false,
-    },
-    ping: {
-      enabled: true,
-    },
-    honeypot: {
-      enabled: false,
-      channelId: undefined,
-    },
-  };
+  // Deep clone the canonical Mongoose-compatible defaults.
+  // This prevents undefined values such as modules.logs.channelIds
+  // from being written back to MongoDB.
+  return JSON.parse(
+    JSON.stringify(defaultModules),
+  ) as ModulesConfig;
 }
 /* =========================================================
    UTILITAIRES
@@ -223,7 +138,7 @@ export async function getGuildConfig(
         guildId,
         prefix:
           DEFAULT_PREFIX,
-        language:
+        locale:
           DEFAULT_LANGUAGE,
         modules:
           createDefaultModules(),
@@ -283,8 +198,8 @@ export async function getGuildConfig(
       DEFAULT_PREFIX;
     changed = true;
   }
-  if (!config.language) {
-    config.language =
+  if (!config.locale) {
+    config.locale =
       DEFAULT_LANGUAGE;
     changed = true;
   }
