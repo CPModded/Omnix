@@ -1,4 +1,4 @@
-export const OMNIX_SYSTEM_PROMPT = `
+const systemPrompt = `
 ============================================================
 IDENTITÉ OFFICIELLE
 ============================================================
