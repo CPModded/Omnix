@@ -1,0 +1,4112 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <meta
+    name="theme-color"
+    content="#080b14"
+  >
+
+  <title>OMNIX — Dashboard</title>
+
+  <link
+    rel="icon"
+    href="/logo.png"
+  >
+
+  <style>
+
+    /* =========================================================
+       RESET
+    ========================================================= */
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+
+      --bg: #070a12;
+      --bg-secondary: #0b0f1a;
+
+      --panel: rgba(15, 20, 34, .82);
+      --panel-strong: #101628;
+
+      --border: rgba(255,255,255,.08);
+      --border-hover: rgba(124,92,255,.35);
+
+      --text: #f8fafc;
+      --muted: #8d98ad;
+
+      --primary: #7c5cff;
+      --primary-2: #4f46e5;
+
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+
+      --sidebar-width: 260px;
+      --header-height: 72px;
+
+      --radius: 16px;
+
+    }
+
+
+    html,
+    body {
+
+      width: 100%;
+      min-height: 100%;
+
+      background:
+        var(--bg);
+
+      color:
+        var(--text);
+
+      font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    }
+
+
+    body {
+
+      overflow-x: hidden;
+
+    }
+
+
+    button,
+    input,
+    select,
+    textarea {
+
+      font: inherit;
+
+    }
+
+
+    button {
+
+      border: 0;
+
+    }
+
+
+    a {
+
+      color: inherit;
+      text-decoration: none;
+
+    }
+
+
+    /* =========================================================
+       BACKGROUND
+    ========================================================= */
+
+    body::before {
+
+      content: "";
+
+      position: fixed;
+      inset: 0;
+
+      pointer-events: none;
+
+      background:
+
+        radial-gradient(
+          circle at 10% 10%,
+          rgba(124,92,255,.12),
+          transparent 30%
+        ),
+
+        radial-gradient(
+          circle at 90% 20%,
+          rgba(79,70,229,.10),
+          transparent 30%
+        );
+
+      z-index: -2;
+
+    }
+
+
+    body::after {
+
+      content: "";
+
+      position: fixed;
+      inset: 0;
+
+      background-image:
+
+        linear-gradient(
+          rgba(255,255,255,.018) 1px,
+          transparent 1px
+        ),
+
+        linear-gradient(
+          90deg,
+          rgba(255,255,255,.018) 1px,
+          transparent 1px
+        );
+
+      background-size:
+        40px 40px;
+
+      pointer-events: none;
+
+      opacity: .25;
+
+      z-index: -1;
+
+    }
+
+
+    /* =========================================================
+       APP
+    ========================================================= */
+
+    .app {
+
+      min-height: 100vh;
+
+      display: flex;
+
+    }
+
+
+    /* =========================================================
+       SIDEBAR
+    ========================================================= */
+
+    .sidebar {
+
+      position: fixed;
+
+      inset:
+        0 auto 0 0;
+
+      width:
+        var(--sidebar-width);
+
+      background:
+        rgba(8,11,20,.92);
+
+      backdrop-filter:
+        blur(24px);
+
+      -webkit-backdrop-filter:
+        blur(24px);
+
+      border-right:
+        1px solid var(--border);
+
+      display: flex;
+
+      flex-direction: column;
+
+      z-index: 1000;
+
+      transition:
+        transform .25s ease;
+
+    }
+
+
+    .sidebar-header {
+
+      height:
+        var(--header-height);
+
+      display: flex;
+
+      align-items: center;
+
+      padding:
+        0 20px;
+
+      border-bottom:
+        1px solid var(--border);
+
+    }
+
+
+    .brand {
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 11px;
+
+      font-weight: 900;
+
+      letter-spacing:
+        -.4px;
+
+    }
+
+
+    .brand img {
+
+      width: 38px;
+      height: 38px;
+
+      border-radius:
+        12px;
+
+      object-fit: cover;
+
+      box-shadow:
+        0 0 25px
+        rgba(124,92,255,.3);
+
+    }
+
+
+    .brand span {
+
+      display: block;
+
+      font-size:
+        18px;
+
+      line-height:
+        1;
+
+    }
+
+
+    .brand small {
+
+      display: block;
+
+      margin-top:
+        4px;
+
+      color:
+        var(--muted);
+
+      font-size:
+        9px;
+
+      font-weight:
+        700;
+
+      letter-spacing:
+        .8px;
+
+      text-transform:
+        uppercase;
+
+    }
+
+
+    .sidebar-content {
+
+      flex: 1;
+
+      padding:
+        18px 12px;
+
+      overflow-y:
+        auto;
+
+      scrollbar-width:
+        thin;
+
+    }
+
+
+    .sidebar-section {
+
+      margin-bottom:
+        22px;
+
+    }
+
+
+    .sidebar-title {
+
+      padding:
+        0 11px 8px;
+
+      color:
+        #667085;
+
+      font-size:
+        10px;
+
+      font-weight:
+        800;
+
+      text-transform:
+        uppercase;
+
+      letter-spacing:
+        1px;
+
+    }
+
+
+    .nav-item {
+
+      width: 100%;
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 11px;
+
+      padding:
+        11px 12px;
+
+      margin-bottom:
+        4px;
+
+      border-radius:
+        11px;
+
+      color:
+        #9ca7bb;
+
+      cursor:
+        pointer;
+
+      transition:
+        background .18s ease,
+        color .18s ease,
+        transform .18s ease,
+        border-color .18s ease;
+
+      border:
+        1px solid transparent;
+
+    }
+
+
+    .nav-item:hover {
+
+      background:
+        rgba(124,92,255,.08);
+
+      color:
+        white;
+
+      transform:
+        translateX(2px);
+
+    }
+
+
+    .nav-item.active {
+
+      background:
+
+        linear-gradient(
+          135deg,
+          rgba(124,92,255,.20),
+          rgba(79,70,229,.12)
+        );
+
+      color:
+        white;
+
+      border:
+        1px solid
+        rgba(124,92,255,.15);
+
+    }
+
+
+    .nav-icon {
+
+      width:
+        20px;
+
+      display:
+        flex;
+
+      align-items:
+        center;
+
+      justify-content:
+        center;
+
+      font-size:
+        15px;
+
+      flex-shrink:
+        0;
+
+    }
+
+
+    .nav-label {
+
+      flex:
+        1;
+
+      font-size:
+        12px;
+
+      font-weight:
+        700;
+
+    }
+
+
+    .nav-badge {
+
+      padding:
+        3px 6px;
+
+      border-radius:
+        6px;
+
+      background:
+        rgba(124,92,255,.16);
+
+      color:
+        #b7aaff;
+
+      font-size:
+        9px;
+
+      font-weight:
+        900;
+
+    }
+
+
+    /* =========================================================
+       SIDEBAR USER
+    ========================================================= */
+
+    .sidebar-user {
+
+      padding:
+        14px;
+
+      border-top:
+        1px solid var(--border);
+
+    }
+
+
+    .user-card {
+
+      display:
+        flex;
+
+      align-items:
+        center;
+
+      gap:
+        10px;
+
+      padding:
+        10px;
+
+      border-radius:
+        12px;
+
+      background:
+        rgba(255,255,255,.025);
+
+      border:
+        1px solid transparent;
+
+      transition:
+        border-color .18s ease,
+        background .18s ease;
+
+    }
+
+
+    .user-card:hover {
+
+      background:
+        rgba(255,255,255,.04);
+
+      border-color:
+        rgba(255,255,255,.06);
+
+    }
+
+
+    .user-avatar {
+
+      width:
+        34px;
+
+      height:
+        34px;
+
+      border-radius:
+        50%;
+
+      object-fit:
+        cover;
+
+      background:
+        #151b2b;
+
+      flex-shrink:
+        0;
+
+    }
+
+
+    .user-info {
+
+      min-width:
+        0;
+
+      flex:
+        1;
+
+    }
+
+
+    .user-name {
+
+      font-size:
+        11px;
+
+      font-weight:
+        800;
+
+      white-space:
+        nowrap;
+
+      overflow:
+        hidden;
+
+      text-overflow:
+        ellipsis;
+
+    }
+
+
+    .user-plan {
+
+      color:
+        var(--muted);
+
+      font-size:
+        9px;
+
+      margin-top:
+        2px;
+
+    }
+
+
+    /* =========================================================
+       MAIN
+    ========================================================= */
+
+    .main {
+
+      width:
+        100%;
+
+      margin-left:
+        0;
+
+      min-height:
+        100vh;
+
+    }
+
+
+    /* =========================================================
+       HEADER
+    ========================================================= */
+
+    .header {
+
+      height:
+        var(--header-height);
+
+      position:
+        sticky;
+
+      top:
+        0;
+
+      z-index:
+        500;
+
+      display:
+        flex;
+
+      align-items:
+        center;
+
+      justify-content:
+        space-between;
+
+      padding:
+        0 26px;
+
+      background:
+        rgba(7,10,18,.72);
+
+      backdrop-filter:
+        blur(20px);
+
+      -webkit-backdrop-filter:
+        blur(20px);
+
+      border-bottom:
+        1px solid var(--border);
+
+    }
+
+
+    .header-left {
+
+      display:
+        flex;
+
+      align-items:
+        center;
+
+      gap:
+        14px;
+
+      min-width:
+        0;
+
+    }
+
+
+    .dashboard-menu-button {
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width:40px;
+      height:40px;
+      border:1px solid rgba(148,163,184,.12);
+      border-radius:11px;
+      background:rgba(255,255,255,.025);
+      color:#cbd5e1;
+      cursor:pointer;
+      font-size:18px;
+      margin-left:8px;
+    }
+
+    .dashboard-menu-button:hover {
+      color:#fff;
+      background:rgba(255,255,255,.06);
+    }
+
+
+    .mobile-menu {
+
+      display:
+        none;
+
+      width:
+        38px;
+
+      height:
+        38px;
+
+      border-radius:
+        10px;
+
+      background:
+        rgba(255,255,255,.05);
+
+      color:
+        white;
+
+      cursor:
+        pointer;
+
+      transition:
+        background .18s ease,
+        transform .18s ease;
+
+    }
+
+
+    .mobile-menu:hover {
+
+      background:
+        rgba(124,92,255,.14);
+
+    }
+
+
+    .mobile-menu:active {
+
+      transform:
+        scale(.96);
+
+    }
+
+
+    .page-title {
+
+      font-size:
+        18px;
+
+      font-weight:
+        900;
+
+    }
+
+
+    .page-subtitle {
+
+      margin-top:
+        2px;
+
+      color:
+        var(--muted);
+
+      font-size:
+        10px;
+
+    }
+
+
+    .header-actions {
+
+      display:
+        flex;
+
+      align-items:
+        center;
+
+      gap:
+        10px;
+
+    }
+
+
+    .status-pill {
+
+      display:
+        flex;
+
+      align-items:
+        center;
+
+      gap:
+        7px;
+
+      padding:
+        8px 12px;
+
+      border-radius:
+        999px;
+
+      background:
+        rgba(16,185,129,.07);
+
+      border:
+        1px solid
+        rgba(16,185,129,.15);
+
+      color:
+        #6ee7b7;
+
+      font-size:
+        10px;
+
+      font-weight:
+        800;
+
+      white-space:
+        nowrap;
+
+    }
+
+
+    .status-dot {
+
+      width:
+        7px;
+
+      height:
+        7px;
+
+      border-radius:
+        50%;
+
+      background:
+        var(--success);
+
+      box-shadow:
+        0 0 10px
+        rgba(16,185,129,.8);
+
+      flex-shrink:
+        0;
+
+    }
+
+
+    /* =========================================================
+       CONTENT
+    ========================================================= */
+
+    .content {
+
+      width:
+        100%;
+
+      max-width:
+        1500px;
+
+      margin:
+        0 auto;
+
+      padding:
+        28px;
+
+    }
+
+
+    .welcome {
+
+      margin-bottom:
+        24px;
+
+    }
+
+
+    .welcome h1 {
+
+      font-size:
+        28px;
+
+      line-height:
+        1.15;
+
+      font-weight:
+        950;
+
+      letter-spacing:
+        -.8px;
+
+    }
+
+
+    .welcome p {
+
+      margin-top:
+        7px;
+
+      color:
+        var(--muted);
+
+      font-size:
+        12px;
+
+    }
+
+
+    /* =========================================================
+       STATS
+    ========================================================= */
+
+    .stats-grid {
+
+      display:
+        grid;
+
+      grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+      gap:
+        14px;
+
+      margin-bottom:
+        24px;
+
+    }
+
+
+    .stat-card {
+
+      position:
+        relative;
+
+      padding:
+        18px;
+
+      border-radius:
+        var(--radius);
+
+      background:
+
+        linear-gradient(
+          145deg,
+          rgba(18,24,40,.92),
+          rgba(10,14,25,.92)
+        );
+
+      border:
+        1px solid var(--border);
+
+      overflow:
+        hidden;
+
+      transition:
+        transform .2s ease,
+        border-color .2s ease,
+        box-shadow .2s ease;
+
+    }
+
+
+    .stat-card:hover {
+
+      transform:
+        translateY(-2px);
+
+      border-color:
+        var(--border-hover);
+
+      box-shadow:
+        0 12px 30px
+        rgba(0,0,0,.14);
+
+    }
+
+
+    .stat-card::after {
+
+      content:
+        "";
+
+      position:
+        absolute;
+
+      width:
+        100px;
+
+      height:
+        100px;
+
+      right:
+        -45px;
+
+      bottom:
+        -45px;
+
+      border-radius:
+        50%;
+
+      background:
+        rgba(124,92,255,.08);
+
+      pointer-events:
+        none;
+
+    }
+
+
+    .stat-label {
+
+      color:
+        var(--muted);
+
+      font-size:
+        10px;
+
+      font-weight:
+        800;
+
+      text-transform:
+        uppercase;
+
+      letter-spacing:
+        .7px;
+
+    }
+
+
+    .stat-value {
+
+      margin-top:
+        9px;
+
+      font-size:
+        26px;
+
+      font-weight:
+        950;
+
+      letter-spacing:
+        -.7px;
+
+      position:
+        relative;
+
+      z-index:
+        1;
+
+    }
+
+
+    .stat-description {
+
+      margin-top:
+        5px;
+
+      color:
+        #657086;
+
+      font-size:
+        9px;
+
+      position:
+        relative;
+
+      z-index:
+        1;
+
+    }
+
+
+    /* =========================================================
+       SECTIONS
+    ========================================================= */
+
+    .section {
+
+      margin-bottom:
+        25px;
+
+    }
+
+
+    .section-header {
+
+      display:
+        flex;
+
+      align-items:
+        center;
+
+      justify-content:
+        space-between;
+
+      gap:
+        15px;
+
+      margin-bottom:
+        12px;
+
+    }
+
+
+    .section-heading {
+
+      min-width:
+        0;
+
+    }
+
+
+    .section-heading h2 {
+
+      font-size:
+        15px;
+
+      font-weight:
+        900;
+
+    }
+
+
+    .section-heading p {
+
+      margin-top:
+        3px;
+
+      color:
+        var(--muted);
+
+      font-size:
+        10px;
+
+    }
+
+
+    .section-actions {
+
+      display:
+        flex;
+
+      align-items:
+        center;
+
+      gap:
+        8px;
+
+      flex-shrink:
+        0;
+
+    }
+
+
+    /* =========================================================
+       BUTTONS
+    ========================================================= */
+
+    .btn {
+
+      display:
+        inline-flex;
+
+      align-items:
+        center;
+
+      justify-content:
+        center;
+
+      gap:
+        7px;
+
+      padding:
+        9px 13px;
+
+      border-radius:
+        9px;
+
+      cursor:
+        pointer;
+
+      font-size:
+        10px;
+
+      font-weight:
+        800;
+
+      transition:
+        transform .18s ease,
+        opacity .18s ease,
+        background .18s ease,
+        border-color .18s ease;
+
+    }
+
+
+    .btn:hover {
+
+      transform:
+        translateY(-1px);
+
+    }
+
+
+    .btn:active {
+
+      transform:
+        translateY(0);
+
+    }
+
+
+    .btn-primary {
+
+      background:
+
+        linear-gradient(
+          135deg,
+          var(--primary),
+          var(--primary-2)
+        );
+
+      color:
+        white;
+
+      box-shadow:
+        0 8px 25px
+        rgba(79,70,229,.18);
+
+    }
+
+
+    .btn-primary:hover {
+
+      opacity:
+        .94;
+
+    }
+
+
+    .btn-secondary {
+
+      background:
+        rgba(255,255,255,.05);
+
+      color:
+        #dbe2ef;
+
+      border:
+        1px solid var(--border);
+
+    }
+
+
+    .btn-secondary:hover {
+
+      background:
+        rgba(255,255,255,.08);
+
+      border-color:
+        rgba(255,255,255,.12);
+
+    }
+
+
+    /* =========================================================
+       SERVER TOOLBAR
+    ========================================================= */
+
+    .server-toolbar {
+
+      display:
+        flex;
+
+      gap:
+        10px;
+
+      margin-bottom:
+        14px;
+
+    }
+
+
+    .search-box {
+
+      flex:
+        1;
+
+      position:
+        relative;
+
+    }
+
+
+    .search-box input {
+
+      width:
+        100%;
+
+      height:
+        40px;
+
+      padding:
+        0 13px;
+
+      border-radius:
+        10px;
+
+      border:
+        1px solid var(--border);
+
+      outline:
+        none;
+
+      background:
+        rgba(255,255,255,.035);
+
+      color:
+        white;
+
+      font-size:
+        11px;
+
+      transition:
+        border-color .18s ease,
+        background .18s ease,
+        box-shadow .18s ease;
+
+    }
+
+
+    .search-box input::placeholder {
+
+      color:
+        #667085;
+
+    }
+
+
+    .search-box input:focus {
+
+      border-color:
+        rgba(124,92,255,.4);
+
+      background:
+        rgba(255,255,255,.045);
+
+      box-shadow:
+        0 0 0 3px
+        rgba(124,92,255,.06);
+
+    }
+
+
+    /* =========================================================
+       SERVER GRID
+    ========================================================= */
+
+    #servers-container {
+
+      display:
+        grid;
+
+      grid-template-columns:
+        repeat(
+          auto-fill,
+          minmax(240px, 1fr)
+        );
+
+      gap:
+        12px;
+
+    }
+
+
+    .server-card {
+
+      display:
+        flex;
+
+      align-items:
+        center;
+
+      gap:
+        11px;
+
+      min-width:
+        0;
+
+      padding:
+        13px;
+
+      border-radius:
+        13px;
+
+      background:
+        rgba(15,20,34,.78);
+
+      border:
+        1px solid var(--border);
+
+      cursor:
+        pointer;
+
+      transition:
+        transform .18s ease,
+        border-color .18s ease,
+        background .18s ease,
+        box-shadow .18s ease;
+
+    }
+
+
+    .server-card:hover {
+
+      transform:
+        translateY(-2px);
+
+      border-color:
+        rgba(124,92,255,.3);
+
+      background:
+        rgba(20,26,44,.9);
+
+    }
+
+
+    .server-card.selected {
+
+      border-color:
+        rgba(124,92,255,.55);
+
+      box-shadow:
+
+        0 0 0 1px
+        rgba(124,92,255,.08),
+
+        0 10px 30px
+        rgba(0,0,0,.18);
+
+    }
+
+
+    .server-icon {
+
+      width:
+        45px;
+
+      height:
+        45px;
+
+      flex-shrink:
+        0;
+
+      border-radius:
+        12px;
+
+      object-fit:
+        cover;
+
+      background:
+        #161c2c;
+
+    }
+
+
+    .server-details {
+
+      min-width:
+        0;
+
+      flex:
+        1;
+
+    }
+
+
+    .server-name {
+
+      display:
+        block;
+
+      overflow:
+        hidden;
+
+      white-space:
+        nowrap;
+
+      text-overflow:
+        ellipsis;
+
+      font-size:
+        11px;
+
+      font-weight:
+        850;
+
+    }
+
+
+    .server-meta {
+
+      display:
+        block;
+
+      margin-top:
+        4px;
+
+      color:
+        var(--muted);
+
+      font-size:
+        9px;
+
+    }
+
+
+    .server-status {
+
+      width:
+        7px;
+
+      height:
+        7px;
+
+      flex-shrink:
+        0;
+
+      border-radius:
+        50%;
+
+      background:
+        var(--success);
+
+      box-shadow:
+        0 0 8px
+        rgba(16,185,129,.7);
+
+    }
+
+
+    /* =========================================================
+       EMPTY STATE
+    ========================================================= */
+
+    .empty-state {
+
+      padding:
+        45px 20px;
+
+      text-align:
+        center;
+
+      border:
+        1px dashed
+        rgba(255,255,255,.09);
+
+      border-radius:
+        15px;
+
+      background:
+        rgba(255,255,255,.018);
+
+    }
+
+
+    .empty-icon {
+
+      font-size:
+        30px;
+
+      margin-bottom:
+        12px;
+
+    }
+
+
+    .empty-state strong {
+
+      display:
+        block;
+
+      font-size:
+        13px;
+
+    }
+
+
+    .empty-state p {
+
+      max-width:
+        420px;
+
+      margin:
+        7px auto 0;
+
+      color:
+        var(--muted);
+
+      font-size:
+        10px;
+
+      line-height:
+        1.6;
+
+    }
+
+
+    /* =========================================================
+       TOAST
+    ========================================================= */
+
+    #toast-container {
+
+      position:
+        fixed;
+
+      right:
+        20px;
+
+      bottom:
+        20px;
+
+      display:
+        flex;
+
+      flex-direction:
+        column;
+
+      gap:
+        9px;
+
+      z-index:
+        5000;
+
+    }
+
+
+    .toast {
+
+      min-width:
+        260px;
+
+      padding:
+        13px 15px;
+
+      border-radius:
+        12px;
+
+      background:
+        rgba(16,22,38,.96);
+
+      border:
+        1px solid var(--border);
+
+      box-shadow:
+        0 20px 50px
+        rgba(0,0,0,.3);
+
+      color:
+        white;
+
+      font-size:
+        11px;
+
+      font-weight:
+        700;
+
+      animation:
+        toastIn .22s ease;
+
+      transition:
+        opacity .22s ease,
+        transform .22s ease;
+
+    }
+
+
+    .toast.error {
+
+      border-color:
+        rgba(239,68,68,.3);
+
+    }
+
+
+    .toast.success {
+
+      border-color:
+        rgba(16,185,129,.3);
+
+    }
+
+
+    @keyframes toastIn {
+
+      from {
+
+        opacity:
+          0;
+
+        transform:
+          translateY(10px);
+
+      }
+
+      to {
+
+        opacity:
+          1;
+
+        transform:
+          translateY(0);
+
+      }
+
+    }
+
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+
+    @media (max-width: 1100px) {
+
+      .stats-grid {
+
+        grid-template-columns:
+          repeat(2, minmax(0, 1fr));
+
+      }
+
+    }
+
+
+    @media (max-width: 800px) {
+
+      :root {
+
+        --sidebar-width:
+          260px;
+
+      }
+
+
+      .sidebar {
+
+        transform:
+          translateX(-100%);
+
+        box-shadow:
+          15px 0 50px
+          rgba(0,0,0,.35);
+
+      }
+
+
+      .sidebar.open {
+
+        transform:
+          translateX(0);
+
+      }
+
+
+      .main {
+
+        width:
+          100%;
+
+        margin-left:
+          0;
+
+      }
+
+
+      .mobile-menu {
+
+        display:
+          block;
+
+      }
+
+
+      .header {
+
+        padding:
+          0 15px;
+
+      }
+
+
+      .content {
+
+        padding:
+          18px 14px;
+
+      }
+
+
+      .status-pill {
+
+        display:
+          none;
+
+      }
+
+    }
+
+
+    @media (max-width: 520px) {
+
+      .stats-grid {
+
+        grid-template-columns:
+          1fr;
+
+      }
+
+
+      .server-toolbar {
+
+        flex-direction:
+          column;
+
+      }
+
+
+      .welcome h1 {
+
+        font-size:
+          23px;
+
+      }
+
+
+      .section-header {
+
+        align-items:
+          flex-start;
+
+        flex-direction:
+          column;
+
+      }
+
+
+      .section-actions {
+
+        width:
+          100%;
+
+      }
+
+
+      .section-actions .btn {
+
+        width:
+          100%;
+
+      }
+
+
+      #servers-container {
+
+        grid-template-columns:
+          1fr;
+
+      }
+
+
+      #toast-container {
+
+        left:
+          14px;
+
+        right:
+          14px;
+
+        bottom:
+          14px;
+
+      }
+
+
+      .toast {
+
+        min-width:
+          0;
+
+        width:
+          100%;
+
+      }
+
+    }
+
+  </style>
+
+</head>
+
+
+<body>
+
+  <div class="app">
+
+
+    <!-- =====================================================
+         SIDEBAR OMNIX CENTRALISÉ
+    ====================================================== -->
+
+    <%- include('partials/sidebar') %>
+
+
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
+    <main class="main">
+
+
+      <!-- ===================================================
+           HEADER
+      ==================================================== -->
+
+      <header class="header">
+
+        <div class="header-left">
+<div>
+
+            <div class="page-title">
+              Dashboard
+            </div>
+
+            <div class="page-subtitle">
+              Gestion de votre environnement OMNIX
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="header-actions">
+
+          <button
+            type="button"
+            class="dashboard-menu-button"
+            onclick="openOmnixSidebar()"
+            aria-label="Ouvrir le menu OMNIX"
+            aria-controls="omnix-sidebar"
+            aria-expanded="false"
+          >
+            ☰
+          </button>
+
+          <div
+            class="status-pill"
+            id="system-status"
+          >
+
+            <span
+              class="status-dot"
+            ></span>
+
+            Tous les systèmes opérationnels
+
+          </div>
+
+        </div>
+
+      </header>
+
+
+      <!-- ===================================================
+           CONTENT
+      ==================================================== -->
+
+      <section class="content">
+
+
+        <!-- =================================================
+             WELCOME
+        ================================================== -->
+
+        <div class="welcome">
+
+          <h1 id="welcome-title">
+            Bonjour 👋
+          </h1>
+
+          <p>
+            Gérez vos serveurs Discord et
+            contrôlez OMNIX depuis un seul endroit.
+          </p>
+
+        </div>
+
+
+        <!-- =================================================
+             STATS
+        ================================================== -->
+
+        <section class="section">
+
+          <div class="stats-grid">
+
+
+            <article class="stat-card">
+
+              <div class="stat-label">
+                Serveurs
+              </div>
+
+              <div
+                class="stat-value"
+                id="stat-servers"
+                data-value="0"
+              >
+                —
+              </div>
+
+              <div class="stat-description">
+                Serveurs Discord accessibles
+              </div>
+
+            </article>
+
+
+            <article class="stat-card">
+
+              <div class="stat-label">
+                Membres
+              </div>
+
+              <div
+                class="stat-value"
+                id="stat-members"
+                data-value="0"
+              >
+                —
+              </div>
+
+              <div class="stat-description">
+                Membres suivis par OMNIX
+              </div>
+
+            </article>
+
+
+            <article class="stat-card">
+
+              <div class="stat-label">
+                Commandes
+              </div>
+
+              <div
+                class="stat-value"
+                id="stat-commands"
+                data-value="0"
+              >
+                —
+              </div>
+
+              <div class="stat-description">
+                Commandes disponibles
+              </div>
+
+            </article>
+
+
+            <article class="stat-card">
+
+              <div class="stat-label">
+                Latence
+              </div>
+
+              <div
+                class="stat-value"
+                id="stat-ping"
+                data-value="0"
+              >
+                —
+              </div>
+
+              <div class="stat-description">
+                Temps de réponse du bot
+              </div>
+
+            </article>
+
+          </div>
+
+        </section>
+
+
+        <!-- =================================================
+             SERVERS
+        ================================================== -->
+
+        <section class="section">
+
+          <div class="section-header">
+
+            <div class="section-heading">
+
+              <h2>
+                Vos serveurs Discord
+              </h2>
+
+              <p>
+                Sélectionnez un serveur pour
+                accéder à sa configuration.
+              </p>
+
+            </div>
+
+
+            <div class="section-actions">
+
+              <button
+                type="button"
+                class="btn btn-secondary"
+                onclick="refreshGuilds()"
+              >
+                ↻ Actualiser
+              </button>
+
+            </div>
+
+          </div>
+
+
+          <div class="server-toolbar">
+
+            <div class="search-box">
+
+              <input
+                id="server-search"
+                type="search"
+                placeholder="Rechercher un serveur..."
+                autocomplete="off"
+                aria-label="Rechercher un serveur"
+              >
+
+            </div>
+
+          </div>
+
+
+          <div id="servers-container">
+
+            <div
+              class="empty-state"
+              style="grid-column:1/-1;"
+            >
+
+              <div class="empty-icon">
+                ⏳
+              </div>
+
+              <strong>
+                Chargement des serveurs...
+              </strong>
+
+              <p>
+                Récupération de vos serveurs Discord.
+              </p>
+
+            </div>
+
+          </div>
+
+        </section>
+
+      </section>
+
+    </main>
+
+  </div>
+
+
+  <!-- =====================================================
+       TOAST CONTAINER
+  ====================================================== -->
+
+  <div
+    id="toast-container"
+    aria-live="polite"
+    aria-atomic="true"
+  ></div>
+
+
+  <script src="/socket.io/socket.io.js"></script>
+
+  <!-- =====================================================
+       JAVASCRIPT — PARTIE 1
+  ====================================================== -->
+
+  <script>
+
+    /* =====================================================
+       OMNIX GLOBAL STATE
+    ===================================================== */
+
+    window.OMNIX =
+      window.OMNIX || {
+
+        user:
+          null,
+
+        guilds:
+          [],
+
+        selectedGuild:
+          null,
+
+        stats:
+          null,
+
+        socket:
+          null
+
+      };
+
+
+    /* =====================================================
+       HTML SECURITY HELPERS
+    ===================================================== */
+
+    function escapeHTML(value) {
+
+      return String(
+        value ?? ''
+      )
+
+        .replace(
+          /&/g,
+          '&amp;'
+        )
+
+        .replace(
+          /</g,
+          '&lt;'
+        )
+
+        .replace(
+          />/g,
+          '&gt;'
+        )
+
+        .replace(
+          /"/g,
+          '&quot;'
+        )
+
+        .replace(
+          /'/g,
+          '&#039;'
+        );
+
+    }
+
+
+    function escapeAttribute(value) {
+
+      return escapeHTML(
+        value
+      );
+
+    }
+
+
+    /* =====================================================
+       NUMBER FORMAT
+    ===================================================== */
+
+    function formatNumber(value) {
+
+      const number =
+        Number(value);
+
+      if (
+        !Number.isFinite(number)
+      ) {
+
+        return '0';
+
+      }
+
+      return new Intl.NumberFormat(
+        'fr-FR'
+      ).format(
+        number
+      );
+
+    }
+
+
+    /* =====================================================
+       TOAST
+    ===================================================== */
+
+    function showToast(
+      message,
+      type = 'success'
+    ) {
+
+      const container =
+        document.getElementById(
+          'toast-container'
+        );
+
+      if (!container) {
+        return;
+      }
+
+
+      const toast =
+        document.createElement(
+          'div'
+        );
+
+
+      toast.className =
+        `toast ${type}`;
+
+
+      toast.textContent =
+        String(message);
+
+
+      container.appendChild(
+        toast
+      );
+
+
+      setTimeout(
+        () => {
+
+          toast.style.opacity =
+            '0';
+
+          toast.style.transform =
+            'translateY(8px)';
+
+
+          setTimeout(
+            () => {
+
+              toast.remove();
+
+            },
+            220
+          );
+
+        },
+        3200
+      );
+
+    }
+
+
+    /* =====================================================
+       SIDEBAR
+    ===================================================== */
+
+    function toggleSidebar() {
+
+      if (typeof window.toggleOmnixSidebar === 'function') {
+        window.toggleOmnixSidebar();
+      }
+
+    }
+
+
+    /* =====================================================
+       SESSION
+       IMPORTANT:
+       OMNIX utilise désormais la session serveur/cookie.
+       Aucun JWT n'est lu depuis localStorage.
+       Aucun token n'est accepté depuis l'URL.
+    ===================================================== */
+
+    function initializeSession() {
+
+      /*
+       * Le cookie httpOnly n'est volontairement
+       * pas accessible depuis JavaScript.
+       *
+       * La session sera vérifiée par :
+       *
+       *     /api/auth/me
+       *
+       * avec :
+       *
+       *     credentials: 'include'
+       */
+
+      return null;
+
+    }
+
+
+    /* =====================================================
+       LOAD CURRENT USER
+    ===================================================== */
+
+    async function loadCurrentUser() {
+
+      try {
+
+        const response =
+          await fetch(
+            '/api/auth/me',
+            {
+              method:
+                'GET',
+
+              credentials:
+                'include',
+
+              cache:
+                'no-store',
+
+              headers: {
+
+                Accept:
+                  'application/json'
+
+              }
+
+            }
+          );
+
+
+        if (
+          response.status === 401
+        ) {
+
+          window.location.href =
+            '/api/auth/login';
+
+          return null;
+
+        }
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            `HTTP ${response.status}`
+          );
+
+        }
+
+
+        const data =
+          await response.json();
+
+
+        const user =
+          data?.user ||
+          data;
+
+
+        if (!user) {
+
+          throw new Error(
+            'Utilisateur absent de la réponse.'
+          );
+
+        }
+
+
+        OMNIX.user =
+          {
+            ...OMNIX.user,
+            ...user
+          };
+
+
+        updateUserUI();
+
+
+        return OMNIX.user;
+
+      } catch (error) {
+
+        console.error(
+          '[OMNIX] Impossible de récupérer le profil:',
+          error
+        );
+
+        return null;
+
+      }
+
+    }
+
+
+    /* =====================================================
+       USER UI
+    ===================================================== */
+
+    function updateUserUI() {
+
+      const user =
+        OMNIX.user || {};
+
+
+      const username =
+        user.globalName ||
+        user.global_name ||
+        user.username ||
+        user.name ||
+        'Utilisateur';
+
+
+      const avatar =
+        user.avatarURL ||
+        user.avatarUrl ||
+        user.avatar ||
+        user.avatar_url ||
+        '/logo.png';
+
+
+      const plan =
+        user.plan ||
+        user.subscription ||
+        (
+          user.premium
+            ? 'Premium'
+            : 'Free'
+        );
+
+
+      const welcome =
+        document.getElementById(
+          'welcome-title'
+        );
+
+
+      if (welcome) {
+
+        welcome.textContent =
+          `Bonjour ${username} 👋`;
+
+      }
+
+
+      const name =
+        document.getElementById(
+          'sidebar-user-name'
+        );
+
+
+      if (name) {
+
+        name.textContent =
+          username;
+
+      }
+
+
+      const planElement =
+        document.getElementById(
+          'sidebar-user-plan'
+        );
+
+
+      if (planElement) {
+
+        planElement.textContent =
+          plan;
+
+      }
+
+
+      const avatarElement =
+        document.getElementById(
+          'sidebar-user-avatar'
+        );
+
+
+      if (avatarElement) {
+
+        avatarElement.src =
+          avatar;
+
+
+        avatarElement.onerror =
+          () => {
+
+            avatarElement.onerror =
+              null;
+
+            avatarElement.src =
+              '/logo.png';
+
+          };
+
+      }
+
+    }
+
+
+    /* =====================================================
+       API REQUEST
+    ===================================================== */
+
+    async function apiRequest(
+      url,
+      options = {}
+    ) {
+
+      const controller =
+        new AbortController();
+
+
+      const timeout =
+        setTimeout(
+          () => {
+
+            controller.abort();
+
+          },
+          options.timeout || 10000
+        );
+
+
+      try {
+
+        const response =
+          await fetch(
+            url,
+            {
+              ...options,
+
+              credentials:
+                'include',
+
+              cache:
+                'no-store',
+
+              signal:
+                controller.signal,
+
+              headers: {
+
+                Accept:
+                  'application/json',
+
+                ...(options.body
+                  ? {
+                      'Content-Type':
+                        'application/json'
+                    }
+                  : {}),
+
+                ...(options.headers || {})
+
+              }
+
+            }
+          );
+
+
+        if (
+          response.status === 401
+        ) {
+
+          window.location.href =
+            '/api/auth/login';
+
+          throw new Error(
+            'Session expirée'
+          );
+
+        }
+
+
+        const contentType =
+          response.headers.get(
+            'content-type'
+          ) || '';
+
+
+        let data =
+          null;
+
+
+        if (
+          contentType.includes(
+            'application/json'
+          )
+        ) {
+
+          data =
+            await response.json();
+
+        }
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            data?.error ||
+            data?.message ||
+            `HTTP ${response.status}`
+          );
+
+        }
+
+
+        return data;
+
+      } finally {
+
+        clearTimeout(
+          timeout
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       STATS ANIMATION
+    ===================================================== */
+
+    function animateNumber(
+      element,
+      target,
+      duration = 650,
+      suffix = ''
+    ) {
+
+      if (!element) {
+        return;
+      }
+
+
+      const numericTarget =
+        Number(target);
+
+
+      if (
+        !Number.isFinite(
+          numericTarget
+        )
+      ) {
+
+        element.textContent =
+          '—';
+
+        return;
+
+      }
+
+
+      const start =
+        Number(
+          element.dataset.value || 0
+        );
+
+
+      const startTime =
+        performance.now();
+
+
+      function frame(currentTime) {
+
+        const progress =
+          Math.min(
+            (
+              currentTime -
+              startTime
+            ) / duration,
+            1
+          );
+
+
+        const eased =
+          1 -
+          Math.pow(
+            1 - progress,
+            3
+          );
+
+
+        const value =
+          Math.round(
+            start +
+            (
+              numericTarget -
+              start
+            ) *
+            eased
+          );
+
+
+        element.textContent =
+          `${formatNumber(value)}${suffix}`;
+
+
+        if (
+          progress < 1
+        ) {
+
+          requestAnimationFrame(
+            frame
+          );
+
+        } else {
+
+          element.dataset.value =
+            numericTarget;
+
+        }
+
+      }
+
+
+      requestAnimationFrame(
+        frame
+      );
+
+    }
+
+
+    function updateStat(
+      id,
+      value,
+      suffix = ''
+    ) {
+
+      const element =
+        document.getElementById(
+          id
+        );
+
+
+      if (!element) {
+        return;
+      }
+
+
+      if (
+        value === null ||
+        value === undefined
+      ) {
+
+        element.textContent =
+          '—';
+
+        return;
+
+      }
+
+
+      animateNumber(
+        element,
+        value,
+        650,
+        suffix
+      );
+
+    }
+
+
+    /* =====================================================
+       CONNECTION STATUS
+    ===================================================== */
+
+    function updateConnectionStatus(
+      online
+    ) {
+
+      const status =
+        document.getElementById(
+          'system-status'
+        );
+
+
+      if (!status) {
+        return;
+      }
+
+
+      if (online) {
+
+        status.innerHTML = `
+
+          <span
+            class="status-dot"
+          ></span>
+
+          Tous les systèmes opérationnels
+
+        `;
+
+
+        status.style.color =
+          '#6ee7b7';
+
+
+        status.style.background =
+          'rgba(16,185,129,.07)';
+
+
+        status.style.borderColor =
+          'rgba(16,185,129,.15)';
+
+      } else {
+
+        status.innerHTML = `
+
+          <span
+            class="status-dot"
+            style="
+              background:#f59e0b;
+              box-shadow:
+                0 0 10px
+                rgba(245,158,11,.8);
+            "
+          ></span>
+
+          Connexion instable
+
+        `;
+
+
+        status.style.color =
+          '#fbbf24';
+
+
+        status.style.background =
+          'rgba(245,158,11,.07)';
+
+
+        status.style.borderColor =
+          'rgba(245,158,11,.15)';
+
+      }
+
+    }
+
+
+    /* =====================================================
+       EXPORT BASIC API
+    ===================================================== */
+
+    window.OMNIXDashboard =
+      window.OMNIXDashboard || {
+
+        toggleSidebar:
+          toggleSidebar,
+
+        showToast:
+          showToast,
+
+        refreshStats:
+          null,
+
+        refreshGuilds:
+          null,
+
+        selectGuild:
+          null,
+
+        openGuild:
+          null,
+
+        state:
+          OMNIX
+
+      };
+
+  </script>
+  
+    <script>
+
+    /* =====================================================
+       GUILD HELPERS
+    ===================================================== */
+
+    function normalizeGuild(guild) {
+
+      if (!guild || typeof guild !== 'object') {
+        return null;
+      }
+
+      return {
+        ...guild,
+
+        id:
+          guild.id ||
+          guild.guildId ||
+          guild.guild_id ||
+          null,
+
+        name:
+          guild.name ||
+          guild.guildName ||
+          'Serveur sans nom',
+
+        icon:
+          guild.iconURL ||
+          guild.iconUrl ||
+          guild.icon_url ||
+          guild.icon ||
+          '/logo.png',
+
+        memberCount:
+          guild.memberCount ??
+          guild.members ??
+          guild.membersCount ??
+          0,
+
+        botPresent:
+          guild.botPresent ??
+          guild.bot ??
+          true
+      };
+
+    }
+
+
+    function getGuildIcon(guild) {
+
+      if (!guild) {
+        return '/logo.png';
+      }
+
+      return (
+        guild.iconURL ||
+        guild.iconUrl ||
+        guild.icon_url ||
+        guild.icon ||
+        '/logo.png'
+      );
+
+    }
+
+
+    function getGuildId(guild) {
+
+      if (!guild) {
+        return null;
+      }
+
+      return (
+        guild.id ||
+        guild.guildId ||
+        guild.guild_id ||
+        null
+      );
+
+    }
+
+
+    /* =====================================================
+       SERVER FILTER
+    ===================================================== */
+
+    function getFilteredGuilds() {
+
+      const input =
+        document.getElementById(
+          'server-search'
+        );
+
+      const search =
+        input
+          ? input.value.trim().toLowerCase()
+          : '';
+
+      if (!search) {
+
+        return [
+          ...OMNIX.guilds
+        ];
+
+      }
+
+      return OMNIX.guilds.filter(
+        guild => {
+
+          const name =
+            String(
+              guild?.name || ''
+            ).toLowerCase();
+
+          const id =
+            String(
+              guild?.id || ''
+            ).toLowerCase();
+
+          return (
+            name.includes(search) ||
+            id.includes(search)
+          );
+
+        }
+      );
+
+    }
+
+
+    /* =====================================================
+       RENDER SERVERS
+    ===================================================== */
+
+    function renderGuilds() {
+
+      const container =
+        document.getElementById(
+          'servers-container'
+        );
+
+      if (!container) {
+        return;
+      }
+
+
+      const guilds =
+        getFilteredGuilds();
+
+
+      if (!guilds.length) {
+
+        container.innerHTML = `
+
+          <div
+            class="empty-state"
+            style="grid-column:1/-1;"
+          >
+
+            <div class="empty-icon">
+              🔎
+            </div>
+
+            <strong>
+              Aucun serveur trouvé
+            </strong>
+
+            <p>
+              Aucun serveur ne correspond à votre recherche.
+            </p>
+
+          </div>
+
+        `;
+
+        return;
+
+      }
+
+
+      container.innerHTML =
+        guilds
+          .map(
+            guild => {
+
+              const id =
+                getGuildId(
+                  guild
+                );
+
+              const name =
+                escapeHTML(
+                  guild.name
+                );
+
+              const icon =
+                escapeAttribute(
+                  getGuildIcon(
+                    guild
+                  )
+                );
+
+              const memberCount =
+                formatNumber(
+                  guild.memberCount || 0
+                );
+
+              const selected =
+                OMNIX.selectedGuild &&
+                getGuildId(
+                  OMNIX.selectedGuild
+                ) === id;
+
+
+              return `
+
+                <article
+                  class="
+                    server-card
+                    ${selected ? 'selected' : ''}
+                  "
+                  data-guild-id="${escapeAttribute(id)}"
+                  onclick="
+                    selectGuild(
+                      '${escapeAttribute(id)}'
+                    )
+                  "
+                >
+
+                  <img
+                    class="server-icon"
+                    src="${icon}"
+                    alt="${name}"
+                    loading="lazy"
+                    onerror="
+                      this.onerror=null;
+                      this.src='/logo.png';
+                    "
+                  >
+
+                  <div class="server-details">
+
+                    <span class="server-name">
+                      ${name}
+                    </span>
+
+                    <span class="server-meta">
+                      ${memberCount} membres
+                    </span>
+
+                  </div>
+
+                  <span
+                    class="server-status"
+                    title="Serveur accessible"
+                  ></span>
+
+                </article>
+
+              `;
+
+            }
+          )
+          .join('');
+
+    }
+
+
+    /* =====================================================
+       LOAD GUILDS
+    ===================================================== */
+
+    async function refreshGuilds() {
+
+      const container =
+        document.getElementById(
+          'servers-container'
+        );
+
+
+      if (container) {
+
+        container.innerHTML = `
+
+          <div
+            class="empty-state"
+            style="grid-column:1/-1;"
+          >
+
+            <div class="empty-icon">
+              ⏳
+            </div>
+
+            <strong>
+              Chargement des serveurs...
+            </strong>
+
+            <p>
+              Récupération de vos serveurs Discord.
+            </p>
+
+          </div>
+
+        `;
+
+      }
+
+
+      try {
+
+        /*
+         * La route de récupération des serveurs
+         * reste centralisée ici.
+         *
+         * Le backend doit retourner soit :
+         *
+         *     { guilds: [...] }
+         *
+         * soit directement :
+         *
+         *     [...]
+         */
+
+        const data =
+          await apiRequest(
+            '/api/guilds'
+          );
+
+
+        const guildList =
+          Array.isArray(data)
+            ? data
+            : (
+                data?.guilds ||
+                data?.servers ||
+                data?.data ||
+                []
+              );
+
+
+        OMNIX.guilds =
+          guildList
+            .map(
+              normalizeGuild
+            )
+            .filter(
+              Boolean
+            );
+
+
+        renderGuilds();
+
+
+        if (
+          OMNIX.guilds.length === 0
+        ) {
+
+          showToast(
+            'Aucun serveur Discord accessible.',
+            'error'
+          );
+
+        }
+
+
+        return OMNIX.guilds;
+
+      } catch (error) {
+
+        console.error(
+          '[OMNIX] Erreur lors du chargement des serveurs:',
+          error
+        );
+
+
+        if (container) {
+
+          container.innerHTML = `
+
+            <div
+              class="empty-state"
+              style="grid-column:1/-1;"
+            >
+
+              <div class="empty-icon">
+                ⚠️
+              </div>
+
+              <strong>
+                Impossible de charger les serveurs
+              </strong>
+
+              <p>
+                Une erreur est survenue pendant la récupération
+                de vos serveurs Discord.
+              </p>
+
+              <div
+                style="
+                  margin-top:14px;
+                "
+              >
+
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  onclick="refreshGuilds()"
+                >
+                  ↻ Réessayer
+                </button>
+
+              </div>
+
+            </div>
+
+          `;
+
+        }
+
+
+        updateConnectionStatus(
+          false
+        );
+
+
+        return [];
+
+      }
+
+    }
+
+
+    /* =====================================================
+       SELECT GUILD
+    ===================================================== */
+
+    function selectGuild(
+      guildId
+    ) {
+
+      if (!guildId) {
+        return;
+      }
+
+
+      const guild =
+        OMNIX.guilds.find(
+          item =>
+            String(
+              getGuildId(item)
+            ) === String(
+              guildId
+            )
+        );
+
+
+      if (!guild) {
+
+        showToast(
+          'Serveur introuvable.',
+          'error'
+        );
+
+        return;
+
+      }
+
+
+      OMNIX.selectedGuild =
+        guild;
+
+
+      renderGuilds();
+
+
+      openGuild(
+        guild
+      );
+
+    }
+
+
+    /* =====================================================
+       OPEN GUILD
+    ===================================================== */
+
+    function openGuild(
+      guild
+    ) {
+
+      if (!guild) {
+        return;
+      }
+
+
+      const guildId =
+        getGuildId(
+          guild
+        );
+
+
+      if (!guildId) {
+
+        showToast(
+          'Identifiant du serveur invalide.',
+          'error'
+        );
+
+        return;
+
+      }
+
+
+      OMNIX.selectedGuild =
+        guild;
+
+
+      /*
+       * Navigation vers la configuration
+       * du serveur sélectionné.
+       *
+       * L'identifiant reste dans le chemin
+       * et non dans un token d'authentification.
+       */
+
+      window.location.href =
+        `/dashboard/${encodeURIComponent(
+          guildId
+        )}`;
+
+    }
+
+
+    /* =====================================================
+       LOAD STATS
+    ===================================================== */
+
+    async function refreshStats() {
+
+      try {
+
+        const data =
+          await apiRequest(
+            '/api/stats'
+          );
+
+
+        OMNIX.stats =
+          data;
+
+
+        /*
+         * Compatibilité avec plusieurs formes
+         * de réponse backend déjà utilisées
+         * par OMNIX.
+         */
+
+        const stats =
+          data?.stats ||
+          data?.data ||
+          data ||
+          {};
+
+
+        const bot =
+          stats?.bot ||
+          {};
+
+
+        const database =
+          stats?.database ||
+          {};
+
+
+        const servers =
+          stats?.servers ??
+          stats?.guilds ??
+          stats?.guildCount ??
+          bot?.guildsCount ??
+          0;
+
+
+        const members =
+          stats?.members ??
+          stats?.memberCount ??
+          stats?.membersCount ??
+          bot?.membersCount ??
+          database?.totalMembers ??
+          0;
+
+
+        const commands =
+          stats?.commands ??
+          stats?.commandsCount ??
+          bot?.commandsCount ??
+          0;
+
+
+        const ping =
+          stats?.ping ??
+          stats?.latency ??
+          bot?.ping ??
+          bot?.latency ??
+          null;
+
+
+        updateStat(
+          'stat-servers',
+          servers
+        );
+
+
+        updateStat(
+          'stat-members',
+          members
+        );
+
+
+        updateStat(
+          'stat-commands',
+          commands
+        );
+
+
+        updateStat(
+          'stat-ping',
+          ping,
+          ping !== null ? ' ms' : ''
+        );
+
+
+        updateConnectionStatus(
+          true
+        );
+
+
+        return stats;
+
+      } catch (error) {
+
+        console.error(
+          '[OMNIX] Erreur statistiques:',
+          error
+        );
+
+
+        updateConnectionStatus(
+          false
+        );
+
+
+        return null;
+
+      }
+
+    }
+
+
+    /* =====================================================
+       SEARCH EVENTS
+    ===================================================== */
+
+    function initializeServerSearch() {
+
+      const input =
+        document.getElementById(
+          'server-search'
+        );
+
+
+      if (!input) {
+        return;
+      }
+
+
+      input.addEventListener(
+        'input',
+        () => {
+
+          renderGuilds();
+
+        }
+      );
+
+    }
+
+
+    /* =====================================================
+       SOCKET.IO
+    ===================================================== */
+
+    function initializeSocket() {
+
+      if (
+        typeof io !== 'function'
+      ) {
+
+        console.warn(
+          '[OMNIX] Socket.IO non disponible.'
+        );
+
+        return null;
+
+      }
+
+
+      try {
+
+        const socket =
+          io(
+            {
+              withCredentials:
+                true,
+
+              transports:
+                [
+                  'websocket',
+                  'polling'
+                ]
+            }
+          );
+
+
+        OMNIX.socket =
+          socket;
+
+
+        socket.on(
+          'connect',
+          () => {
+
+            console.info(
+              '[OMNIX] Socket.IO connecté:',
+              socket.id
+            );
+
+
+            updateConnectionStatus(
+              true
+            );
+
+          }
+        );
+
+
+        socket.on(
+          'disconnect',
+          reason => {
+
+            console.warn(
+              '[OMNIX] Socket.IO déconnecté:',
+              reason
+            );
+
+
+            updateConnectionStatus(
+              false
+            );
+
+          }
+        );
+
+
+        socket.on(
+          'connect_error',
+          error => {
+
+            console.error(
+              '[OMNIX] Socket.IO erreur:',
+              error
+            );
+
+
+            updateConnectionStatus(
+              false
+            );
+
+          }
+        );
+
+
+        /*
+         * Mise à jour des statistiques
+         * envoyée par le serveur.
+         */
+
+        socket.on(
+          'stats:update',
+          payload => {
+
+            if (!payload) {
+              return;
+            }
+
+
+            OMNIX.stats =
+              payload;
+
+
+            const stats =
+              payload?.stats ||
+              payload?.data ||
+              payload ||
+              {};
+
+
+            const bot =
+              stats?.bot ||
+              {};
+
+
+            const database =
+              stats?.database ||
+              {};
+
+
+            updateStat(
+              'stat-servers',
+              stats?.servers ??
+              stats?.guilds ??
+              bot?.guildsCount ??
+              0
+            );
+
+
+            updateStat(
+              'stat-members',
+              stats?.members ??
+              stats?.memberCount ??
+              bot?.membersCount ??
+              database?.totalMembers ??
+              0
+            );
+
+
+            updateStat(
+              'stat-commands',
+              stats?.commands ??
+              stats?.commandsCount ??
+              bot?.commandsCount ??
+              0
+            );
+
+
+            updateStat(
+              'stat-ping',
+              stats?.ping ??
+              stats?.latency ??
+              bot?.ping ??
+              bot?.latency ??
+              null,
+              ' ms'
+            );
+
+          }
+        );
+
+
+        /*
+         * Si le backend signale une modification
+         * des serveurs, on recharge la liste.
+         */
+
+        socket.on(
+          'guilds:update',
+          () => {
+
+            refreshGuilds();
+
+          }
+        );
+
+
+        socket.on(
+          'guild:update',
+          () => {
+
+            refreshGuilds();
+
+          }
+        );
+
+
+        return socket;
+
+      } catch (error) {
+
+        console.error(
+          '[OMNIX] Impossible d'initialiser Socket.IO:',
+          error
+        );
+
+
+        return null;
+
+      }
+
+    }
+
+
+    /* =====================================================
+       REFRESH EVERYTHING
+    ===================================================== */
+
+    async function refreshDashboard() {
+
+      await Promise.allSettled(
+        [
+          loadCurrentUser(),
+          refreshStats(),
+          refreshGuilds()
+        ]
+      );
+
+    }
+
+
+    /* =====================================================
+       INITIALIZATION
+    ===================================================== */
+
+    async function initializeDashboard() {
+
+      console.info(
+        '[OMNIX] Initialisation du dashboard...'
+      );
+
+
+      initializeSession();
+
+
+      initializeServerSearch();
+
+
+      initializeSocket();
+
+
+      /*
+       * Les données sont chargées uniquement
+       * après l'initialisation de la session.
+       */
+
+      const user =
+        await loadCurrentUser();
+
+
+      if (!user) {
+
+        return;
+
+      }
+
+
+      await Promise.allSettled(
+        [
+          refreshStats(),
+          refreshGuilds()
+        ]
+      );
+
+
+      console.info(
+        '[OMNIX] Dashboard initialisé.'
+      );
+
+    }
+
+
+    /* =====================================================
+       GLOBAL API
+    ===================================================== */
+
+    window.OMNIXDashboard =
+      {
+        ...window.OMNIXDashboard,
+
+        toggleSidebar:
+          toggleSidebar,
+
+        showToast:
+          showToast,
+
+        refreshStats:
+          refreshStats,
+
+        refreshGuilds:
+          refreshGuilds,
+
+        refreshDashboard:
+          refreshDashboard,
+
+        selectGuild:
+          selectGuild,
+
+        openGuild:
+          openGuild,
+
+        renderGuilds:
+          renderGuilds,
+
+        state:
+          OMNIX
+
+      };
+
+
+    /* =====================================================
+       DOM READY
+    ===================================================== */
+
+    if (
+      document.readyState ===
+      'loading'
+    ) {
+
+      document.addEventListener(
+        'DOMContentLoaded',
+        initializeDashboard,
+        {
+          once:
+            true
+        }
+      );
+
+    } else {
+
+      initializeDashboard();
+
+    }
+
+
+    /* =====================================================
+       WINDOW EVENTS
+    ===================================================== */
+
+    window.addEventListener(
+      'resize',
+      () => {
+
+        if (
+          window.innerWidth > 800
+        ) {
+
+          const sidebar =
+            document.getElementById(
+              'dashboard-sidebar'
+            );
+
+
+          if (sidebar) {
+
+            sidebar.classList.remove(
+              'open'
+            );
+
+          }
+
+        }
+
+      }
+    );
+
+
+    /* =====================================================
+       ESCAPE — CLOSE MOBILE SIDEBAR
+    ===================================================== */
+
+    document.addEventListener(
+      'keydown',
+      event => {
+
+        if (
+          event.key !== 'Escape'
+        ) {
+
+          return;
+
+        }
+
+
+        const sidebar =
+          document.getElementById(
+            'dashboard-sidebar'
+          );
+
+
+        if (sidebar) {
+
+          sidebar.classList.remove(
+            'open'
+          );
+
+        }
+
+      }
+    );
+
+  </script>
+
+
+</body>
+
+</html>
