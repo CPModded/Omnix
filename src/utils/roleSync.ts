@@ -1,5 +1,5 @@
-import { client as botClient } from '../bot/client.ts';
-import { CONFIG } from '../config/index.ts';
+import { client as botClient } from '../bot/client';
+import { CONFIG } from '../config/index';
 /* =========================================================
    PREMIUM ROLE SYNC
 ========================================================= */

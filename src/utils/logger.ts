@@ -2,15 +2,15 @@ import {
   EmbedBuilder,
   TextChannel,
 } from 'discord.js';
-import { client as botClient } from '../bot/client.ts';
+import { client as botClient } from '../bot/client';
 import {
   logAuditEvent,
-} from '../services/AuditLogger.ts';
+} from '../services/AuditLogger';
 import type {
   AuditSeverity,
   AuditStatus,
-} from '../services/AuditLogger.ts';
-import { CONFIG } from '../config/index.ts';
+} from '../services/AuditLogger';
+import { CONFIG } from '../config/index';
 /* =========================================================
    OFFICIAL CHANNELS
 ========================================================= */
