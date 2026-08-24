@@ -1,5 +1,0 @@
-import { Events } from 'discord.js';
-import type { Guild } from 'discord.js';
-import GuildConfig from '../../models/GuildConfig';
-import { License } from '../../models/License';
-export default { name: Events.GuildCreate, once:false, async execute(guild:Guild){const guildId=guild.id,ownerId=guild.ownerId;try{let config=await GuildConfig.findOne({guildId});if(!config)config=new GuildConfig({guildId});const now=new Date();const license=await License.findOneAndUpdate({buyerId:ownerId,status:'active',activatedGuildId:null,$or:[{expiresAt:null},{expiresAt:{$gt:now}}]},{$set:{status:'used',activatedGuildId:guildId,activatedAt:now}},{new:true});if(license){const expiresAt=license.durationInDays>0?new Date(now.getTime()+license.durationInDays*86400000):null;license.expiresAt=expiresAt;await license.save();config.premium.isPremium=true;config.premium.tier=license.tier;config.premium.expiresAt=expiresAt;}await config.save();console.log(`[Bot Sync] ✓ Configuration synchronisée pour ${guild.name} (${guildId})`);}catch(e){console.error(`[Bot Sync] Erreur ${guild.name}:`,e);}}};
