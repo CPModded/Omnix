@@ -1,0 +1,4825 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  >
+  <title>OMNIX — Staff Panel</title>
+  <style>
+    /* =========================================================
+       OMNIX STAFF PANEL
+       PART 1 / 2
+    ========================================================= */
+    :root {
+      --bg: #020617;
+      --bg-soft: #030b1c;
+      --panel: rgba(15, 23, 42, .72);
+      --panel-strong: rgba(15, 23, 42, .92);
+      --border: rgba(148, 163, 184, .12);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --muted-2: #64748b;
+      --cyan: #22d3ee;
+      --blue: #60a5fa;
+      --violet: #a78bfa;
+      --green: #34d399;
+      --yellow: #fbbf24;
+      --red: #fb7185;
+      --radius: 18px;
+      --radius-sm: 12px;
+      --sidebar-width: 270px;
+      --shadow:
+        0 20px 60px rgba(0,0,0,.35);
+      --transition:
+        180ms ease;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(
+          circle at 15% 10%,
+          rgba(34,211,238,.07),
+          transparent 28%
+        ),
+        radial-gradient(
+          circle at 85% 15%,
+          rgba(124,58,237,.08),
+          transparent 30%
+        ),
+        var(--bg);
+      color: var(--text);
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Helvetica,
+        Arial,
+        sans-serif;
+      overflow-x: hidden;
+    }
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+    button {
+      cursor: pointer;
+    }
+    a {
+      color: inherit;
+    }
+    /* =========================================================
+       APP
+    ========================================================= */
+    .admin-app {
+      min-height: 100vh;
+      display: flex;
+    }
+    /* =========================================================
+       SIDEBAR
+    ========================================================= */
+    .admin-sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      width: var(--sidebar-width);
+      padding: 22px 16px;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(15,23,42,.96),
+          rgba(2,6,23,.98)
+        );
+      border-right: 1px solid var(--border);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      transition:
+        transform var(--transition);
+    }
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 10px 22px;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        linear-gradient(
+          135deg,
+          #06b6d4,
+          #4f46e5,
+          #7c3aed
+        );
+      box-shadow:
+        0 8px 25px rgba(79,70,229,.25);
+    }
+    .brand-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .brand-fallback {
+      font-size: 19px;
+      font-weight: 900;
+    }
+    .brand-name {
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      background:
+        linear-gradient(
+          90deg,
+          #60a5fa,
+          #22d3ee,
+          #a78bfa
+        );
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .brand-role {
+      margin-top: 2px;
+      color: var(--muted-2);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .sidebar-nav {
+      margin-top: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      overflow-y: auto;
+    }
+    .nav-section {
+      margin: 18px 10px 8px;
+      color: var(--muted-2);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .nav-button {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 11px 12px;
+      border: 1px solid transparent;
+      border-radius: 11px;
+      background: transparent;
+      color: var(--muted);
+      text-align: left;
+      transition:
+        background var(--transition),
+        color var(--transition),
+        border-color var(--transition);
+    }
+    .nav-button:hover {
+      background: rgba(255,255,255,.035);
+      color: white;
+    }
+    .nav-button.active {
+      color: white;
+      background:
+        linear-gradient(
+          90deg,
+          rgba(34,211,238,.10),
+          rgba(99,102,241,.08)
+        );
+      border-color:
+        rgba(34,211,238,.10);
+    }
+    .nav-icon {
+      width: 19px;
+      min-width: 19px;
+      text-align: center;
+      font-size: 15px;
+    }
+    .nav-label {
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .sidebar-bottom {
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .staff-card {
+      padding: 13px;
+      border:
+        1px solid rgba(255,255,255,.05);
+      border-radius: 13px;
+      background:
+        rgba(255,255,255,.025);
+    }
+    .staff-card-label {
+      color: var(--muted-2);
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .staff-card-name {
+      margin-top: 5px;
+      font-size: 12px;
+      font-weight: 800;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .staff-status {
+      margin-top: 7px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--green);
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow:
+        0 0 10px currentColor;
+    }
+    /* =========================================================
+       MAIN
+    ========================================================= */
+    .admin-main {
+      width: calc(100% - var(--sidebar-width));
+      margin-left: var(--sidebar-width);
+      min-height: 100vh;
+      padding: 22px;
+    }
+    .topbar {
+      min-height: 66px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 0 4px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar-title {
+      font-size: 21px;
+      font-weight: 900;
+    }
+    .topbar-subtitle {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .mobile-menu {
+      display: none;
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel);
+      color: white;
+    }
+    /* =========================================================
+       BUTTONS
+    ========================================================= */
+    .btn {
+      min-height: 38px;
+      padding: 0 13px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background:
+        rgba(255,255,255,.035);
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 800;
+      transition:
+        transform var(--transition),
+        background var(--transition),
+        border-color var(--transition);
+    }
+    .btn:hover {
+      background:
+        rgba(255,255,255,.07);
+      border-color:
+        rgba(255,255,255,.13);
+    }
+    .btn:active {
+      transform: scale(.98);
+    }
+    .btn-primary {
+      border: none;
+      background:
+        linear-gradient(
+          135deg,
+          #06b6d4,
+          #4f46e5
+        );
+      box-shadow:
+        0 8px 22px rgba(79,70,229,.18);
+    }
+    .btn-danger {
+      color: #fecdd3;
+      border-color:
+        rgba(251,113,133,.18);
+      background:
+        rgba(251,113,133,.07);
+    }
+    .btn-success {
+      color: #a7f3d0;
+      border-color:
+        rgba(52,211,153,.18);
+      background:
+        rgba(52,211,153,.07);
+    }
+    /* =========================================================
+       CONTENT
+    ========================================================= */
+    .page-section {
+      display: none;
+      padding-top: 22px;
+      animation:
+        sectionIn .22s ease;
+    }
+    .page-section.active {
+      display: block;
+    }
+    @keyframes sectionIn {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .section-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 15px;
+      margin-bottom: 16px;
+    }
+    .section-header h2 {
+      font-size: 18px;
+      font-weight: 900;
+    }
+    .section-header p {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    /* =========================================================
+       STAT CARDS
+    ========================================================= */
+    .stats-grid {
+      display: grid;
+      grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+      gap: 13px;
+      margin-bottom: 16px;
+    }
+    .stat-card {
+      min-width: 0;
+      padding: 17px;
+      border:
+        1px solid var(--border);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(
+          145deg,
+          rgba(15,23,42,.78),
+          rgba(15,23,42,.42)
+        );
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+    .stat-card::after {
+      content: "";
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      right: -45px;
+      bottom: -45px;
+      border-radius: 50%;
+      background:
+        rgba(34,211,238,.06);
+      filter: blur(12px);
+    }
+    .stat-label {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .7px;
+    }
+    .stat-value {
+      margin-top: 8px;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -.5px;
+    }
+    .stat-meta {
+      margin-top: 6px;
+      color: var(--muted-2);
+      font-size: 10px;
+    }
+    .stat-meta.good {
+      color: var(--green);
+    }
+    .stat-meta.warning {
+      color: var(--yellow);
+    }
+    .stat-meta.error {
+      color: var(--red);
+    }
+    /* =========================================================
+       PANELS
+    ========================================================= */
+    .panel-grid {
+      display: grid;
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .panel {
+      min-width: 0;
+      border:
+        1px solid var(--border);
+      border-radius: var(--radius);
+      background:
+        rgba(15,23,42,.62);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel-header {
+      min-height: 55px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0 16px;
+      border-bottom:
+        1px solid var(--border);
+    }
+    .panel-title {
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .panel-subtitle {
+      margin-top: 2px;
+      color: var(--muted-2);
+      font-size: 9px;
+    }
+    .panel-body {
+      padding: 16px;
+    }
+    /* =========================================================
+       CHARTS
+    ========================================================= */
+    .chart-box {
+      width: 100%;
+      height: 270px;
+      position: relative;
+    }
+    .chart-box canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+    /* =========================================================
+       TABLES
+    ========================================================= */
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    .data-table th {
+      padding: 11px 10px;
+      color: var(--muted-2);
+      font-size: 9px;
+      font-weight: 900;
+      text-align: left;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      border-bottom:
+        1px solid var(--border);
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 12px 10px;
+      color: #cbd5e1;
+      border-bottom:
+        1px solid rgba(148,163,184,.06);
+      vertical-align: middle;
+    }
+    .data-table tr:hover td {
+      background:
+        rgba(255,255,255,.018);
+    }
+    .user-cell {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+    .avatar {
+      width: 30px;
+      height: 30px;
+      flex: 0 0 30px;
+      border-radius: 9px;
+      background:
+        linear-gradient(
+          135deg,
+          #334155,
+          #1e293b
+        );
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 900;
+      color: white;
+    }
+    .user-name {
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .user-id {
+      margin-top: 2px;
+      color: var(--muted-2);
+      font-size: 9px;
+    }
+    /* =========================================================
+       BADGES
+    ========================================================= */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 7px;
+      border-radius: 7px;
+      font-size: 9px;
+      font-weight: 800;
+    }
+    .badge-green {
+      color: #a7f3d0;
+      background: rgba(52,211,153,.09);
+    }
+    .badge-blue {
+      color: #bae6fd;
+      background: rgba(56,189,248,.09);
+    }
+    .badge-violet {
+      color: #ddd6fe;
+      background: rgba(139,92,246,.10);
+    }
+    .badge-yellow {
+      color: #fde68a;
+      background: rgba(251,191,36,.09);
+    }
+    .badge-red {
+      color: #fecdd3;
+      background: rgba(251,113,133,.09);
+    }
+    .badge-gray {
+      color: #cbd5e1;
+      background: rgba(148,163,184,.08);
+    }
+    /* =========================================================
+       TOOLBAR
+    ========================================================= */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 13px;
+    }
+    .input,
+    .select {
+      height: 38px;
+      padding: 0 11px;
+      border:
+        1px solid var(--border);
+      border-radius: 10px;
+      background:
+        rgba(2,6,23,.65);
+      color: white;
+      outline: none;
+      font-size: 11px;
+    }
+    .input {
+      min-width: 180px;
+      flex: 1;
+    }
+    .select {
+      min-width: 145px;
+    }
+    .input:focus,
+    .select:focus {
+      border-color:
+        rgba(34,211,238,.35);
+      box-shadow:
+        0 0 0 3px
+        rgba(34,211,238,.05);
+    }
+    /* =========================================================
+       LOADING / EMPTY
+    ========================================================= */
+    .loading {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .spinner {
+      width: 22px;
+      height: 22px;
+      margin: 0 auto 10px;
+      border:
+        2px solid rgba(255,255,255,.08);
+      border-top-color:
+        var(--cyan);
+      border-radius: 50%;
+      animation:
+        spin .7s linear infinite;
+    }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    .empty {
+      padding: 35px 20px;
+      text-align: center;
+      color: var(--muted-2);
+      font-size: 11px;
+    }
+    /* =========================================================
+       PAGINATION
+    ========================================================= */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 7px;
+      padding: 12px 15px;
+    }
+    .pagination-info {
+      margin-right: auto;
+      color: var(--muted-2);
+      font-size: 10px;
+    }
+    /* =========================================================
+       OVERLAY
+    ========================================================= */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background:
+        rgba(0,0,0,.55);
+      z-index: 90;
+    }
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+    @media (max-width: 1150px) {
+      .stats-grid {
+        grid-template-columns:
+          repeat(2, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 900px) {
+      :root {
+        --sidebar-width: 245px;
+      }
+      .panel-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 720px) {
+      .admin-sidebar {
+        transform:
+          translateX(-100%);
+      }
+      .admin-sidebar.open {
+        transform:
+          translateX(0);
+      }
+      .sidebar-overlay.open {
+        display: block;
+      }
+      .admin-main {
+        width: 100%;
+        margin-left: 0;
+        padding: 15px;
+      }
+      .mobile-menu {
+        display: block;
+      }
+      .topbar {
+        align-items: flex-start;
+      }
+      .topbar-actions .btn {
+        display: none;
+      }
+    }
+    @media (max-width: 520px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      .toolbar {
+        align-items: stretch;
+      }
+      .input,
+      .select {
+        width: 100%;
+        min-width: 0;
+      }
+      .section-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .chart-box {
+        height: 220px;
+      }
+    }
+  .raw-data{margin:0;white-space:pre-wrap;word-break:break-word;color:#94a3b8;font-size:12px;line-height:1.6}.promo-row{display:flex;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.07)}.promo-row code{font-weight:800;color:#fff}.badge-active{color:#10b981}.badge-inactive{color:#ef4444}
+</style>
+</head>
+<body>
+<div class="admin-app">
+  <!-- =======================================================
+       SIDEBAR
+  ======================================================== -->
+  <aside id="adminSidebar" class="admin-sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <img
+          src="/logo.png"
+          alt="OMNIX"
+          onerror="
+            this.style.display='none';
+            document.getElementById('brandFallback').style.display='flex';
+          "
+        >
+        <span
+          id="brandFallback"
+          class="brand-fallback"
+          style="display:none;"
+        >
+          O
+        </span>
+      </div>
+      <div>
+        <div class="brand-name">
+          OMNIX
+        </div>
+        <div class="brand-role">
+          Staff Control Center
+        </div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        Général
+      </div>
+      <button
+        class="nav-button active"
+        data-section="overview"
+      >
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">
+          Vue générale
+        </span>
+      </button>
+      <button
+        class="nav-button"
+        data-section="users"
+      >
+        <span class="nav-icon">👥</span>
+        <span class="nav-label">
+          Utilisateurs
+        </span>
+      </button>
+      <button
+        class="nav-button"
+        data-section="guilds"
+      >
+        <span class="nav-icon">🖥️</span>
+        <span class="nav-label">
+          Serveurs Discord
+        </span>
+      </button>
+      <div class="nav-section">
+        Intelligence artificielle
+      </div>
+      <button
+        class="nav-button"
+        data-section="ai"
+      >
+        <span class="nav-icon">🤖</span>
+        <span class="nav-label">
+          Statistiques IA
+        </span>
+      </button>
+      <button
+        class="nav-button"
+        data-section="aiLogs"
+      >
+        <span class="nav-icon">💬</span>
+        <span class="nav-label">
+          Logs conversations IA
+        </span>
+      </button>
+      <div class="nav-section">
+        Plateforme
+      </div>
+      <button class="nav-button" data-section="bot"><span class="nav-icon">🤖</span><span class="nav-label">Bot Discord</span></button>
+      <button class="nav-button" data-section="payments"><span class="nav-icon">💳</span><span class="nav-label">Paiements</span></button>
+      <button class="nav-button" data-section="emails"><span class="nav-icon">📧</span><span class="nav-label">Emails</span></button>
+      <button class="nav-button" data-section="events"><span class="nav-icon">📡</span><span class="nav-label">Activité temps réel</span></button>
+      <button class="nav-button" data-section="analytics"><span class="nav-icon">📈</span><span class="nav-label">Analytics</span></button>
+      <button class="nav-button" data-section="pricing"><span class="nav-icon">💰</span><span class="nav-label">Abonnements & tarifs</span></button>
+      <button class="nav-button" data-section="promos"><span class="nav-icon">🏷️</span><span class="nav-label">Codes promo</span></button>
+      <button class="nav-button" data-section="admins"><span class="nav-icon">👑</span><span class="nav-label">Admins & rôles</span></button>
+      <div class="nav-section">
+        Sécurité
+      </div>
+      <button class="nav-button" data-section="audit"><span class="nav-icon">🛡️</span><span class="nav-label">Audit Logs</span></button>
+      <div class="nav-section">
+        Système
+      </div>
+      <button
+        class="nav-button"
+        data-section="health"
+      >
+        <span class="nav-icon">❤️</span>
+        <span class="nav-label">
+          Santé système
+        </span>
+      </button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="staff-card">
+        <div class="staff-card-label">
+          Session Staff
+        </div>
+        <div
+          id="staffName"
+          class="staff-card-name"
+        >
+          Chargement...
+        </div>
+        <div class="staff-status">
+          <span class="status-dot"></span>
+          Panel sécurisé
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div
+    id="sidebarOverlay"
+    class="sidebar-overlay"
+  ></div>
+  <!-- =======================================================
+       MAIN
+  ======================================================== -->
+  <main class="admin-main">
+    <header class="topbar">
+      <div
+        style="
+          display:flex;
+          align-items:center;
+          gap:12px;
+        "
+      >
+        <button
+          id="mobileMenu"
+          class="mobile-menu"
+          type="button"
+        >
+          ☰
+        </button>
+        <div>
+          <div class="topbar-title">
+            Staff Panel
+          </div>
+          <div class="topbar-subtitle">
+            Centre de contrôle administratif OMNIX
+          </div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button
+          class="btn"
+          id="refreshAll"
+          type="button"
+        >
+          ↻ Actualiser
+        </button>
+        <a
+          href="/"
+          class="btn"
+        >
+          ← Retour
+        </a>
+      </div>
+    </header>
+    <!-- =====================================================
+         OVERVIEW
+    ====================================================== -->
+    <section
+      id="section-overview"
+      class="page-section active"
+    >
+      <div class="section-header">
+        <div>
+          <h2>
+            Vue générale
+          </h2>
+          <p>
+            Vue globale de l'activité OMNIX.
+          </p>
+        </div>
+        <div
+          style="
+            display:flex;
+            gap:7px;
+            align-items:center;
+          "
+        >
+          <input
+            id="overviewStart"
+            class="input"
+            type="date"
+            style="max-width:145px;"
+          >
+          <input
+            id="overviewEnd"
+            class="input"
+            type="date"
+            style="max-width:145px;"
+          >
+          <button
+            id="overviewApply"
+            class="btn btn-primary"
+            type="button"
+          >
+            Filtrer
+          </button>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">
+            Utilisateurs
+          </div>
+          <div
+            id="statUsers"
+            class="stat-value"
+          >
+            —
+          </div>
+          <div
+            id="statNewUsers"
+            class="stat-meta"
+          >
+            —
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            Serveurs Discord
+          </div>
+          <div
+            id="statGuilds"
+            class="stat-value"
+          >
+            —
+          </div>
+          <div
+            id="statGuildPremium"
+            class="stat-meta"
+          >
+            —
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            Requêtes IA
+          </div>
+          <div
+            id="statAi"
+            class="stat-value"
+          >
+            —
+          </div>
+          <div
+            id="statAiErrors"
+            class="stat-meta"
+          >
+            —
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            Plans actifs
+          </div>
+          <div
+            id="statPlans"
+            class="stat-value"
+          >
+            —
+          </div>
+          <div
+            id="statAudit"
+            class="stat-meta"
+          >
+            —
+          </div>
+        </div>
+      </div>
+      <div class="panel-grid">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">
+                Inscriptions utilisateurs
+              </div>
+              <div class="panel-subtitle">
+                Évolution quotidienne
+              </div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="chart-box">
+              <canvas id="usersChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">
+                Nouveaux serveurs
+              </div>
+              <div class="panel-subtitle">
+                Serveurs enregistrés
+              </div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="chart-box">
+              <canvas id="guildsChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              Activité IA
+            </div>
+            <div class="panel-subtitle">
+              Requêtes, tokens et erreurs
+            </div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="chart-box">
+            <canvas id="overviewAiChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- =====================================================
+         USERS
+    ====================================================== -->
+    <section
+      id="section-users"
+      class="page-section"
+    >
+      <div class="section-header">
+        <div>
+          <h2>
+            Utilisateurs
+          </h2>
+          <p>
+            Comptes enregistrés sur OMNIX.
+          </p>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-body">
+          <div class="toolbar">
+            <input
+              id="usersSearch"
+              class="input"
+              type="search"
+              placeholder="Rechercher par Discord ID, pseudo ou email..."
+            >
+            <button
+              id="usersSearchBtn"
+              class="btn btn-primary"
+              type="button"
+            >
+              Rechercher
+            </button>
+          </div>
+          <div
+            id="usersTableContainer"
+            class="table-wrapper"
+          >
+            <div class="loading">
+              <div class="spinner"></div>
+              Chargement des utilisateurs...
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- =====================================================
+         GUILDS
+    ====================================================== -->
+    <section
+      id="section-guilds"
+      class="page-section"
+    >
+      <div class="section-header">
+        <div>
+          <h2>
+            Serveurs Discord
+          </h2>
+          <p>
+            Tous les serveurs utilisant OMNIX.
+          </p>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-body">
+          <div class="toolbar">
+            <input
+              id="guildsSearch"
+              class="input"
+              type="search"
+              placeholder="Rechercher un serveur ou un Guild ID..."
+            >
+            <button
+              id="guildsSearchBtn"
+              class="btn btn-primary"
+              type="button"
+            >
+              Rechercher
+            </button>
+          </div>
+          <div
+            id="guildsTableContainer"
+            class="table-wrapper"
+          >
+            <div class="loading">
+              <div class="spinner"></div>
+              Chargement des serveurs...
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- =====================================================
+         AI STATISTICS
+    ====================================================== -->
+    <section
+      id="section-ai"
+      class="page-section"
+    >
+      <div class="section-header">
+        <div>
+          <h2>
+            Intelligence artificielle
+          </h2>
+          <p>
+            Analyse globale de l'utilisation de l'IA OMNIX.
+          </p>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">
+            Requêtes
+          </div>
+          <div
+            id="aiTotalRequests"
+            class="stat-value"
+          >
+            —
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            Tokens
+          </div>
+          <div
+            id="aiTotalTokens"
+            class="stat-value"
+          >
+            —
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            Erreurs
+          </div>
+          <div
+            id="aiTotalErrors"
+            class="stat-value"
+          >
+            —
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            Taux d'erreur
+          </div>
+          <div
+            id="aiErrorRate"
+            class="stat-value"
+          >
+            —
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              Activité IA
+            </div>
+            <div class="panel-subtitle">
+              Données issues de /api/admin/statistics/ai
+            </div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="chart-box">
+            <canvas id="aiChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- =====================================================
+         AI LOGS
+    ====================================================== -->
+    <section
+      id="section-aiLogs"
+      class="page-section"
+    >
+      <div class="section-header">
+        <div>
+          <h2>
+            Logs des conversations IA
+          </h2>
+          <p>
+            Conversations du site et des serveurs Discord.
+          </p>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-body">
+          <div class="toolbar">
+            <input
+              id="aiLogSearch"
+              class="input"
+              type="search"
+              placeholder="Rechercher dans les conversations..."
+            >
+            <input
+              id="aiLogGuild"
+              class="input"
+              type="text"
+              placeholder="Guild ID"
+            >
+            <input
+              id="aiLogOwner"
+              class="input"
+              type="text"
+              placeholder="Owner ID"
+            >
+            <select
+              id="aiLogSource"
+              class="select"
+            >
+              <option value="">
+                Toutes les sources
+              </option>
+              <option value="website">
+                Site web
+              </option>
+              <option value="discord">
+                Discord
+              </option>
+            </select>
+            <select
+              id="aiLogStatus"
+              class="select"
+            >
+              <option value="">
+                Tous les statuts
+              </option>
+              <option value="success">
+                Succès
+              </option>
+              <option value="error">
+                Erreurs
+              </option>
+            </select>
+            <button
+              id="aiLogsSearchBtn"
+              class="btn btn-primary"
+              type="button"
+            >
+              Filtrer
+            </button>
+          </div>
+          <div
+            id="aiLogsTableContainer"
+            class="table-wrapper"
+          >
+            <div class="loading">
+              <div class="spinner"></div>
+              Chargement des logs IA...
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- =====================================================
+         PLATFORM EXTENSIONS
+    ====================================================== -->
+    <section id="section-bot" class="page-section"><div class="section-header"><div><h2>Bot Discord</h2><p>État réel du bot OMNIX.</p></div></div><div class="panel"><div class="panel-body"><pre id="botData" class="raw-data">Chargement...</pre></div></div></section>
+    <section id="section-payments" class="page-section"><div class="section-header"><div><h2>Paiements</h2><p>Paiements Stripe et licences.</p></div></div><div class="panel"><div class="panel-body"><pre id="paymentsData" class="raw-data">Chargement...</pre></div></div></section>
+    <section id="section-emails" class="page-section"><div class="section-header"><div><h2>Emails</h2><p>Conversations email OMNIX.</p></div></div><div class="panel"><div class="panel-body"><pre id="emailsData" class="raw-data">Chargement...</pre></div></div></section>
+    <section id="section-events" class="page-section"><div class="section-header"><div><h2>Activité temps réel</h2><p>Événements récents de la plateforme.</p></div></div><div class="panel"><div class="panel-body"><pre id="eventsData" class="raw-data">Chargement...</pre></div></div></section>
+    <section id="section-analytics" class="page-section"><div class="section-header"><div><h2>Analytics</h2><p>Analyse globale OMNIX.</p></div></div><div class="panel"><div class="panel-body"><pre id="analyticsData" class="raw-data">Chargement...</pre></div></div></section>
+    <section id="section-audit" class="page-section"><div class="section-header"><div><h2>Audit Logs</h2><p>Actions sensibles et opérations Staff.</p></div></div><div class="panel"><div class="panel-body"><pre id="auditData" class="raw-data">Chargement...</pre></div></div></section>
+    <section id="section-pricing" class="page-section"><div class="section-header"><div><h2>Abonnements & tarifs</h2><p>Prix actuellement configurés dans MongoDB.</p></div><button class="btn btn-primary" type="button" onclick="loadPricing()">↻ Actualiser</button></div><div class="panel"><div class="panel-body"><div id="pricingData">Chargement...</div></div></div></section>
+    <section id="section-promos" class="page-section"><div class="section-header"><div><h2>Codes promo</h2><p>Créer, activer et désactiver les codes promotionnels.</p></div></div><div class="panel"><div class="panel-body"><div class="toolbar"><input id="promoCode" class="input" placeholder="CODE"><select id="promoType" class="select"><option value="percentage">Pourcentage</option><option value="fixed">Montant fixe</option></select><input id="promoValue" class="input" type="number" min="0" step="0.01" placeholder="Valeur"><input id="promoMaxUses" class="input" type="number" min="0" placeholder="Usages max (0 = illimité)"><input id="promoExpiresAt" class="input" type="datetime-local"><button id="promoCreate" class="btn btn-primary" type="button">Créer</button></div><div id="promosData">Chargement...</div></div></div></section>
+    <section id="section-admins" class="page-section"><div class="section-header"><div><h2>Admins & rôles</h2><p>Gestion RBAC du Staff OMNIX.</p></div></div><div class="panel"><div class="panel-body"><p>Les rôles sont contrôlés côté backend. Les Owners restent déterminés par OWNER_IDS.</p><pre id="adminsData" class="raw-data">Utilisez la section Utilisateurs pour modifier les rôles.</pre></div></div></section>
+    <!-- =====================================================
+         HEALTH
+    ====================================================== -->
+    <section
+      id="section-health"
+      class="page-section"
+    >
+      <div class="section-header">
+        <div>
+          <h2>
+            Santé système
+          </h2>
+          <p>
+            État actuel de l'infrastructure OMNIX.
+          </p>
+        </div>
+        <button
+          id="healthRefresh"
+          class="btn btn-primary"
+          type="button"
+        >
+          Vérifier maintenant
+        </button>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">
+            Application
+          </div>
+          <div
+            id="healthStatus"
+            class="stat-value"
+          >
+            —
+          </div>
+          <div
+            id="healthUptime"
+            class="stat-meta"
+          >
+            —
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            MongoDB
+          </div>
+          <div
+            id="healthMongo"
+            class="stat-value"
+          >
+            —
+          </div>
+          <div
+            id="healthMongoState"
+            class="stat-meta"
+          >
+            —
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            RAM utilisée
+          </div>
+          <div
+            id="healthMemory"
+            class="stat-value"
+          >
+            —
+          </div>
+          <div class="stat-meta">
+            Process Node.js
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">
+            Node.js
+          </div>
+          <div
+            id="healthNode"
+            class="stat-value"
+          >
+            —
+          </div>
+          <div
+            id="healthPlatform"
+            class="stat-meta"
+          >
+            —
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              Informations techniques
+            </div>
+            <div class="panel-subtitle">
+              Données retournées par /api/admin/health
+            </div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <pre
+            id="healthRaw"
+            style="
+              margin:0;
+              white-space:pre-wrap;
+              word-break:break-word;
+              color:#94a3b8;
+              font-size:10px;
+              line-height:1.7;
+            "
+          >Chargement...</pre>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<!-- =========================================================
+     SCRIPT
+========================================================= -->
+<script>
+/* =========================================================
+   OMNIX ADMIN
+   PART 1 / 2
+========================================================= */
+"use strict";
+/* =========================================================
+   STATE
+========================================================= */
+const AdminState = {
+  currentSection: "overview",
+  charts: {},
+  overview: null,
+  usersPage: 1,
+  usersLimit: 25,
+  guildsPage: 1,
+  guildsLimit: 25,
+  aiLogsPage: 1,
+  aiLogsLimit: 25
+};
+/* =========================================================
+   HELPERS
+========================================================= */
+function escapeHtml(value) {
+  if (value === null || value === undefined) {
+    return "";
+  }
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+function formatNumber(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) {
+    return "0";
+  }
+  return new Intl.NumberFormat("fr-FR")
+    .format(number);
+}
+function formatBytes(bytes) {
+  const number = Number(bytes);
+  if (!Number.isFinite(number)) {
+    return "0 B";
+  }
+  const units = [
+    "B",
+    "KB",
+    "MB",
+    "GB",
+    "TB"
+  ];
+  let size = number;
+  let index = 0;
+  while (
+    size >= 1024 &&
+    index < units.length - 1
+  ) {
+    size /= 1024;
+    index++;
+  }
+  return (
+    size.toFixed(
+      index === 0 ? 0 : 1
+    ) +
+    " " +
+    units[index]
+  );
+}
+function formatUptime(seconds) {
+  const total = Math.max(
+    0,
+    Number(seconds) || 0
+  );
+  const days =
+    Math.floor(
+      total / 86400
+    );
+  const hours =
+    Math.floor(
+      (total % 86400) / 3600
+    );
+  const minutes =
+    Math.floor(
+      (total % 3600) / 60
+    );
+  return `${days}j ${hours}h ${minutes}m`;
+}
+function formatDate(value) {
+  if (!value) {
+    return "—";
+  }
+  const date =
+    new Date(value);
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return "—";
+  }
+  return date.toLocaleString(
+    "fr-FR",
+    {
+      dateStyle: "short",
+      timeStyle: "short"
+    }
+  );
+}
+function getInitials(value) {
+  const text =
+    String(value || "?")
+      .trim();
+  if (!text) {
+    return "?";
+  }
+  return text
+    .split(/\s+/)
+    .slice(0, 2)
+    .map(
+      part =>
+        part[0]
+          ?.toUpperCase() || ""
+    )
+    .join("");
+}
+function todayInputDate() {
+  const date =
+    new Date();
+  return date
+    .toISOString()
+    .slice(0, 10);
+}
+function daysAgoInputDate(days) {
+  const date =
+    new Date();
+  date.setDate(
+    date.getDate() - days
+  );
+  return date
+    .toISOString()
+    .slice(0, 10);
+}
+/* =========================================================
+   API CLIENT
+========================================================= */
+async function adminFetch(
+  path,
+  options = {}
+) {
+  const response =
+    await fetch(
+      path,
+      {
+        credentials: "include",
+        headers: {
+          "Accept":
+            "application/json",
+          ...(options.headers || {})
+        },
+        ...options
+      }
+    );
+  let data = null;
+  try {
+    data =
+      await response.json();
+  } catch {
+    data = null;
+  }
+  if (
+    response.status === 401
+  ) {
+    window.location.href =
+      "/login";
+    throw new Error(
+      "Session expirée."
+    );
+  }
+  if (
+    response.status === 403
+  ) {
+    throw new Error(
+      "Accès Staff refusé."
+    );
+  }
+  if (!response.ok) {
+    throw new Error(
+      data?.error ||
+      "Erreur serveur."
+    );
+  }
+  return data;
+}
+async function loadJsonInto(url,id){try{const data=await adminFetch(url);const el=document.getElementById(id);if(el)el.textContent=JSON.stringify(data,null,2);return data;}catch(e){const el=document.getElementById(id);if(el)el.textContent=`Erreur: ${e.message}`;}}
+async function loadBot(){return loadJsonInto('/api/admin/bot','botData');}
+async function loadPayments(){return loadJsonInto('/api/admin/payments?limit=50','paymentsData');}
+async function loadEmails(){return loadJsonInto('/api/email/threads','emailsData');}
+async function loadEvents(){return loadJsonInto('/api/admin/events?limit=50','eventsData');}
+async function loadAnalytics(){return loadJsonInto('/api/admin/analytics','analyticsData');}
+async function loadAudit(){return loadJsonInto('/api/admin/audit-logs?limit=50','auditData');}
+async function loadPricing(){try{const d=await adminFetch(ADMIN_ROUTES.pricing);const rows=d?.data||[];const el=document.getElementById('pricingData');if(!el)return;el.innerHTML=rows.length?rows.map(p=>`<div class="promo-row"><strong>${escapeHtml(p.name)}</strong><span>${Number(p.price||0).toFixed(2)} ${escapeHtml(p.currency||'EUR')}</span><span>${escapeHtml(p.durationLabel||((p.durationDays||0)+' jours'))}</span><span class="${p.active?'badge-active':'badge-inactive'}">${p.active?'ACTIF':'INACTIF'}</span></div>`).join(''):'Aucun abonnement configuré.';}catch(e){const el=document.getElementById('pricingData');if(el)el.textContent='Erreur: '+e.message;}}
+async function loadPromos(){try{const d=await adminFetch(ADMIN_ROUTES.promos);const rows=d?.data||[];const el=document.getElementById('promosData');if(!el)return;el.innerHTML=rows.length?rows.map(p=>`<div class="promo-row"><code>${escapeHtml(p.code)}</code><span>${p.discountType==='percentage'?p.discountValue+'%':Number(p.discountValue||0).toFixed(2)+'€'}</span><span>${Number(p.usesCount||0)}/${Number(p.maxUses||0)||'∞'}</span><span class="${p.isActive?'badge-active':'badge-inactive'}">${p.isActive?'ACTIF':'INACTIF'}</span><button class="btn" type="button" onclick="togglePromo('${escapeAttribute(p.code)}',${!p.isActive})">${p.isActive?'Désactiver':'Activer'}</button></div>`).join(''):'Aucun code promo.';}catch(e){const el=document.getElementById('promosData');if(el)el.textContent='Erreur: '+e.message;}}
+async function togglePromo(code,active){await adminFetch('/api/admin/promos/'+encodeURIComponent(code),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({isActive:active})});await loadPromos();}
+async function loadAdmins(){return loadJsonInto('/api/admin/me','adminsData');}
+
+/* =========================================================
+   NAVIGATION
+========================================================= */
+function openSection(
+  section
+) {
+  AdminState.currentSection =
+    section;
+  document
+    .querySelectorAll(
+      ".nav-button"
+    )
+    .forEach(button => {
+      button.classList.toggle(
+        "active",
+        button.dataset.section ===
+          section
+      );
+    });
+  document
+    .querySelectorAll(
+      ".page-section"
+    )
+    .forEach(element => {
+      element.classList.toggle(
+        "active",
+        element.id ===
+          `section-${section}`
+      );
+    });
+  closeMobileSidebar();
+  if (section === "overview") {
+    loadOverview();
+  }
+  if (section === "users") {
+    loadUsers();
+  }
+  if (section === "guilds") {
+    loadGuilds();
+  }
+  if (section === "ai") {
+    loadAiStatistics();
+  }
+  if (section === "aiLogs") {
+    loadAiLogs();
+  }
+  if (section === "health") {
+    loadHealth();
+  }
+  if (section === "bot") loadBot();
+  if (section === "payments") loadPayments();
+  if (section === "emails") loadEmails();
+  if (section === "events") loadEvents();
+  if (section === "analytics") loadAnalytics();
+  if (section === "audit") loadAudit();
+  if (section === "pricing") loadPricing();
+  if (section === "promos") loadPromos();
+  if (section === "admins") loadAdmins();
+}
+document
+  .querySelectorAll(
+    ".nav-button"
+  )
+  .forEach(button => {
+    button.addEventListener(
+      "click",
+      () => {
+        openSection(
+          button.dataset.section
+        );
+      }
+    );
+  });
+/* =========================================================
+   MOBILE SIDEBAR
+========================================================= */
+function openMobileSidebar() {
+  document
+    .getElementById(
+      "adminSidebar"
+    )
+    .classList.add("open");
+  document
+    .getElementById(
+      "sidebarOverlay"
+    )
+    .classList.add("open");
+}
+function closeMobileSidebar() {
+  document
+    .getElementById(
+      "adminSidebar"
+    )
+    .classList.remove("open");
+  document
+    .getElementById(
+      "sidebarOverlay"
+    )
+    .classList.remove("open");
+}
+document
+  .getElementById(
+    "mobileMenu"
+  )
+  ?.addEventListener(
+    "click",
+    openMobileSidebar
+  );
+document
+  .getElementById(
+    "sidebarOverlay"
+  )
+  ?.addEventListener(
+    "click",
+    closeMobileSidebar
+  );
+/* =========================================================
+   OVERVIEW
+========================================================= */
+async function loadOverview() {
+  const start =
+    document.getElementById(
+      "overviewStart"
+    )?.value;
+  const end =
+    document.getElementById(
+      "overviewEnd"
+    )?.value;
+  const params =
+    new URLSearchParams();
+  if (start) {
+    params.set(
+      "start",
+      `${start}T00:00:00`
+    );
+  }
+  if (end) {
+    params.set(
+      "end",
+      `${end}T23:59:59`
+    );
+  }
+  try {
+    const data =
+      await adminFetch(
+        `/api/admin/overview?${params.toString()}`
+      );
+    AdminState.overview =
+      data;
+    renderOverview(
+      data
+    );
+    await Promise.all([
+      loadUserStatistics(
+        start,
+        end
+      ),
+      loadGuildStatistics(
+        start,
+        end
+      ),
+      loadAiStatistics(
+        start,
+        end
+      )
+    ]);
+  } catch (error) {
+    console.error(
+      "[OMNIX ADMIN] Overview:",
+      error
+    );
+    showError(
+      "Impossible de charger la vue générale.",
+      error.message
+    );
+  }
+}
+function renderOverview(
+  data
+) {
+  const users =
+    data?.users || {};
+  const guilds =
+    data?.guilds || {};
+  const pricing =
+    data?.pricing || {};
+  const ai =
+    data?.ai || {};
+  const staff =
+    data?.staff || {};
+  setText(
+    "statUsers",
+    formatNumber(
+      users.total
+    )
+  );
+  setText(
+    "statNewUsers",
+    `+${formatNumber(
+      users.new
+    )} sur la période`
+  );
+  setText(
+    "statGuilds",
+    formatNumber(
+      guilds.total
+    )
+  );
+  setText(
+    "statGuildPremium",
+    `${formatNumber(
+      guilds.premium
+    )} Premium · ${formatNumber(
+      guilds.free
+    )} Free`
+  );
+  setText(
+    "statAi",
+    formatNumber(
+      ai.requests
+    )
+  );
+  setText(
+    "statAiErrors",
+    `${formatNumber(
+      ai.errors
+    )} erreur(s)`
+  );
+  setText(
+    "statPlans",
+    formatNumber(
+      pricing.active
+    )
+  );
+  setText(
+    "statAudit",
+    `${formatNumber(
+      staff.auditActions
+    )} actions Staff`
+  );
+  const name =
+    data?.user?.username ||
+    data?.user?.tag ||
+    "Staff OMNIX";
+  setText(
+    "staffName",
+    name
+  );
+}
+async function loadUserStatistics(
+  start,
+  end
+) {
+  const params =
+    new URLSearchParams();
+  if (start) {
+    params.set(
+      "start",
+      `${start}T00:00:00`
+    );
+  }
+  if (end) {
+    params.set(
+      "end",
+      `${end}T23:59:59`
+    );
+  }
+  try {
+    const data =
+      await adminFetch(
+        `/api/admin/statistics/users?${params.toString()}`
+      );
+    drawLineChart(
+      "usersChart",
+      data?.data || [],
+      "count",
+      "Inscriptions"
+    );
+  } catch (error) {
+    console.error(
+      "[OMNIX ADMIN] User chart:",
+      error
+    );
+  }
+}
+async function loadGuildStatistics(
+  start,
+  end
+) {
+  const params =
+    new URLSearchParams();
+  if (start) {
+    params.set(
+      "start",
+      `${start}T00:00:00`
+    );
+  }
+  if (end) {
+    params.set(
+      "end",
+      `${end}T23:59:59`
+    );
+  }
+  try {
+    const data =
+      await adminFetch(
+        `/api/admin/statistics/guilds?${params.toString()}`
+      );
+    drawLineChart(
+      "guildsChart",
+      data?.data || [],
+      "count",
+      "Serveurs"
+    );
+  } catch (error) {
+    console.error(
+      "[OMNIX ADMIN] Guild chart:",
+      error
+    );
+  }
+}
+async function loadAiStatistics(
+  start,
+  end
+) {
+  const params =
+    new URLSearchParams();
+  if (start) {
+    params.set(
+      "start",
+      `${start}T00:00:00`
+    );
+  }
+  if (end) {
+    params.set(
+      "end",
+      `${end}T23:59:59`
+    );
+  }
+  try {
+    const data =
+      await adminFetch(
+        `/api/admin/statistics/ai?${params.toString()}`
+      );
+    renderAiStatistics(
+      data?.data || []
+    );
+    drawAiChart(
+      data?.data || []
+    );
+    drawOverviewAiChart(
+      data?.data || []
+    );
+  } catch (error) {
+    console.error(
+      "[OMNIX ADMIN] AI chart:",
+      error
+    );
+  }
+}
+/* =========================================================
+   AI STATISTICS RENDER
+========================================================= */
+function renderAiStatistics(
+  rows
+) {
+  const totalRequests =
+    rows.reduce(
+      (sum, row) =>
+        sum +
+        Number(
+          row.requests || 0
+        ),
+      0
+    );
+  const totalTokens =
+    rows.reduce(
+      (sum, row) =>
+        sum +
+        Number(
+          row.tokens || 0
+        ),
+      0
+    );
+  const totalErrors =
+    rows.reduce(
+      (sum, row) =>
+        sum +
+        Number(
+          row.errors || 0
+        ),
+      0
+    );
+  const errorRate =
+    totalRequests > 0
+      ? (
+          totalErrors /
+          totalRequests *
+          100
+        ).toFixed(2) + "%"
+      : "0%";
+  setText(
+    "aiTotalRequests",
+    formatNumber(
+      totalRequests
+    )
+  );
+  setText(
+    "aiTotalTokens",
+    formatNumber(
+      totalTokens
+    )
+  );
+  setText(
+    "aiTotalErrors",
+    formatNumber(
+      totalErrors
+    )
+  );
+  setText(
+    "aiErrorRate",
+    errorRate
+  );
+}
+/* =========================================================
+   CHART ENGINE
+========================================================= */
+function destroyChart(
+  id
+) {
+  if (
+    AdminState.charts[id]
+  ) {
+    AdminState.charts[id].destroy();
+    delete AdminState.charts[id];
+  }
+}
+function drawLineChart(
+  canvasId,
+  rows,
+  valueKey,
+  label
+) {
+  const canvas =
+    document.getElementById(
+      canvasId
+    );
+  if (!canvas) {
+    return;
+  }
+  const ctx =
+    canvas.getContext(
+      "2d"
+    );
+  if (!ctx) {
+    return;
+  }
+  destroyChart(
+    canvasId
+  );
+  const values =
+    rows.map(
+      row =>
+        Number(
+          row[valueKey] || 0
+        )
+    );
+  const labels =
+    rows.map(
+      row =>
+        row.date || ""
+    );
+  if (typeof Chart !== 'function') {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.font = '14px system-ui';
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillText('Graphique indisponible', 16, 30);
+    return;
+  }
+  AdminState.charts[
+    canvasId
+  ] = new Chart(
+    ctx,
+    {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            label,
+            data: values,
+            borderColor:
+              "#22d3ee",
+            backgroundColor:
+              "rgba(34,211,238,.08)",
+            borderWidth: 2,
+            pointRadius: 2,
+            pointHoverRadius: 5,
+            tension: .35,
+            fill: true
+          }
+        ]
+      },
+      options: chartOptions()
+    }
+  );
+}
+function drawAiChart(
+  rows
+) {
+  const canvas =
+    document.getElementById(
+      "aiChart"
+    );
+  if (!canvas) {
+    return;
+  }
+  const ctx =
+    canvas.getContext(
+      "2d"
+    );
+  destroyChart(
+    "aiChart"
+  );
+  if (typeof Chart !== 'function') return;
+  AdminState.charts.aiChart = new Chart(
+      ctx,
+      {
+        type: "line",
+        data: {
+          labels:
+            rows.map(
+              row =>
+                row.date
+            ),
+          datasets: [
+            {
+              label:
+                "Requêtes",
+              data:
+                rows.map(
+                  row =>
+                    Number(
+                      row.requests ||
+                      0
+                    )
+                ),
+              borderColor:
+                "#22d3ee",
+              backgroundColor:
+                "rgba(34,211,238,.06)",
+              tension: .35,
+              fill: true
+            },
+            {
+              label:
+                "Erreurs",
+              data:
+                rows.map(
+                  row =>
+                    Number(
+                      row.errors ||
+                      0
+                    )
+                ),
+              borderColor:
+                "#fb7185",
+              backgroundColor:
+                "transparent",
+              tension: .35,
+              fill: false
+            }
+          ]
+        },
+        options:
+          chartOptions()
+      }
+    );
+}
+function drawOverviewAiChart(
+  rows
+) {
+  const canvas =
+    document.getElementById(
+      "overviewAiChart"
+    );
+  if (!canvas) {
+    return;
+  }
+  const ctx =
+    canvas.getContext(
+      "2d"
+    );
+  destroyChart(
+    "overviewAiChart"
+  );
+  if (typeof Chart !== 'function') return;
+  AdminState.charts.overviewAiChart = new Chart(
+      ctx,
+      {
+        type: "bar",
+        data: {
+          labels:
+            rows.map(
+              row =>
+                row.date
+            ),
+          datasets: [
+            {
+              label:
+                "Requêtes",
+              data:
+                rows.map(
+                  row =>
+                    Number(
+                      row.requests ||
+                      0
+                    )
+                ),
+              backgroundColor:
+                "rgba(34,211,238,.55)"
+            },
+            {
+              label:
+                "Erreurs",
+              data:
+                rows.map(
+                  row =>
+                    Number(
+                      row.errors ||
+                      0
+                    )
+                ),
+              backgroundColor:
+                "rgba(251,113,133,.55)"
+            }
+          ]
+        },
+        options:
+          chartOptions()
+      }
+    );
+}
+function chartOptions() {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      intersect: false,
+      mode: "index"
+    },
+    plugins: {
+      legend: {
+        labels: {
+          color: "#94a3b8",
+          font: {
+            size: 10
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: {
+          color:
+            "rgba(148,163,184,.06)"
+        },
+        ticks: {
+          color:
+            "#64748b",
+          font: {
+            size: 9
+          },
+          maxTicksLimit: 8
+        }
+      },
+      y: {
+        beginAtZero: true,
+        grid: {
+          color:
+            "rgba(148,163,184,.06)"
+        },
+        ticks: {
+          color:
+            "#64748b",
+          font: {
+            size: 9
+          }
+        }
+      }
+    }
+  };
+}
+/* =========================================================
+   USERS
+========================================================= */
+async function loadUsers(
+  page =
+    AdminState.usersPage
+) {
+  AdminState.usersPage =
+    page;
+  const search =
+    document.getElementById(
+      "usersSearch"
+    )?.value.trim() || "";
+  const params =
+    new URLSearchParams();
+  params.set(
+    "page",
+    String(page)
+  );
+  params.set(
+    "limit",
+    String(
+      AdminState.usersLimit
+    )
+  );
+  if (search) {
+    params.set(
+      "search",
+      search
+    );
+  }
+  const container =
+    document.getElementById(
+      "usersTableContainer"
+    );
+  container.innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      Chargement des utilisateurs...
+    </div>
+  `;
+  try {
+    const data =
+      await adminFetch(
+        `/api/admin/users?${params.toString()}`
+      );
+    renderUsers(
+      data
+    );
+  } catch (error) {
+    container.innerHTML =
+      errorBox(
+        error.message
+      );
+  }
+}
+function renderUsers(
+  data
+) {
+  const container =
+    document.getElementById(
+      "usersTableContainer"
+    );
+  const users =
+    data?.data || [];
+  if (!users.length) {
+    container.innerHTML =
+      `<div class="empty">
+        Aucun utilisateur trouvé.
+      </div>`;
+    return;
+  }
+  container.innerHTML = `
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Utilisateur</th>
+          <th>Email</th>
+          <th>Statut</th>
+          <th>Création</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${users.map(user => {
+          const name =
+            user.username ||
+            user.tag ||
+            user.discordId ||
+            "Utilisateur";
+          const premium =
+            user.isPremium === true;
+          const admin =
+            user.isAdmin === true ||
+            user.isOwner === true;
+          return `
+            <tr>
+              <td>
+                <div class="user-cell">
+                  <div class="avatar">
+                    ${escapeHtml(
+                      getInitials(name)
+                    )}
+                  </div>
+                  <div>
+                    <div class="user-name">
+                      ${escapeHtml(name)}
+                    </div>
+                    <div class="user-id">
+                      ${escapeHtml(
+                        user.discordId ||
+                        user.id ||
+                        "ID inconnu"
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                ${escapeHtml(
+                  user.email || "—"
+                )}
+              </td>
+              <td>
+                ${
+                  admin
+                    ? `<span class="badge badge-violet">STAFF</span>`
+                    : premium
+                      ? `<span class="badge badge-blue">PREMIUM</span>`
+                      : `<span class="badge badge-gray">FREE</span>`
+                }
+              </td>
+              <td>
+                ${formatDate(
+                  user.createdAt
+                )}
+              </td>
+            </tr>
+          `;
+        }).join("")}
+      </tbody>
+    </table>
+    ${renderPagination(
+      data?.pagination,
+      "users"
+    )}
+  `;
+}
+/* =========================================================
+   GUILDS
+========================================================= */
+async function loadGuilds(
+  page =
+    AdminState.guildsPage
+) {
+  AdminState.guildsPage =
+    page;
+  const search =
+    document.getElementById(
+      "guildsSearch"
+    )?.value.trim() || "";
+  const params =
+    new URLSearchParams();
+  params.set(
+    "page",
+    String(page)
+  );
+  params.set(
+    "limit",
+    String(
+      AdminState.guildsLimit
+    )
+  );
+  if (search) {
+    params.set(
+      "search",
+      search
+    );
+  }
+  const container =
+    document.getElementById(
+      "guildsTableContainer"
+    );
+  container.innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      Chargement des serveurs...
+    </div>
+  `;
+  try {
+    const data =
+      await adminFetch(
+        `/api/admin/guilds?${params.toString()}`
+      );
+    renderGuilds(
+      data
+    );
+  } catch (error) {
+    container.innerHTML =
+      errorBox(
+        error.message
+      );
+  }
+}
+function renderGuilds(
+  data
+) {
+  const container =
+    document.getElementById(
+      "guildsTableContainer"
+    );
+  const guilds =
+    data?.data || [];
+  if (!guilds.length) {
+    container.innerHTML =
+      `<div class="empty">
+        Aucun serveur trouvé.
+      </div>`;
+    return;
+  }
+  container.innerHTML = `
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Serveur</th>
+          <th>Owner</th>
+          <th>Premium</th>
+          <th>Création</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${guilds.map(guild => {
+          const premium =
+            guild?.premium?.isPremium === true ||
+            guild?.premium?.isPremium === "true";
+          return `
+            <tr>
+              <td>
+                <div class="user-cell">
+                  <div class="avatar">
+                    🖥️
+                  </div>
+                  <div>
+                    <div class="user-name">
+                      ${escapeHtml(
+                        guild.guildName ||
+                        guild.name ||
+                        "Serveur"
+                      )}
+                    </div>
+                    <div class="user-id">
+                      ${escapeHtml(
+                        guild.guildId ||
+                        "Guild ID inconnu"
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                ${escapeHtml(
+                  guild.ownerId ||
+                  guild.owner?.id ||
+                  "—"
+                )}
+              </td>
+              <td>
+                ${
+                  premium
+                    ? `<span class="badge badge-violet">PREMIUM</span>`
+                    : `<span class="badge badge-gray">FREE</span>`
+                }
+              </td>
+              <td>
+                ${formatDate(
+                  guild.createdAt
+                )}
+              </td>
+              <td>
+                <button
+                  class="btn"
+                  type="button"
+                  onclick="
+                    openGuildDetail(
+                      '${escapeJs(
+                        guild.guildId
+                      )}'
+                    )
+                  "
+                >
+                  Voir
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join("")}
+      </tbody>
+    </table>
+    ${renderPagination(
+      data?.pagination,
+      "guilds"
+    )}
+  `;
+}
+/* =========================================================
+   PAGINATION
+========================================================= */
+function renderPagination(
+  pagination,
+  type
+) {
+  if (!pagination) {
+    return "";
+  }
+  const page =
+    Number(
+      pagination.page || 1
+    );
+  const pages =
+    Number(
+      pagination.pages || 1
+    );
+  const total =
+    Number(
+      pagination.total || 0
+    );
+  if (pages <= 1) {
+    return `
+      <div class="pagination">
+        <div class="pagination-info">
+          ${formatNumber(total)} résultat(s)
+        </div>
+      </div>
+    `;
+  }
+  const safeType =
+    escapeJs(type);
+  return `
+    <div class="pagination">
+      <div class="pagination-info">
+        Page ${page} / ${pages}
+        · ${formatNumber(total)} résultat(s)
+      </div>
+      <button
+        class="btn"
+        ${page <= 1 ? "disabled" : ""}
+        onclick="
+          changePage(
+            '${safeType}',
+            ${page - 1}
+          )
+        "
+      >
+        ←
+      </button>
+      <button
+        class="btn"
+        ${page >= pages ? "disabled" : ""}
+        onclick="
+          changePage(
+            '${safeType}',
+            ${page + 1}
+          )
+        "
+      >
+        →
+      </button>
+    </div>
+  `;
+}
+function changePage(
+  type,
+  page
+) {
+  if (page < 1) {
+    return;
+  }
+  if (type === "users") {
+    loadUsers(page);
+  }
+  if (type === "guilds") {
+    loadGuilds(page);
+  }
+  if (type === "aiLogs") {
+    loadAiLogs(page);
+  }
+}
+/* =========================================================
+   GLOBAL EVENTS PART 1
+========================================================= */
+document
+  .getElementById(
+    "overviewApply"
+  )
+  ?.addEventListener(
+    "click",
+    () => {
+      loadOverview();
+    }
+  );
+document
+  .getElementById(
+    "refreshAll"
+  )
+  ?.addEventListener(
+    "click",
+    () => {
+      openSection(
+        AdminState.currentSection
+      );
+    }
+  );
+document
+  .getElementById(
+    "healthRefresh"
+  )
+  ?.addEventListener(
+    "click",
+    loadHealth
+  );
+document
+  .getElementById(
+    "usersSearchBtn"
+  )
+  ?.addEventListener(
+    "click",
+    () => {
+      loadUsers(1);
+    }
+  );
+document
+  .getElementById(
+    "usersSearch"
+  )
+  ?.addEventListener(
+    "keydown",
+    event => {
+      if (
+        event.key === "Enter"
+      ) {
+        loadUsers(1);
+      }
+    }
+  );
+document
+  .getElementById(
+    "guildsSearchBtn"
+  )
+  ?.addEventListener(
+    "click",
+    () => {
+      loadGuilds(1);
+    }
+  );
+document
+  .getElementById(
+    "guildsSearch"
+  )
+  ?.addEventListener(
+    "keydown",
+    event => {
+      if (
+        event.key === "Enter"
+      ) {
+        loadGuilds(1);
+      }
+    }
+  );
+/* =========================================================
+   UTILITY FUNCTIONS
+========================================================= */
+function setText(
+  id,
+  value
+) {
+  const element =
+    document.getElementById(
+      id
+    );
+  if (element) {
+    element.textContent =
+      value;
+  }
+}
+function errorBox(
+  message
+) {
+  return `
+    <div class="empty">
+      <div
+        style="
+          color:#fb7185;
+          font-weight:800;
+          margin-bottom:5px;
+        "
+      >
+        Une erreur est survenue
+      </div>
+      ${escapeHtml(
+        message
+      )}
+    </div>
+  `;
+}
+function showError(
+  title,
+  message
+) {
+  console.error(
+    title,
+    message
+  );
+}
+function escapeJs(
+  value
+) {
+  return String(
+    value || ""
+  )
+    .replaceAll(
+      "\\",
+      "\\\\"
+    )
+    .replaceAll(
+      "'",
+      "\\'"
+    )
+    .replaceAll(
+      "\n",
+      "\\n"
+    )
+    .replaceAll(
+      "\r",
+      "\\r"
+    );
+}
+/* =========================================================
+   DEFAULT DATE RANGE
+========================================================= */
+(function initDates() {
+  const start =
+    document.getElementById(
+      "overviewStart"
+    );
+  const end =
+    document.getElementById(
+      "overviewEnd"
+    );
+  if (start) {
+    start.value =
+      daysAgoInputDate(30);
+  }
+  if (end) {
+    end.value =
+      todayInputDate();
+  }
+})();
+/* =========================================================
+   BOOT
+========================================================= */
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+    loadOverview();
+  }
+);
+
+</script>
+<!-- =========================================================
+     OMNIX ADMIN
+     PART 2 / 2
+========================================================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+
+<script>
+"use strict";
+
+/* =========================================================
+   ADMIN ROUTES
+   Les routes déjà utilisées dans la PARTIE 1 sont conservées.
+========================================================= */
+
+const ADMIN_ROUTES = {
+  overview:
+    "/api/admin/overview",
+
+  users:
+    "/api/admin/users",
+
+  guilds:
+    "/api/admin/guilds",
+
+  userStatistics:
+    "/api/admin/statistics/users",
+
+  guildStatistics:
+    "/api/admin/statistics/guilds",
+
+  aiStatistics:
+    "/api/admin/statistics/ai",
+
+  aiLogs:
+    "/api/admin/ai-logs",
+
+  health:
+    "/api/admin/health",
+  pricing: "/api/admin/pricing?includeInactive=true",
+  promos: "/api/admin/promos",
+  me: "/api/admin/me"
+};
+
+/* =========================================================
+   PATCH API ROUTES
+   Remplace les appels de la PARTIE 1 par les constantes.
+   Cela évite d'avoir les routes dispersées.
+========================================================= */
+
+async function loadOverview() {
+
+  const start =
+    document.getElementById(
+      "overviewStart"
+    )?.value;
+
+  const end =
+    document.getElementById(
+      "overviewEnd"
+    )?.value;
+
+  const params =
+    new URLSearchParams();
+
+  if (start) {
+    params.set(
+      "start",
+      `${start}T00:00:00`
+    );
+  }
+
+  if (end) {
+    params.set(
+      "end",
+      `${end}T23:59:59`
+    );
+  }
+
+  try {
+
+    const query =
+      params.toString();
+
+    const url =
+      query
+        ? `${ADMIN_ROUTES.overview}?${query}`
+        : ADMIN_ROUTES.overview;
+
+    const data =
+      await adminFetch(
+        url
+      );
+
+    AdminState.overview =
+      data;
+
+    renderOverview(
+      data
+    );
+
+    await Promise.all([
+      loadUserStatistics(
+        start,
+        end
+      ),
+
+      loadGuildStatistics(
+        start,
+        end
+      ),
+
+      loadAiStatistics(
+        start,
+        end
+      )
+    ]);
+
+  } catch (error) {
+
+    console.error(
+      "[OMNIX ADMIN] Overview:",
+      error
+    );
+
+    showError(
+      "Impossible de charger la vue générale.",
+      error.message
+    );
+  }
+}
+
+/* =========================================================
+   USER STATISTICS
+========================================================= */
+
+async function loadUserStatistics(
+  start,
+  end
+) {
+
+  const params =
+    new URLSearchParams();
+
+  if (start) {
+    params.set(
+      "start",
+      `${start}T00:00:00`
+    );
+  }
+
+  if (end) {
+    params.set(
+      "end",
+      `${end}T23:59:59`
+    );
+  }
+
+  try {
+
+    const query =
+      params.toString();
+
+    const url =
+      query
+        ? `${ADMIN_ROUTES.userStatistics}?${query}`
+        : ADMIN_ROUTES.userStatistics;
+
+    const data =
+      await adminFetch(
+        url
+      );
+
+    drawLineChart(
+      "usersChart",
+      Array.isArray(data?.data)
+        ? data.data
+        : [],
+      "count",
+      "Inscriptions"
+    );
+
+  } catch (error) {
+
+    console.error(
+      "[OMNIX ADMIN] User statistics:",
+      error
+    );
+
+  }
+}
+
+/* =========================================================
+   GUILD STATISTICS
+========================================================= */
+
+async function loadGuildStatistics(
+  start,
+  end
+) {
+
+  const params =
+    new URLSearchParams();
+
+  if (start) {
+    params.set(
+      "start",
+      `${start}T00:00:00`
+    );
+  }
+
+  if (end) {
+    params.set(
+      "end",
+      `${end}T23:59:59`
+    );
+  }
+
+  try {
+
+    const query =
+      params.toString();
+
+    const url =
+      query
+        ? `${ADMIN_ROUTES.guildStatistics}?${query}`
+        : ADMIN_ROUTES.guildStatistics;
+
+    const data =
+      await adminFetch(
+        url
+      );
+
+    drawLineChart(
+      "guildsChart",
+      Array.isArray(data?.data)
+        ? data.data
+        : [],
+      "count",
+      "Serveurs"
+    );
+
+  } catch (error) {
+
+    console.error(
+      "[OMNIX ADMIN] Guild statistics:",
+      error
+    );
+
+  }
+}
+
+/* =========================================================
+   AI STATISTICS
+========================================================= */
+
+async function loadAiStatistics(
+  start,
+  end
+) {
+
+  const params =
+    new URLSearchParams();
+
+  if (start) {
+    params.set(
+      "start",
+      `${start}T00:00:00`
+    );
+  }
+
+  if (end) {
+    params.set(
+      "end",
+      `${end}T23:59:59`
+    );
+  }
+
+  try {
+
+    const query =
+      params.toString();
+
+    const url =
+      query
+        ? `${ADMIN_ROUTES.aiStatistics}?${query}`
+        : ADMIN_ROUTES.aiStatistics;
+
+    const data =
+      await adminFetch(
+        url
+      );
+
+    const rows =
+      Array.isArray(data?.data)
+        ? data.data
+        : [];
+
+    renderAiStatistics(
+      rows
+    );
+
+    drawAiChart(
+      rows
+    );
+
+    drawOverviewAiChart(
+      rows
+    );
+
+  } catch (error) {
+
+    console.error(
+      "[OMNIX ADMIN] AI statistics:",
+      error
+    );
+
+  }
+}
+
+/* =========================================================
+   AI LOGS
+========================================================= */
+
+async function loadAiLogs(
+  page =
+    AdminState.aiLogsPage
+) {
+
+  AdminState.aiLogsPage =
+    page;
+
+  const search =
+    document.getElementById(
+      "aiLogSearch"
+    )?.value.trim() || "";
+
+  const guildId =
+    document.getElementById(
+      "aiLogGuild"
+    )?.value.trim() || "";
+
+  const ownerId =
+    document.getElementById(
+      "aiLogOwner"
+    )?.value.trim() || "";
+
+  const source =
+    document.getElementById(
+      "aiLogSource"
+    )?.value || "";
+
+  const status =
+    document.getElementById(
+      "aiLogStatus"
+    )?.value || "";
+
+  const params =
+    new URLSearchParams();
+
+  params.set(
+    "page",
+    String(page)
+  );
+
+  params.set(
+    "limit",
+    String(
+      AdminState.aiLogsLimit
+    )
+  );
+
+  if (search) {
+    params.set(
+      "search",
+      search
+    );
+  }
+
+  if (guildId) {
+    params.set(
+      "guildId",
+      guildId
+    );
+  }
+
+  if (ownerId) {
+    params.set(
+      "ownerId",
+      ownerId
+    );
+  }
+
+  if (source) {
+    params.set(
+      "source",
+      source
+    );
+  }
+
+  if (status) {
+    params.set(
+      "status",
+      status
+    );
+  }
+
+  const container =
+    document.getElementById(
+      "aiLogsTableContainer"
+    );
+
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      Chargement des logs IA...
+    </div>
+  `;
+
+  try {
+
+    const data =
+      await adminFetch(
+        `${ADMIN_ROUTES.aiLogs}?${params.toString()}`
+      );
+
+    renderAiLogs(
+      data
+    );
+
+  } catch (error) {
+
+    console.error(
+      "[OMNIX ADMIN] AI logs:",
+      error
+    );
+
+    container.innerHTML =
+      errorBox(
+        error.message
+      );
+  }
+}
+
+/* =========================================================
+   RENDER AI LOGS
+========================================================= */
+
+function renderAiLogs(
+  data
+) {
+
+  const container =
+    document.getElementById(
+      "aiLogsTableContainer"
+    );
+
+  if (!container) {
+    return;
+  }
+
+  const logs =
+    Array.isArray(data?.data)
+      ? data.data
+      : [];
+
+  if (!logs.length) {
+
+    container.innerHTML = `
+      <div class="empty">
+        Aucun log IA trouvé.
+      </div>
+    `;
+
+    return;
+  }
+
+  container.innerHTML = `
+    <table class="data-table">
+
+      <thead>
+        <tr>
+          <th>Utilisateur</th>
+          <th>Source</th>
+          <th>Serveur</th>
+          <th>Requête</th>
+          <th>Tokens</th>
+          <th>Statut</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        ${logs.map(log => {
+
+          const username =
+            log.username ||
+            log.user?.username ||
+            log.discordUsername ||
+            log.ownerId ||
+            "Utilisateur";
+
+          const guildId =
+            log.guildId ||
+            log.guild?.id ||
+            "—";
+
+          const source =
+            String(
+              log.source ||
+              "unknown"
+            ).toLowerCase();
+
+          const status =
+            String(
+              log.status ||
+              (
+                log.error
+                  ? "error"
+                  : "success"
+              )
+            ).toLowerCase();
+
+          const prompt =
+            log.prompt ||
+            log.message ||
+            log.input ||
+            log.question ||
+            "—";
+
+          const tokens =
+            Number(
+              log.tokens ??
+              log.totalTokens ??
+              log.usage?.total_tokens ??
+              0
+            );
+
+          return `
+            <tr>
+
+              <td>
+
+                <div class="user-cell">
+
+                  <div class="avatar">
+                    ${escapeHtml(
+                      getInitials(
+                        username
+                      )
+                    )}
+                  </div>
+
+                  <div>
+
+                    <div class="user-name">
+                      ${escapeHtml(
+                        username
+                      )}
+                    </div>
+
+                    <div class="user-id">
+                      ${escapeHtml(
+                        log.userId ||
+                        log.discordId ||
+                        log.ownerId ||
+                        "ID inconnu"
+                      )}
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </td>
+
+              <td>
+
+                ${
+                  source === "discord"
+
+                    ? `
+                      <span class="badge badge-violet">
+                        DISCORD
+                      </span>
+                    `
+
+                    : source === "website"
+
+                      ? `
+                        <span class="badge badge-blue">
+                          SITE
+                        </span>
+                      `
+
+                      : `
+                        <span class="badge badge-gray">
+                          ${escapeHtml(
+                            source
+                          )}
+                        </span>
+                      `
+                }
+
+              </td>
+
+              <td>
+                ${escapeHtml(
+                  guildId
+                )}
+              </td>
+
+              <td
+                title="${escapeHtml(
+                  prompt
+                )}"
+                style="
+                  max-width:300px;
+                  overflow:hidden;
+                  text-overflow:ellipsis;
+                  white-space:nowrap;
+                "
+              >
+                ${escapeHtml(
+                  prompt
+                )}
+              </td>
+
+              <td>
+                ${formatNumber(
+                  tokens
+                )}
+              </td>
+
+              <td>
+
+                ${
+                  status === "success"
+
+                    ? `
+                      <span class="badge badge-green">
+                        SUCCÈS
+                      </span>
+                    `
+
+                    : `
+                      <span class="badge badge-red">
+                        ERREUR
+                      </span>
+                    `
+                }
+
+              </td>
+
+              <td>
+                ${formatDate(
+                  log.createdAt ||
+                  log.timestamp ||
+                  log.date
+                )}
+              </td>
+
+            </tr>
+          `;
+
+        }).join("")}
+
+      </tbody>
+
+    </table>
+
+    ${renderPagination(
+      data?.pagination,
+      "aiLogs"
+    )}
+  `;
+}
+
+/* =========================================================
+   HEALTH
+========================================================= */
+
+async function loadHealth() {
+
+  setText(
+    "healthStatus",
+    "..."
+  );
+
+  setText(
+    "healthMongo",
+    "..."
+  );
+
+  setText(
+    "healthMemory",
+    "..."
+  );
+
+  setText(
+    "healthNode",
+    "..."
+  );
+
+  setText(
+    "healthUptime",
+    "Vérification..."
+  );
+
+  setText(
+    "healthMongoState",
+    "..."
+  );
+
+  setText(
+    "healthPlatform",
+    "..."
+  );
+
+  const raw =
+    document.getElementById(
+      "healthRaw"
+    );
+
+  if (raw) {
+    raw.textContent =
+      "Vérification de l'infrastructure...";
+  }
+
+  try {
+
+    const data =
+      await adminFetch(
+        ADMIN_ROUTES.health
+      );
+
+    renderHealth(
+      data
+    );
+
+  } catch (error) {
+
+    console.error(
+      "[OMNIX ADMIN] Health:",
+      error
+    );
+
+    setText(
+      "healthStatus",
+      "ERREUR"
+    );
+
+    setText(
+      "healthMongo",
+      "INCONNU"
+    );
+
+    setText(
+      "healthMemory",
+      "—"
+    );
+
+    setText(
+      "healthNode",
+      "—"
+    );
+
+    setText(
+      "healthUptime",
+      "Impossible de vérifier"
+    );
+
+    setText(
+      "healthMongoState",
+      error.message
+    );
+
+    if (raw) {
+      raw.textContent =
+        JSON.stringify(
+          {
+            error:
+              error.message
+          },
+          null,
+          2
+        );
+    }
+  }
+}
+
+/* =========================================================
+   RENDER HEALTH
+========================================================= */
+
+function renderHealth(
+  data
+) {
+
+  const application =
+    data?.application ||
+    data?.app ||
+    {};
+
+  const mongo =
+    data?.mongodb ||
+    data?.mongo ||
+    data?.database ||
+    {};
+
+  const memory =
+    data?.memory ||
+    data?.process?.memory ||
+    {};
+
+  const node =
+    data?.node ||
+    {};
+
+  const status =
+    data?.status ||
+    application?.status ||
+    "unknown";
+
+  const uptime =
+    data?.uptime ??
+    application?.uptime ??
+    0;
+
+  const mongoStatus =
+    mongo?.status ||
+    mongo?.state ||
+    (
+      mongo?.connected === true
+        ? "connected"
+        : "unknown"
+    );
+
+  const heapUsed =
+    memory?.heapUsed ??
+    memory?.heapUsedBytes ??
+    memory?.rss ??
+    0;
+
+  const nodeVersion =
+    data?.nodeVersion ||
+    node?.version ||
+    "—";
+
+  const platform =
+    data?.platform ||
+    node?.platform ||
+    navigator.platform ||
+    "—";
+
+  setText(
+    "healthStatus",
+    String(
+      status
+    ).toUpperCase()
+  );
+
+  setText(
+    "healthUptime",
+    formatUptime(
+      uptime
+    )
+  );
+
+  setText(
+    "healthMongo",
+    String(
+      mongoStatus
+    ).toUpperCase()
+  );
+
+  setText(
+    "healthMongoState",
+    mongo?.message ||
+    mongo?.details ||
+    "État de la connexion MongoDB"
+  );
+
+  setText(
+    "healthMemory",
+    formatBytes(
+      heapUsed
+    )
+  );
+
+  setText(
+    "healthNode",
+    nodeVersion
+  );
+
+  setText(
+    "healthPlatform",
+    platform
+  );
+
+  const raw =
+    document.getElementById(
+      "healthRaw"
+    );
+
+  if (raw) {
+
+    raw.textContent =
+      JSON.stringify(
+        data,
+        null,
+        2
+      );
+  }
+}
+
+/* =========================================================
+   GUILD DETAIL
+========================================================= */
+
+/*
+ * La PARTIE 1 appelle openGuildDetail().
+ *
+ * On ne fait pas ici un appel vers une route non déclarée
+ * dans les routes Admin déjà présentes.
+ *
+ * La fonction affiche les informations disponibles et
+ * prépare le point d'extension pour une route de détail
+ * lorsque celle-ci existe côté backend.
+ */
+
+function openGuildDetail(
+  guildId
+) {
+
+  if (!guildId) {
+    return;
+  }
+
+  const encoded =
+    encodeURIComponent(
+      guildId
+    );
+
+  const url =
+    `/api/admin/guilds?search=${encoded}&page=1&limit=1`;
+
+  adminFetch(
+    url
+  )
+    .then(
+      data => {
+
+        const guild =
+          Array.isArray(
+            data?.data
+          )
+            ? data.data[0]
+            : null;
+
+        if (!guild) {
+
+          alert(
+            "Serveur introuvable."
+          );
+
+          return;
+        }
+
+        showGuildDetailModal(
+          guild
+        );
+      }
+    )
+    .catch(
+      error => {
+
+        console.error(
+          "[OMNIX ADMIN] Guild detail:",
+          error
+        );
+
+        alert(
+          error.message ||
+          "Impossible de charger le serveur."
+        );
+      }
+    );
+}
+
+/* =========================================================
+   GUILD DETAIL MODAL
+========================================================= */
+
+function showGuildDetailModal(
+  guild
+) {
+
+  const existing =
+    document.getElementById(
+      "omnixGuildModal"
+    );
+
+  if (existing) {
+    existing.remove();
+  }
+
+  const guildName =
+    guild.guildName ||
+    guild.name ||
+    "Serveur";
+
+  const guildId =
+    guild.guildId ||
+    guild.id ||
+    "—";
+
+  const ownerId =
+    guild.ownerId ||
+    guild.owner?.id ||
+    "—";
+
+  const createdAt =
+    formatDate(
+      guild.createdAt
+    );
+
+  const premium =
+    guild?.premium?.isPremium === true ||
+    guild?.premium?.isPremium === "true";
+
+  const modal =
+    document.createElement(
+      "div"
+    );
+
+  modal.id =
+    "omnixGuildModal";
+
+  modal.style.cssText = `
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    background:rgba(0,0,0,.72);
+    backdrop-filter:blur(8px);
+  `;
+
+  modal.innerHTML = `
+
+    <div
+      style="
+        width:min(560px,100%);
+        max-height:90vh;
+        overflow:auto;
+        border:1px solid rgba(148,163,184,.14);
+        border-radius:18px;
+        background:
+          linear-gradient(
+            145deg,
+            rgba(15,23,42,.98),
+            rgba(2,6,23,.98)
+          );
+        box-shadow:
+          0 30px 100px rgba(0,0,0,.55);
+      "
+    >
+
+      <div
+        style="
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:12px;
+          padding:18px;
+          border-bottom:1px solid rgba(148,163,184,.10);
+        "
+      >
+
+        <div>
+
+          <div
+            style="
+              font-size:16px;
+              font-weight:900;
+              color:#fff;
+            "
+          >
+            ${escapeHtml(
+              guildName
+            )}
+          </div>
+
+          <div
+            style="
+              margin-top:4px;
+              color:#64748b;
+              font-size:10px;
+            "
+          >
+            Guild ID :
+            ${escapeHtml(
+              guildId
+            )}
+          </div>
+
+        </div>
+
+        <button
+          type="button"
+          class="btn"
+          id="closeGuildModal"
+        >
+          ✕
+        </button>
+
+      </div>
+
+      <div
+        style="
+          padding:18px;
+          display:grid;
+          gap:10px;
+        "
+      >
+
+        <div class="panel">
+          <div class="panel-body">
+
+            <div
+              style="
+                display:grid;
+                gap:12px;
+              "
+            >
+
+              <div>
+                <div class="stat-label">
+                  Serveur
+                </div>
+                <div
+                  style="
+                    margin-top:5px;
+                    font-size:13px;
+                    font-weight:800;
+                  "
+                >
+                  ${escapeHtml(
+                    guildName
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div class="stat-label">
+                  Guild ID
+                </div>
+                <div
+                  style="
+                    margin-top:5px;
+                    color:#94a3b8;
+                    font-size:11px;
+                  "
+                >
+                  ${escapeHtml(
+                    guildId
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div class="stat-label">
+                  Owner ID
+                </div>
+                <div
+                  style="
+                    margin-top:5px;
+                    color:#94a3b8;
+                    font-size:11px;
+                  "
+                >
+                  ${escapeHtml(
+                    ownerId
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div class="stat-label">
+                  Plan
+                </div>
+
+                <div
+                  style="
+                    margin-top:6px;
+                  "
+                >
+
+                  ${
+                    premium
+
+                      ? `
+                        <span class="badge badge-violet">
+                          PREMIUM
+                        </span>
+                      `
+
+                      : `
+                        <span class="badge badge-gray">
+                          FREE
+                        </span>
+                      `
+                  }
+
+                </div>
+
+              </div>
+
+              <div>
+                <div class="stat-label">
+                  Enregistrement
+                </div>
+                <div
+                  style="
+                    margin-top:5px;
+                    color:#94a3b8;
+                    font-size:11px;
+                  "
+                >
+                  ${escapeHtml(
+                    createdAt
+                  )}
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <div
+        style="
+          display:flex;
+          justify-content:flex-end;
+          padding:0 18px 18px;
+        "
+      >
+
+        <button
+          type="button"
+          class="btn btn-primary"
+          id="closeGuildModalBottom"
+        >
+          Fermer
+        </button>
+
+      </div>
+
+    </div>
+  `;
+
+  document.body.appendChild(
+    modal
+  );
+
+  const close =
+    () => {
+      modal.remove();
+    };
+
+  document
+    .getElementById(
+      "closeGuildModal"
+    )
+    ?.addEventListener(
+      "click",
+      close
+    );
+
+  document
+    .getElementById(
+      "closeGuildModalBottom"
+    )
+    ?.addEventListener(
+      "click",
+      close
+    );
+
+  modal.addEventListener(
+    "click",
+    event => {
+
+      if (
+        event.target ===
+        modal
+      ) {
+        close();
+      }
+
+    }
+  );
+
+  document.addEventListener(
+    "keydown",
+    function escapeHandler(
+      event
+    ) {
+
+      if (
+        event.key ===
+        "Escape"
+      ) {
+
+        close();
+
+        document.removeEventListener(
+          "keydown",
+          escapeHandler
+        );
+      }
+
+    }
+  );
+}
+
+/* =========================================================
+   AI LOG FILTER EVENTS
+========================================================= */
+
+document
+  .getElementById(
+    "aiLogsSearchBtn"
+  )
+  ?.addEventListener(
+    "click",
+    () => {
+
+      loadAiLogs(
+        1
+      );
+
+    }
+  );
+
+document
+  .getElementById(
+    "aiLogSearch"
+  )
+  ?.addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key ===
+        "Enter"
+      ) {
+
+        loadAiLogs(
+          1
+        );
+
+      }
+
+    }
+  );
+
+document
+  .getElementById(
+    "aiLogGuild"
+  )
+  ?.addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key ===
+        "Enter"
+      ) {
+
+        loadAiLogs(
+          1
+        );
+
+      }
+
+    }
+  );
+
+document
+  .getElementById(
+    "aiLogOwner"
+  )
+  ?.addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key ===
+        "Enter"
+      ) {
+
+        loadAiLogs(
+          1
+        );
+
+      }
+
+    }
+  );
+
+/* =========================================================
+   SELECT FILTER EVENTS
+========================================================= */
+
+document
+  .getElementById(
+    "aiLogSource"
+  )
+  ?.addEventListener(
+    "change",
+    () => {
+
+      loadAiLogs(
+        1
+      );
+
+    }
+  );
+
+document
+  .getElementById(
+    "aiLogStatus"
+  )
+  ?.addEventListener(
+    "change",
+    () => {
+
+      loadAiLogs(
+        1
+      );
+
+    }
+  );
+
+/* =========================================================
+   MOBILE KEYBOARD / ESC
+========================================================= */
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if (
+      event.key ===
+      "Escape"
+    ) {
+
+      closeMobileSidebar();
+
+    }
+
+  }
+);
+
+/* =========================================================
+   GLOBAL REFRESH
+========================================================= */
+
+document
+  .getElementById(
+    "refreshAll"
+  )
+  ?.addEventListener(
+    "click",
+    async () => {
+
+      const button =
+        document.getElementById(
+          "refreshAll"
+        );
+
+      if (!button) {
+        return;
+      }
+
+      const original =
+        button.textContent;
+
+      button.disabled =
+        true;
+
+      button.textContent =
+        "↻ Chargement...";
+
+      try {
+
+        await reloadCurrentSection();
+
+      } catch (error) {
+
+        console.error(
+          "[OMNIX ADMIN] Refresh:",
+          error
+        );
+
+      } finally {
+
+        button.disabled =
+          false;
+
+        button.textContent =
+          original ||
+          "↻ Actualiser";
+      }
+
+    }
+  );
+
+/* =========================================================
+   CURRENT SECTION RELOAD
+========================================================= */
+
+async function reloadCurrentSection() {
+
+  switch (
+    AdminState.currentSection
+  ) {
+
+    case "overview":
+
+      await loadOverview();
+
+      break;
+
+    case "users":
+
+      await loadUsers(
+        AdminState.usersPage
+      );
+
+      break;
+
+    case "guilds":
+
+      await loadGuilds(
+        AdminState.guildsPage
+      );
+
+      break;
+
+    case "ai":
+
+      await loadAiStatistics();
+
+      break;
+
+    case "aiLogs":
+
+      await loadAiLogs(
+        AdminState.aiLogsPage
+      );
+
+      break;
+
+    case "health":
+      await loadHealth();
+      break;
+    case "bot": await loadBot(); break;
+    case "payments": await loadPayments(); break;
+    case "emails": await loadEmails(); break;
+    case "events": await loadEvents(); break;
+    case "analytics": await loadAnalytics(); break;
+    case "audit": await loadAudit(); break;
+    case "pricing": await loadPricing(); break;
+    case "promos": await loadPromos(); break;
+    case "admins": await loadAdmins(); break;
+
+    default:
+
+      await loadOverview();
+
+      break;
+  }
+}
+
+/* =========================================================
+   PERIODIC HEALTH CHECK
+========================================================= */
+
+let healthInterval =
+  null;
+
+function startHealthMonitor() {
+
+  if (healthInterval) {
+
+    clearInterval(
+      healthInterval
+    );
+
+  }
+
+  healthInterval =
+    setInterval(
+      () => {
+
+        if (
+          AdminState.currentSection ===
+          "health"
+        ) {
+
+          loadHealth();
+
+        }
+
+      },
+      60000
+    );
+}
+
+startHealthMonitor();
+
+/* =========================================================
+   CHART.JS CHECK
+========================================================= */
+
+function chartLibraryReady() {
+
+  if (
+    typeof Chart ===
+    "undefined"
+  ) {
+
+    console.error(
+      "[OMNIX ADMIN] Chart.js n'est pas disponible."
+    );
+
+    return false;
+  }
+
+  return true;
+}
+
+/* =========================================================
+   SAFE CHART WRAPPER
+========================================================= */
+
+const originalDrawLineChart =
+  drawLineChart;
+
+drawLineChart =
+  function (
+    canvasId,
+    rows,
+    valueKey,
+    label
+  ) {
+
+    if (
+      !chartLibraryReady()
+    ) {
+
+      return;
+
+    }
+
+    return originalDrawLineChart(
+      canvasId,
+      rows,
+      valueKey,
+      label
+    );
+  };
+
+/* =========================================================
+   PAGE VISIBILITY
+========================================================= */
+
+document.addEventListener(
+  "visibilitychange",
+  () => {
+
+    if (
+      document.visibilityState ===
+      "visible"
+    ) {
+
+      if (
+        AdminState.currentSection ===
+        "health"
+      ) {
+
+        loadHealth();
+
+      }
+
+    }
+
+  }
+);
+
+/* =========================================================
+   NETWORK ERROR HANDLING
+========================================================= */
+
+window.addEventListener(
+  "unhandledrejection",
+  event => {
+
+    console.error(
+      "[OMNIX ADMIN] Promise rejetée:",
+      event.reason
+    );
+
+  }
+);
+
+document.getElementById('promoCreate')?.addEventListener('click',async()=>{try{const code=document.getElementById('promoCode').value.trim();const discountType=document.getElementById('promoType').value;const discountValue=Number(document.getElementById('promoValue').value);const maxUses=Number(document.getElementById('promoMaxUses').value||0);const expiresAt=document.getElementById('promoExpiresAt').value;if(!code||!Number.isFinite(discountValue)||discountValue<0||!expiresAt)throw new Error('Code, valeur et expiration obligatoires.');await adminFetch('/api/admin/promos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,discountType,discountValue,maxUses,expiresAt:new Date(expiresAt).toISOString()})});document.getElementById('promoCode').value='';await loadPromos();}catch(e){alert(e.message)}});
+/* =========================================================
+   FINAL BOOT
+========================================================= */
+
+async function bootAdminPanel() {
+
+  console.log(
+    "%cOMNIX Staff Panel",
+    "font-weight:900;font-size:18px;"
+  );
+
+  console.log(
+    "[OMNIX ADMIN] Initialisation..."
+  );
+
+  if (
+    !chartLibraryReady()
+  ) {
+
+    console.warn(
+      "[OMNIX ADMIN] Chart.js indisponible."
+    );
+
+  }
+
+  try {
+
+    await loadOverview();
+
+    console.log(
+      "[OMNIX ADMIN] Panel opérationnel."
+    );
+
+  } catch (error) {
+
+    console.error(
+      "[OMNIX ADMIN] Boot error:",
+      error
+    );
+
+  }
+
+}
+
+/* =========================================================
+   DOM READY
+========================================================= */
+
+if (
+  document.readyState ===
+  "loading"
+) {
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    bootAdminPanel,
+    {
+      once: true
+    }
+  );
+
+} else {
+
+  bootAdminPanel();
+
+}
+
+/* =========================================================
+   DEBUG API
+   Accessible uniquement depuis la console.
+========================================================= */
+
+window.OMNIX_ADMIN = {
+  state:
+    AdminState,
+
+  routes:
+    ADMIN_ROUTES,
+
+  reload:
+    reloadCurrentSection,
+
+  overview:
+    loadOverview,
+
+  users:
+    loadUsers,
+
+  guilds:
+    loadGuilds,
+
+  ai:
+    loadAiStatistics,
+
+  aiLogs:
+    loadAiLogs,
+
+  health:
+    loadHealth
+};
+
+</script>
+
+</body>
+</html>
