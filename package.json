@@ -1,0 +1,42 @@
+{
+  "name": "omnix",
+  "version": "2.4.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc",
+    "start": "node index.js",
+    "dev": "tsx src/index.ts",
+    "test": "jest"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.5",
+    "socket.io": "^4.8.1",
+    "stripe": "^17.5.0",
+    "tsx": "^4.19.2",
+    "nodemailer": "^7.0.3",
+    "imapflow": "^1.0.181"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.8",
+    "@types/cors": "^2.8.17",
+    "@types/ejs": "^3.1.5",
+    "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/node": "^22.10.5",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.7.2",
+    "@types/nodemailer": "^6.4.15"
+  }
+}
