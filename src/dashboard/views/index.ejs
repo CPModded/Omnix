@@ -1,0 +1,3266 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <meta
+    name="description"
+    content="OMNIX — Plateforme intelligente de gestion, sécurité et automatisation Discord."
+  >
+
+  <meta
+    name="theme-color"
+    content="#030712"
+  >
+
+  <title>OMNIX — Plateforme Officielle</title>
+
+  <style>
+
+    /* =========================================================
+       RESET
+    ========================================================= */
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-height: 100vh;
+
+      background: #030712;
+
+      color: #f8fafc;
+
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Helvetica,
+        Arial,
+        sans-serif;
+
+      line-height: 1.5;
+
+      overflow-x: hidden;
+
+      position: relative;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button,
+    a {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    a {
+      color: inherit;
+    }
+
+
+    /* =========================================================
+       BACKGROUND
+    ========================================================= */
+
+    .omnix-background {
+      position: fixed;
+      inset: 0;
+
+      z-index: -10;
+
+      overflow: hidden;
+
+      pointer-events: none;
+
+      background:
+        radial-gradient(
+          circle at 50% -15%,
+          rgba(79, 70, 229, 0.14),
+          transparent 42%
+        ),
+        radial-gradient(
+          circle at 100% 50%,
+          rgba(6, 182, 212, 0.05),
+          transparent 35%
+        ),
+        #030712;
+    }
+
+    .omnix-background-grid {
+      position: absolute;
+      inset: 0;
+
+      opacity: 0.18;
+
+      background-image:
+        linear-gradient(
+          rgba(148, 163, 184, 0.045) 1px,
+          transparent 1px
+        ),
+        linear-gradient(
+          90deg,
+          rgba(148, 163, 184, 0.045) 1px,
+          transparent 1px
+        );
+
+      background-size: 48px 48px;
+
+      mask-image:
+        linear-gradient(
+          to bottom,
+          black 0%,
+          rgba(0, 0, 0, 0.8) 45%,
+          transparent 90%
+        );
+    }
+
+    .omnix-halo {
+      position: absolute;
+
+      width: 520px;
+      height: 520px;
+
+      border-radius: 50%;
+
+      filter: blur(110px);
+
+      pointer-events: none;
+    }
+
+    .omnix-halo-top {
+      top: -280px;
+      left: -180px;
+
+      background:
+        rgba(79, 70, 229, 0.20);
+    }
+
+    .omnix-halo-right {
+      top: 30%;
+      right: -330px;
+
+      background:
+        rgba(6, 182, 212, 0.12);
+    }
+
+    .omnix-halo-bottom {
+      bottom: -350px;
+      left: 20%;
+
+      background:
+        rgba(124, 58, 237, 0.10);
+    }
+
+
+    /* =========================================================
+       HEADER
+    ========================================================= */
+
+    header {
+      position: sticky;
+      top: 0;
+
+      z-index: 100;
+
+      width: 100%;
+
+      border-bottom:
+        1px solid
+        rgba(148, 163, 184, 0.08);
+
+      background:
+        rgba(3, 7, 18, 0.76);
+
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+    }
+
+    .omnix-header-inner {
+      width:
+        min(1180px, calc(100% - 32px));
+
+      min-height: 72px;
+
+      margin: 0 auto;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      gap: 20px;
+    }
+
+
+    /* =========================================================
+       LOGO
+    ========================================================= */
+
+    .logo-area {
+      display: inline-flex;
+
+      align-items: center;
+
+      gap: 12px;
+
+      text-decoration: none;
+
+      flex-shrink: 0;
+    }
+
+    .logo-wrapper {
+      width: 40px;
+      height: 40px;
+
+      position: relative;
+
+      overflow: hidden;
+
+      border-radius: 12px;
+
+      box-shadow:
+        0 8px 30px
+        rgba(79, 70, 229, 0.25);
+    }
+
+    .logo-img {
+      display: block;
+
+      width: 100%;
+      height: 100%;
+
+      object-fit: cover;
+    }
+
+    .logo-fallback {
+      position: absolute;
+
+      inset: 0;
+
+      display: none;
+
+      align-items: center;
+      justify-content: center;
+
+      background:
+        linear-gradient(
+          135deg,
+          #06b6d4,
+          #4f46e5,
+          #7c3aed
+        );
+
+      color: white;
+
+      font-size: 19px;
+      font-weight: 900;
+    }
+
+    .logo-text {
+      font-size: 18px;
+
+      font-weight: 900;
+
+      letter-spacing: 1.5px;
+
+      background:
+        linear-gradient(
+          90deg,
+          #60a5fa,
+          #22d3ee,
+          #a78bfa
+        );
+
+      -webkit-background-clip: text;
+      background-clip: text;
+
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-status {
+      display: none;
+
+      align-items: center;
+
+      gap: 7px;
+
+      padding:
+        5px 9px;
+
+      border:
+        1px solid
+        rgba(52, 211, 153, 0.14);
+
+      border-radius: 999px;
+
+      background:
+        rgba(52, 211, 153, 0.06);
+
+      color:
+        #6ee7b7;
+
+      font-size: 9px;
+
+      font-weight: 800;
+
+      letter-spacing: 0.6px;
+
+      text-transform: uppercase;
+    }
+
+    .brand-status-dot {
+      width: 6px;
+      height: 6px;
+
+      border-radius: 50%;
+
+      background: #34d399;
+
+      box-shadow:
+        0 0 10px
+        rgba(52, 211, 153, 0.8);
+    }
+
+    @media (min-width: 700px) {
+
+      .brand-status {
+        display: inline-flex;
+      }
+
+    }
+
+
+    /* =========================================================
+       HEADER AUTH
+    ========================================================= */
+
+    .header-controls {
+      display: flex;
+
+      align-items: center;
+
+      gap: 10px;
+    }
+
+    #auth-buttons-header {
+      display: flex;
+
+      align-items: center;
+
+      gap: 10px;
+    }
+
+    .header-button {
+      min-height: 40px;
+
+      display: inline-flex;
+
+      align-items: center;
+      justify-content: center;
+
+      padding:
+        0 15px;
+
+      border:
+        1px solid
+        rgba(148, 163, 184, 0.12);
+
+      border-radius: 10px;
+
+      background:
+        rgba(15, 23, 42, 0.72);
+
+      color:
+        #cbd5e1;
+
+      text-decoration: none;
+
+      font-size: 12px;
+
+      font-weight: 800;
+
+      transition:
+        transform 0.2s ease,
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+    }
+
+    .header-button:hover {
+      transform: translateY(-1px);
+
+      border-color:
+        rgba(96, 165, 250, 0.30);
+
+      background:
+        rgba(30, 41, 59, 0.85);
+
+      color: white;
+    }
+
+    .header-button-primary {
+      border-color: transparent;
+
+      background:
+        linear-gradient(
+          135deg,
+          #4f46e5,
+          #06b6d4
+        );
+
+      color: white;
+
+      box-shadow:
+        0 8px 24px
+        rgba(79, 70, 229, 0.20);
+    }
+
+    .header-button-primary:hover {
+      border-color: transparent;
+
+      background:
+        linear-gradient(
+          135deg,
+          #4338ca,
+          #0891b2
+        );
+    }
+
+    .header-button-admin {
+      border-color: transparent;
+
+      background:
+        linear-gradient(
+          135deg,
+          #7c3aed,
+          #a855f7
+        );
+
+      color: white;
+    }
+
+    .header-button-admin:hover {
+      border-color: transparent;
+    }
+
+    .btn-nav-logout {
+      border: none;
+
+      background: transparent;
+
+      color: #64748b;
+
+      cursor: pointer;
+
+      padding: 8px;
+
+      font-size: 12px;
+
+      font-weight: 700;
+
+      transition:
+        color 0.2s ease;
+    }
+
+    .btn-nav-logout:hover {
+      color: #f87171;
+    }
+
+
+    /* =========================================================
+       BURGER
+    ========================================================= */
+
+    .btn-burger {
+      width: 42px;
+      height: 42px;
+
+      display: inline-flex;
+
+      align-items: center;
+      justify-content: center;
+
+      border:
+        1px solid
+        rgba(148, 163, 184, 0.10);
+
+      border-radius: 11px;
+
+      background:
+        rgba(15, 23, 42, 0.65);
+
+      color: #94a3b8;
+
+      cursor: pointer;
+
+      transition:
+        0.2s ease;
+    }
+
+    .btn-burger:hover {
+      border-color:
+        rgba(96, 165, 250, 0.25);
+
+      background:
+        rgba(30, 41, 59, 0.80);
+
+      color: white;
+    }
+
+    .burger-icon {
+      width: 20px;
+      height: 20px;
+
+      fill: currentColor;
+    }
+
+
+    /* =========================================================
+       MAIN
+    ========================================================= */
+
+    main {
+      width:
+        min(1120px, calc(100% - 32px));
+
+      margin: 0 auto;
+
+      padding:
+        75px 0 100px;
+
+      position: relative;
+
+      z-index: 5;
+    }
+
+    @media (min-width: 768px) {
+
+      main {
+        padding:
+          110px 0 125px;
+      }
+
+    }
+
+
+    /* =========================================================
+       HERO
+    ========================================================= */
+
+    .hero {
+      max-width: 920px;
+
+      margin: 0 auto;
+
+      text-align: center;
+    }
+
+    .tag {
+      display: inline-flex;
+
+      align-items: center;
+
+      gap: 8px;
+
+      padding:
+        7px 14px;
+
+      margin-bottom: 25px;
+
+      border:
+        1px solid
+        rgba(129, 140, 248, 0.20);
+
+      border-radius: 999px;
+
+      background:
+        rgba(99, 102, 241, 0.07);
+
+      color:
+        #a5b4fc;
+
+      font-size: 10px;
+
+      font-weight: 900;
+
+      letter-spacing: 1.1px;
+
+      text-transform: uppercase;
+    }
+
+    .tag::before {
+      content: "";
+
+      width: 6px;
+      height: 6px;
+
+      border-radius: 50%;
+
+      background: #818cf8;
+
+      box-shadow:
+        0 0 10px
+        rgba(129, 140, 248, 0.85);
+    }
+
+    h1 {
+      max-width: 920px;
+
+      margin:
+        0 auto 25px;
+
+      color: white;
+
+      font-size:
+        clamp(38px, 7vw, 76px);
+
+      font-weight: 950;
+
+      line-height: 1.02;
+
+      letter-spacing: -3px;
+    }
+
+    h1 span {
+      background:
+        linear-gradient(
+          90deg,
+          #60a5fa,
+          #22d3ee 42%,
+          #a78bfa 85%
+        );
+
+      -webkit-background-clip: text;
+      background-clip: text;
+
+      -webkit-text-fill-color: transparent;
+
+      filter:
+        drop-shadow(
+          0 0 28px
+          rgba(56, 189, 248, 0.12)
+        );
+    }
+
+    p.subtitle {
+      max-width: 760px;
+
+      margin:
+        0 auto 40px;
+
+      color: #94a3b8;
+
+      font-size:
+        clamp(14px, 2vw, 17px);
+
+      line-height: 1.75;
+    }
+
+
+    /* =========================================================
+       CTA
+    ========================================================= */
+
+    .cta-area {
+      width:
+        min(100%, 570px);
+
+      margin:
+        0 auto 75px;
+
+      display: grid;
+
+      grid-template-columns: 1fr;
+
+      gap: 12px;
+    }
+
+    @media (min-width: 620px) {
+
+      .cta-area {
+        grid-template-columns:
+          repeat(2, 1fr);
+      }
+
+    }
+
+    .cta-button {
+      min-height: 56px;
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      gap: 10px;
+
+      padding:
+        0 20px;
+
+      border-radius: 14px;
+
+      text-decoration: none;
+
+      font-size: 13px;
+
+      font-weight: 850;
+
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease,
+        border-color 0.2s ease;
+    }
+
+    .cta-button:hover {
+      transform:
+        translateY(-3px);
+    }
+
+    .cta-primary {
+      color: white;
+
+      background:
+        linear-gradient(
+          135deg,
+          #4f46e5,
+          #06b6d4
+        );
+
+      box-shadow:
+        0 14px 35px
+        rgba(79, 70, 229, 0.24);
+    }
+
+    .cta-primary:hover {
+      box-shadow:
+        0 18px 45px
+        rgba(6, 182, 212, 0.25);
+    }
+
+    .cta-secondary {
+      color: #e2e8f0;
+
+      border:
+        1px solid
+        rgba(148, 163, 184, 0.12);
+
+      background:
+        rgba(15, 23, 42, 0.72);
+
+      box-shadow:
+        0 10px 30px
+        rgba(0, 0, 0, 0.16);
+    }
+
+    .cta-secondary:hover {
+      border-color:
+        rgba(96, 165, 250, 0.25);
+
+      background:
+        rgba(30, 41, 59, 0.80);
+    }
+
+    .discord-svg {
+      width: 19px;
+      height: 19px;
+
+      fill: currentColor;
+    }
+
+
+    /* =========================================================
+       PRODUCT PREVIEW
+    ========================================================= */
+
+    .product-preview {
+      width: 100%;
+
+      position: relative;
+
+      margin-bottom: 75px;
+
+      padding: 1px;
+
+      border-radius: 25px;
+
+      background:
+        linear-gradient(
+          135deg,
+          rgba(96, 165, 250, 0.20),
+          rgba(34, 211, 238, 0.06),
+          rgba(167, 139, 250, 0.18)
+        );
+
+      box-shadow:
+        0 35px 100px
+        rgba(0, 0, 0, 0.35);
+    }
+
+    .product-preview-inner {
+      min-height: 340px;
+
+      position: relative;
+
+      overflow: hidden;
+
+      border-radius: 24px;
+
+      background:
+        linear-gradient(
+          145deg,
+          rgba(15, 23, 42, 0.96),
+          rgba(3, 7, 18, 0.98)
+        );
+    }
+
+    .preview-glow {
+      position: absolute;
+
+      width: 380px;
+      height: 380px;
+
+      top: -230px;
+      right: -100px;
+
+      border-radius: 50%;
+
+      background:
+        rgba(6, 182, 212, 0.12);
+
+      filter: blur(80px);
+
+      pointer-events: none;
+    }
+
+    .preview-header {
+      height: 60px;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      padding:
+        0 20px;
+
+      border-bottom:
+        1px solid
+        rgba(148, 163, 184, 0.08);
+
+      background:
+        rgba(15, 23, 42, 0.65);
+    }
+
+    .preview-brand {
+      display: flex;
+
+      align-items: center;
+
+      gap: 9px;
+
+      color: #cbd5e1;
+
+      font-size: 11px;
+
+      font-weight: 800;
+
+      letter-spacing: 0.8px;
+
+      text-transform: uppercase;
+    }
+
+    .preview-brand-icon {
+      width: 25px;
+      height: 25px;
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 7px;
+
+      background:
+        linear-gradient(
+          135deg,
+          #4f46e5,
+          #06b6d4
+        );
+
+      color: white;
+
+      font-size: 11px;
+
+      font-weight: 900;
+    }
+
+    .preview-status {
+      display: flex;
+
+      align-items: center;
+
+      gap: 7px;
+
+      color: #6ee7b7;
+
+      font-size: 9px;
+
+      font-weight: 800;
+
+      letter-spacing: 0.7px;
+
+      text-transform: uppercase;
+    }
+
+    .preview-status::before {
+      content: "";
+
+      width: 6px;
+      height: 6px;
+
+      border-radius: 50%;
+
+      background: #34d399;
+
+      box-shadow:
+        0 0 10px
+        rgba(52, 211, 153, 0.8);
+    }
+
+    .preview-content {
+      padding: 24px;
+
+      display: grid;
+
+      grid-template-columns: 1fr;
+
+      gap: 14px;
+    }
+
+    @media (min-width: 700px) {
+
+      .preview-content {
+        grid-template-columns:
+          1.3fr 0.7fr;
+      }
+
+    }
+
+    .preview-main-card,
+    .preview-small-card {
+      border:
+        1px solid
+        rgba(148, 163, 184, 0.08);
+
+      background:
+        rgba(15, 23, 42, 0.55);
+
+      border-radius: 17px;
+
+      padding: 20px;
+
+      text-align: left;
+    }
+
+    .preview-main-card {
+      min-height: 220px;
+    }
+
+    .preview-small-stack {
+      display: grid;
+
+      gap: 14px;
+    }
+
+    .preview-small-card {
+      min-height: 103px;
+    }
+
+    .preview-label {
+      margin-bottom: 9px;
+
+      color: #64748b;
+
+      font-size: 9px;
+
+      font-weight: 800;
+
+      letter-spacing: 0.9px;
+
+      text-transform: uppercase;
+    }
+
+    .preview-title {
+      margin-bottom: 8px;
+
+      color: white;
+
+      font-size: 19px;
+
+      font-weight: 850;
+    }
+
+    .preview-description {
+      color: #64748b;
+
+      font-size: 11px;
+
+      line-height: 1.65;
+    }
+
+    .preview-value {
+      color: white;
+
+      font-size: 24px;
+
+      font-weight: 900;
+    }
+
+    .preview-value span {
+      color: #22d3ee;
+
+      font-size: 10px;
+
+      font-weight: 800;
+    }
+
+
+    /* =========================================================
+       SECTION HEADINGS
+    ========================================================= */
+
+    .section-heading {
+      margin-bottom: 26px;
+
+      text-align: center;
+    }
+
+    .section-kicker {
+      display: block;
+
+      margin-bottom: 8px;
+
+      color: #818cf8;
+
+      font-size: 10px;
+
+      font-weight: 900;
+
+      letter-spacing: 1.5px;
+
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      color: white;
+
+      font-size:
+        clamp(22px, 4vw, 30px);
+
+      font-weight: 900;
+
+      letter-spacing: -0.8px;
+    }
+
+
+    /* =========================================================
+       STATS
+    ========================================================= */
+
+    .stats-grid {
+      width: 100%;
+
+      display: grid;
+
+      grid-template-columns:
+        repeat(2, 1fr);
+
+      gap: 10px;
+
+      margin-bottom: 60px;
+
+      padding: 10px;
+
+      border:
+        1px solid
+        rgba(148, 163, 184, 0.07);
+
+      border-radius: 22px;
+
+      background:
+        rgba(15, 23, 42, 0.52);
+
+      box-shadow:
+        0 25px 70px
+        rgba(0, 0, 0, 0.20);
+    }
+
+    @media (min-width: 600px) {
+
+      .stats-grid {
+        grid-template-columns:
+          repeat(5, 1fr);
+      }
+
+    }
+
+    .stat-item {
+      min-height: 105px;
+
+      display: flex;
+
+      flex-direction: column;
+
+      align-items: center;
+      justify-content: center;
+
+      padding: 15px 8px;
+
+      border-radius: 15px;
+
+      transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+    }
+
+    .stat-item:hover {
+      background:
+        rgba(30, 41, 59, 0.50);
+
+      transform:
+        translateY(-2px);
+    }
+
+    .stat-num {
+      min-height: 40px;
+
+      display: flex;
+
+      align-items: center;
+
+      color: white;
+
+      font-size:
+        clamp(22px, 4vw, 30px);
+
+      font-weight: 900;
+
+      letter-spacing: -1px;
+
+      background:
+        linear-gradient(
+          90deg,
+          #38bdf8,
+          #818cf8
+        );
+
+      -webkit-background-clip: text;
+      background-clip: text;
+
+      -webkit-text-fill-color: transparent;
+    }
+
+    .stat-label {
+      margin-top: 5px;
+
+      color: #64748b;
+
+      font-size: 8px;
+
+      font-weight: 800;
+
+      letter-spacing: 1px;
+
+      text-transform: uppercase;
+
+      text-align: center;
+    }
+
+
+    /* =========================================================
+       TERMINAL
+    ========================================================= */
+
+    .terminal-wrapper {
+      width: 100%;
+
+      max-width: 950px;
+
+      margin: 0 auto;
+    }
+
+    .terminal {
+      width: 100%;
+
+      overflow: hidden;
+
+      border:
+        1px solid
+        rgba(148, 163, 184, 0.11);
+
+      border-radius: 18px;
+
+      background: #020617;
+
+      box-shadow:
+        0 30px 80px
+        rgba(0, 0, 0, 0.45);
+    }
+
+    .terminal-header {
+      min-height: 52px;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      padding:
+        0 16px;
+
+      background: #0f172a;
+
+      border-bottom:
+        1px solid
+        rgba(148, 163, 184, 0.08);
+    }
+
+    .terminal-left {
+      display: flex;
+
+      align-items: center;
+
+      gap: 10px;
+    }
+
+    .terminal-dots {
+      display: flex;
+
+      gap: 6px;
+    }
+
+    .terminal-dot {
+      width: 9px;
+      height: 9px;
+
+      border-radius: 50%;
+    }
+
+    .terminal-title {
+      color: #64748b;
+
+      font-size: 10px;
+
+      font-weight: 800;
+
+      letter-spacing: 0.8px;
+
+      text-transform: uppercase;
+    }
+
+    .terminal-live {
+      display: inline-flex;
+
+      align-items: center;
+
+      gap: 6px;
+
+      color: #38bdf8;
+
+      font-size: 9px;
+
+      font-weight: 900;
+
+      letter-spacing: 0.8px;
+    }
+
+    .terminal-live::before {
+      content: "";
+
+      width: 5px;
+      height: 5px;
+
+      border-radius: 50%;
+
+      background: #38bdf8;
+
+      box-shadow:
+        0 0 9px
+        rgba(56, 189, 248, 0.9);
+
+      animation:
+        omnixPulse 1.8s infinite;
+    }
+
+    .terminal-screen {
+      height: 215px;
+
+      padding: 17px;
+
+      overflow-y: auto;
+
+      background: #030712;
+
+      color: #a3e635;
+
+      font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        monospace;
+
+      font-size: 11px;
+
+      line-height: 1.7;
+
+      scrollbar-width: thin;
+
+      scrollbar-color:
+        #334155
+        transparent;
+    }
+
+
+    /* =========================================================
+       FOOTER
+    ========================================================= */
+
+    footer {
+      width: 100%;
+
+      border-top:
+        1px solid
+        rgba(148, 163, 184, 0.06);
+
+      background:
+        rgba(3, 7, 18, 0.70);
+
+      padding: 25px 16px;
+
+      text-align: center;
+    }
+
+    footer p {
+      color: #475569;
+
+      font-size: 11px;
+    }
+
+
+    /* =========================================================
+       DRAWER OVERLAY
+    ========================================================= */
+
+    .drawer-overlay {
+      position: fixed;
+
+      inset: 0;
+
+      z-index: 900;
+
+      background:
+        rgba(0, 0, 0, 0.55);
+
+      backdrop-filter: blur(3px);
+
+      opacity: 0;
+
+      visibility: hidden;
+
+      transition:
+        opacity 0.25s ease,
+        visibility 0.25s ease;
+    }
+
+    .drawer-overlay.open {
+      opacity: 1;
+
+      visibility: visible;
+    }
+
+
+    /* =========================================================
+       ACCESSIBILITY
+    ========================================================= */
+
+    :focus-visible {
+      outline:
+        2px solid
+        #38bdf8;
+
+      outline-offset: 3px;
+    }
+
+
+    /* =========================================================
+       ANIMATIONS
+    ========================================================= */
+
+    @keyframes omnixPulse {
+
+      0%,
+      100% {
+        opacity: 0.45;
+        transform: scale(0.85);
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.15);
+      }
+
+    }
+
+    @keyframes omnixAppear {
+
+      from {
+        opacity: 0;
+
+        transform:
+          translateY(15px);
+      }
+
+      to {
+        opacity: 1;
+
+        transform:
+          translateY(0);
+      }
+
+    }
+
+    .hero,
+    .product-preview,
+    .stats-grid,
+    .terminal-wrapper {
+      animation:
+        omnixAppear
+        0.7s
+        ease
+        both;
+    }
+
+    .product-preview {
+      animation-delay: 0.08s;
+    }
+
+    .stats-grid {
+      animation-delay: 0.15s;
+    }
+
+    .terminal-wrapper {
+      animation-delay: 0.22s;
+    }
+
+
+    /* =========================================================
+       MOBILE
+    ========================================================= */
+
+    @media (max-width: 599px) {
+
+      .omnix-header-inner {
+        width:
+          min(
+            100% - 20px,
+            1180px
+          );
+
+        min-height: 64px;
+      }
+
+      .logo-text {
+        font-size: 16px;
+      }
+
+      #auth-buttons-header
+      .btn-nav-logout {
+        display: none;
+      }
+
+      #auth-buttons-header
+      .header-button {
+        min-height: 36px;
+
+        padding:
+          0 10px;
+
+        font-size: 10px;
+      }
+
+      main {
+        width:
+          min(
+            100% - 20px,
+            1120px
+          );
+
+        padding-top: 55px;
+      }
+
+      h1 {
+        letter-spacing: -2px;
+      }
+
+      .product-preview-inner {
+        min-height: 0;
+      }
+
+      .preview-header {
+        padding:
+          0 14px;
+      }
+
+      .preview-content {
+        padding: 14px;
+      }
+
+      .preview-main-card {
+        min-height: 170px;
+      }
+
+      .terminal-screen {
+        height: 180px;
+      }
+
+    }
+
+
+    /* =========================================================
+       REDUCED MOTION
+    ========================================================= */
+
+    @media (prefers-reduced-motion: reduce) {
+
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+
+        animation-duration:
+          0.01ms !important;
+
+        animation-iteration-count:
+          1 !important;
+
+        transition-duration:
+          0.01ms !important;
+      }
+
+    }
+
+  </style>
+</head>
+
+<body>
+<script>
+/* OMNIX global logo fallback — available before any page script can call it. */
+window.setupLogoFallback = window.setupLogoFallback || function setupLogoFallback() {
+  const image = document.getElementById('logo-main-img');
+  const fallback = document.getElementById('logo-fallback-box');
+  if (!image || !fallback) return;
+  const showFallback = () => { image.style.display = 'none'; fallback.style.display = 'flex'; };
+  image.addEventListener('error', showFallback, { once: true });
+  if (image.complete && image.naturalWidth === 0) showFallback();
+};
+</script>
+
+
+  <!-- =======================================================
+       BACKGROUND
+  ======================================================== -->
+
+  <div
+    class="omnix-background"
+    aria-hidden="true"
+  >
+
+    <div class="omnix-background-grid"></div>
+
+    <div
+      class="omnix-halo omnix-halo-top"
+    ></div>
+
+    <div
+      class="omnix-halo omnix-halo-right"
+    ></div>
+
+    <div
+      class="omnix-halo omnix-halo-bottom"
+    ></div>
+
+  </div>
+
+
+  <!-- =======================================================
+       HEADER
+  ======================================================== -->
+
+  <header>
+
+    <div class="omnix-header-inner">
+
+      <a
+        href="/"
+        class="logo-area"
+        aria-label="OMNIX — Accueil"
+      >
+
+        <div class="logo-wrapper">
+
+          <img
+            src="/logo.png"
+            id="logo-main-img"
+            class="logo-img"
+            alt="OMNIX"
+          >
+
+          <div
+            id="logo-fallback-box"
+            class="logo-fallback"
+          >
+            O
+          </div>
+
+        </div>
+
+        <span class="logo-text">
+          OMNIX
+        </span>
+
+        <span class="brand-status">
+
+          <span
+            class="brand-status-dot"
+          ></span>
+
+          Operational
+
+        </span>
+
+      </a>
+
+
+      <div class="header-controls">
+
+        <div
+          id="auth-buttons-header"
+        ></div>
+
+        <button
+          type="button"
+          onclick="openOmnixSidebar()"
+          class="btn-burger"
+          aria-label="Ouvrir le menu"
+          aria-controls="omnix-sidebar"
+        >
+
+          <svg
+            class="burger-icon"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+
+            <path
+              d="
+                M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z
+              "
+            />
+
+          </svg>
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </header>
+
+
+  <!-- =======================================================
+       SIDEBAR EXISTANTE
+  ======================================================== -->
+
+  <%- include('partials/sidebar') %>
+
+
+  <!-- =======================================================
+       DRAWER OVERLAY
+  ======================================================== -->
+
+  <div
+    id="drawer-overlay"
+    class="drawer-overlay"
+    onclick="toggleDrawer(false)"
+    aria-hidden="true"
+  ></div>
+
+
+  <!-- =======================================================
+       MAIN
+  ======================================================== -->
+
+  <main>
+
+    <!-- =====================================================
+         HERO
+    ====================================================== -->
+
+    <section class="hero">
+
+      <span class="tag">
+        Plateforme intégrée SaaS
+      </span>
+
+      <h1>
+        Gérez votre communauté avec
+        <span>OMNIX</span>
+      </h1>
+
+      <p class="subtitle">
+        OMNIX n'est pas un simple bot Discord.
+        C'est une plateforme intelligente conçue
+        pour automatiser, protéger et développer
+        votre communauté.
+        Modération, sécurité, économie, IA,
+        statistiques et gestion réunis dans
+        une seule expérience.
+      </p>
+
+
+      <!-- =================================================
+           CTA DYNAMIQUE
+      ================================================== -->
+
+      <div
+        class="cta-area"
+        id="cta-action-area"
+      ></div>
+
+    </section>
+
+
+    <!-- =====================================================
+         PRODUCT PREVIEW
+    ====================================================== -->
+
+    <section class="product-preview">
+
+      <div class="product-preview-inner">
+
+        <div
+          class="preview-glow"
+          aria-hidden="true"
+        ></div>
+
+
+        <div class="preview-header">
+
+          <div class="preview-brand">
+
+            <span class="preview-brand-icon">
+              O
+            </span>
+
+            OMNIX Console
+
+          </div>
+
+          <div class="preview-status">
+            System Online
+          </div>
+
+        </div>
+
+
+        <div class="preview-content">
+
+          <div class="preview-main-card">
+
+            <div class="preview-label">
+              Administration intelligente
+            </div>
+
+            <h2 class="preview-title">
+              Contrôlez votre serveur.
+              Automatisez le reste.
+            </h2>
+
+            <p class="preview-description">
+              Configurez la sécurité, les tickets,
+              la modération, l'économie, l'IA et
+              les statistiques depuis votre
+              environnement OMNIX.
+            </p>
+
+          </div>
+
+
+          <div class="preview-small-stack">
+
+            <div class="preview-small-card">
+
+              <div class="preview-label">
+                Sécurité
+              </div>
+
+              <div class="preview-value">
+                AutoMod
+              </div>
+
+              <p class="preview-description">
+                Protection automatisée.
+              </p>
+
+            </div>
+
+
+            <div class="preview-small-card">
+
+              <div class="preview-label">
+                Intelligence
+              </div>
+
+              <div class="preview-value">
+                IA
+                <span>INTEGRATED</span>
+              </div>
+
+              <p class="preview-description">
+                Assistance et automatisation.
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         STATISTIQUES
+    ====================================================== -->
+
+    <section>
+
+      <div class="section-heading">
+
+        <span class="section-kicker">
+          Infrastructure
+        </span>
+
+        <h2 class="section-title">
+          OMNIX en temps réel
+        </h2>
+
+      </div>
+
+
+      <div
+        class="stats-grid"
+        aria-label="Statistiques OMNIX"
+      >
+
+        <div class="stat-item">
+
+          <span
+            class="stat-num"
+            id="s-servers"
+          >
+            ...
+          </span>
+
+          <span class="stat-label">
+            Serveurs
+          </span>
+
+        </div>
+
+
+        <div class="stat-item">
+
+          <span
+            class="stat-num"
+            id="s-users"
+          >
+            ...
+          </span>
+
+          <span class="stat-label">
+            Membres
+          </span>
+
+        </div>
+
+
+        <div class="stat-item">
+
+          <span
+            class="stat-num"
+            id="s-commands"
+          >
+            ...
+          </span>
+
+          <span class="stat-label">
+            Commandes
+          </span>
+
+        </div>
+
+
+        <div class="stat-item">
+
+          <span
+            class="stat-num"
+            id="s-uptime"
+          >
+            ...
+          </span>
+
+          <span class="stat-label">
+            Uptime
+          </span>
+
+        </div>
+
+
+        <div class="stat-item">
+
+          <span
+            class="stat-num"
+            id="s-latency"
+          >
+            ...
+          </span>
+
+          <span class="stat-label">
+            Latence
+          </span>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         TERMINAL
+    ====================================================== -->
+
+    <section class="terminal-wrapper">
+
+      <div class="section-heading">
+
+        <span class="section-kicker">
+          Live System
+        </span>
+
+        <h2 class="section-title">
+          Console de diagnostic
+        </h2>
+
+      </div>
+
+
+      <div
+        id="index-terminal"
+        class="terminal"
+      >
+
+        <div class="terminal-header">
+
+          <div class="terminal-left">
+
+            <div class="terminal-dots">
+
+              <span
+                class="terminal-dot"
+                style="background:#ef4444;"
+              ></span>
+
+              <span
+                class="terminal-dot"
+                style="background:#f59e0b;"
+              ></span>
+
+              <span
+                class="terminal-dot"
+                style="background:#10b981;"
+              ></span>
+
+            </div>
+
+            <span class="terminal-title">
+              OMNIX / index
+            </span>
+
+          </div>
+
+          <span class="terminal-live">
+            LIVE LOGS
+          </span>
+
+        </div>
+
+
+        <div
+          id="index-terminal-screen"
+          class="terminal-screen"
+          aria-live="polite"
+        >
+          [SYSTEM] Console de diagnostic prête.
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- =======================================================
+       FOOTER
+  ======================================================== -->
+
+  <footer>
+
+    <p>
+      &copy; 2026 OMNIX.
+      Tous droits réservés.
+    </p>
+
+  </footer>
+  <!-- =========================================================
+     OMNIX — PARTIE 2/2
+     JAVASCRIPT + FIN DU DOCUMENT
+========================================================= -->
+
+<script>
+
+/* =========================================================
+   DRAWER / MENU
+========================================================= */
+
+function getDrawer() {
+
+  return document.querySelector(
+    '.drawer'
+  );
+
+}
+
+
+function legacyToggleDrawer(open) {
+
+  const drawer =
+    getDrawer();
+
+  const overlay =
+    document.getElementById(
+      'drawer-overlay'
+    );
+
+  if (!drawer) {
+
+    console.warn(
+      '[OMNIX] Drawer introuvable.'
+    );
+
+    return;
+  }
+
+
+  if (open) {
+
+    drawer.classList.add(
+      'open'
+    );
+
+    if (overlay) {
+
+      overlay.classList.add(
+        'open'
+      );
+
+    }
+
+    document.body.classList.add(
+      'drawer-open'
+    );
+
+    document.body.style.overflow =
+      'hidden';
+
+  } else {
+
+    drawer.classList.remove(
+      'open'
+    );
+
+    if (overlay) {
+
+      overlay.classList.remove(
+        'open'
+      );
+
+    }
+
+    document.body.classList.remove(
+      'drawer-open'
+    );
+
+    document.body.style.overflow =
+      '';
+
+  }
+
+}
+
+
+/* =========================================================
+   FERMETURE DU DRAWER — ESCAPE
+========================================================= */
+
+document.addEventListener(
+  'keydown',
+  function(event) {
+
+    if (
+      event.key === 'Escape'
+    ) {
+
+      toggleDrawer(false);
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   FERMETURE DU DRAWER — LIENS
+========================================================= */
+
+document.addEventListener(
+  'click',
+  function(event) {
+
+    const target =
+      event.target;
+
+    if (
+      target &&
+      target.closest &&
+      target.closest('.drawer a')
+    ) {
+
+      toggleDrawer(false);
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   LOG SYSTEM
+========================================================= */
+
+function addLaunchLog(
+  type,
+  message
+) {
+
+  const screen =
+    document.getElementById(
+      'index-terminal-screen'
+    );
+
+  if (!screen) {
+    return;
+  }
+
+
+  const time =
+    new Date().toLocaleTimeString(
+      'fr-FR'
+    );
+
+
+  let label =
+    'INFO';
+
+  let color =
+    '#a3e635';
+
+
+  switch (type) {
+
+    case 'success':
+
+      label =
+        'SUCCESS';
+
+      color =
+        '#10b981';
+
+      break;
+
+
+    case 'warn':
+
+      label =
+        'WARN';
+
+      color =
+        '#f59e0b';
+
+      break;
+
+
+    case 'error':
+
+      label =
+        'ERROR';
+
+      color =
+        '#ef4444';
+
+      break;
+
+
+    case 'debug':
+
+      label =
+        'DEBUG';
+
+      color =
+        '#38bdf8';
+
+      break;
+
+
+    default:
+
+      break;
+
+  }
+
+
+  const line =
+    document.createElement(
+      'div'
+    );
+
+
+  line.style.color =
+    color;
+
+  line.style.marginBottom =
+    '4px';
+
+
+  /*
+   * textContent volontairement utilisé
+   * afin d'éviter toute injection HTML.
+   */
+
+  line.textContent =
+    `[${time}] [${label}] ${message}`;
+
+
+  screen.appendChild(
+    line
+  );
+
+
+  screen.scrollTop =
+    screen.scrollHeight;
+
+}
+
+
+/* =========================================================
+   ERREURS JAVASCRIPT
+========================================================= */
+
+window.addEventListener(
+  'error',
+  function(event) {
+
+    addLaunchLog(
+      'error',
+      `Erreur JavaScript : ${
+        event.message ||
+        'Erreur inconnue'
+      }`
+    );
+
+  }
+);
+
+
+/* =========================================================
+   ERREURS PROMESSES NON GÉRÉES
+========================================================= */
+
+window.addEventListener(
+  'unhandledrejection',
+  function(event) {
+
+    const reason =
+      event.reason instanceof Error
+        ? event.reason.message
+        : String(
+            event.reason ||
+            'Erreur inconnue'
+          );
+
+    addLaunchLog(
+      'error',
+      `Promise rejetée : ${reason}`
+    );
+
+  }
+);
+
+
+/* =========================================================
+   SESSION UTILISATEUR
+========================================================= */
+
+/**
+ * Le JWT n'est jamais manipulé côté client.
+ *
+ * La session est conservée par le serveur
+ * dans un cookie httpOnly.
+ */
+
+async function getCurrentUser() {
+
+  try {
+
+    addLaunchLog(
+      'debug',
+      'Requête /api/auth/me...'
+    );
+
+
+    const response =
+      await fetch(
+        '/api/auth/me',
+        {
+          method:
+            'GET',
+
+          credentials:
+            'include',
+
+          cache:
+            'no-store',
+
+          headers: {
+            Accept:
+              'application/json'
+          }
+        }
+      );
+
+
+    /*
+     * 401 = visiteur non connecté.
+     */
+
+    if (
+      response.status === 401
+    ) {
+
+      return null;
+
+    }
+
+
+    if (
+      !response.ok
+    ) {
+
+      throw new Error(
+        `HTTP ${response.status}`
+      );
+
+    }
+
+
+    const data =
+      await response.json();
+
+
+    if (
+      !data ||
+      !data.success ||
+      !data.user
+    ) {
+
+      return null;
+
+    }
+
+
+    return data.user;
+
+  } catch (error) {
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : String(error);
+
+
+    addLaunchLog(
+      'warn',
+      `Session impossible à vérifier : ${message}`
+    );
+
+
+    return null;
+
+  }
+
+}
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+function logout() {
+
+  addLaunchLog(
+    'warn',
+    'Déconnexion OMNIX...'
+  );
+
+
+  /*
+   * Le serveur détruit le cookie
+   * de session.
+   */
+
+  window.location.href =
+    '/api/auth/logout';
+
+}
+
+
+/* =========================================================
+   AUTHENTIFICATION UI
+========================================================= */
+
+async function setupDynamicButtons() {
+
+  const headerArea =
+    document.getElementById(
+      'auth-buttons-header'
+    );
+
+  const ctaArea =
+    document.getElementById(
+      'cta-action-area'
+    );
+
+
+  if (!headerArea) {
+
+    addLaunchLog(
+      'error',
+      'Zone auth-buttons-header introuvable.'
+    );
+
+    return;
+
+  }
+
+
+  if (!ctaArea) {
+
+    addLaunchLog(
+      'error',
+      'Zone cta-action-area introuvable.'
+    );
+
+    return;
+
+  }
+
+
+  addLaunchLog(
+    'info',
+    'Vérification de la session OMNIX...'
+  );
+
+
+  const user =
+    await getCurrentUser();
+
+
+  /* =======================================================
+     UTILISATEUR CONNECTÉ
+  ====================================================== */
+
+  if (user) {
+
+    const username =
+      user.username ||
+      user.globalName ||
+      'Utilisateur';
+
+
+    addLaunchLog(
+      'success',
+      `Session active : @${username}`
+    );
+
+
+    /*
+     * HEADER CONNECTÉ
+     */
+
+    headerArea.innerHTML = `
+
+      <a
+        href="/dashboard"
+        class="header-button header-button-primary"
+      >
+        Dashboard
+      </a>
+
+      ${
+        user.isOwner
+          ? `
+            <a
+              href="/ai-dev"
+              class="header-button header-button-admin"
+            >
+              Panel Admin
+            </a>
+          `
+          : ''
+      }
+
+      <button
+        type="button"
+        class="btn-nav-logout"
+        onclick="logout()"
+      >
+        Déconnexion
+      </button>
+
+    `;
+
+
+    /*
+     * CTA CONNECTÉ
+     */
+
+    ctaArea.innerHTML = `
+
+      <a
+        href="/dashboard"
+        class="cta-button cta-primary"
+      >
+        Accéder au Dashboard
+      </a>
+
+      <a
+        href="/pricing"
+        class="cta-button cta-secondary"
+      >
+        Découvrir les offres
+      </a>
+
+    `;
+
+
+    return;
+
+  }
+
+
+  /* =======================================================
+     VISITEUR
+  ====================================================== */
+
+  addLaunchLog(
+    'info',
+    'Aucune session active. Mode visiteur.'
+  );
+
+
+  /*
+   * Le navigateur ne construit pas
+   * l'URL OAuth Discord.
+   *
+   * Le backend gère entièrement OAuth.
+   */
+
+  headerArea.innerHTML = `
+
+    <a
+      href="/api/auth/google"
+      class="header-button header-button-primary"
+    >
+      Se connecter avec Google
+    </a>
+
+  `;
+
+
+  ctaArea.innerHTML = `
+
+    <a
+      href="/api/auth/google"
+      class="cta-button cta-primary"
+    >
+
+      ${discordIcon()}
+
+      Continuer avec Google
+
+    </a>
+
+    <a
+      href="/pricing"
+      class="cta-button cta-secondary"
+    >
+      Découvrir les offres
+    </a>
+
+  `;
+
+}
+
+
+/* =========================================================
+   ANIMATION DES STATISTIQUES
+========================================================= */
+
+function animateValue(
+  element,
+  start,
+  end,
+  duration,
+  suffix = ''
+) {
+
+  if (!element) {
+    return;
+  }
+
+
+  const numericStart =
+    Number(start);
+
+  const numericEnd =
+    Number(end);
+
+
+  if (
+    !Number.isFinite(
+      numericEnd
+    )
+  ) {
+
+    element.textContent =
+      '--';
+
+    return;
+
+  }
+
+
+  let startTimestamp =
+    null;
+
+
+  function step(timestamp) {
+
+    if (
+      startTimestamp === null
+    ) {
+
+      startTimestamp =
+        timestamp;
+
+    }
+
+
+    const progress =
+      Math.min(
+        (
+          timestamp -
+          startTimestamp
+        ) /
+        duration,
+        1
+      );
+
+
+    /*
+     * Easing cubic-out.
+     */
+
+    const easedProgress =
+      1 -
+      Math.pow(
+        1 - progress,
+        3
+      );
+
+
+    const value =
+      Math.floor(
+        easedProgress *
+        (
+          numericEnd -
+          numericStart
+        ) +
+        numericStart
+      );
+
+
+    element.textContent =
+      value.toLocaleString(
+        'fr-FR'
+      ) +
+      suffix;
+
+
+    if (
+      progress < 1
+    ) {
+
+      window.requestAnimationFrame(
+        step
+      );
+
+    }
+
+  }
+
+
+  window.requestAnimationFrame(
+    step
+  );
+
+}
+
+
+/* =========================================================
+   STATISTIQUES OMNIX
+========================================================= */
+
+async function loadRealStats() {
+
+  const servers =
+    document.getElementById(
+      's-servers'
+    );
+
+  const users =
+    document.getElementById(
+      's-users'
+    );
+
+  const commands =
+    document.getElementById(
+      's-commands'
+    );
+
+  const uptime =
+    document.getElementById(
+      's-uptime'
+    );
+
+  const latency =
+    document.getElementById(
+      's-latency'
+    );
+
+
+  addLaunchLog(
+    'info',
+    'Connexion à l’API statistiques...'
+  );
+
+
+  try {
+
+    const started =
+      performance.now();
+
+
+    const response =
+      await fetch(
+        '/api/stats',
+        {
+          method:
+            'GET',
+
+          credentials:
+            'include',
+
+          cache:
+            'no-store',
+
+          headers: {
+            Accept:
+              'application/json'
+          }
+        }
+      );
+
+
+    const requestLatency =
+      Math.round(
+        performance.now() -
+        started
+      );
+
+
+    if (
+      !response.ok
+    ) {
+
+      throw new Error(
+        `HTTP ${response.status}`
+      );
+
+    }
+
+
+    const data =
+      await response.json();
+
+
+    addLaunchLog(
+      'debug',
+      'Réponse /api/stats reçue.'
+    );
+
+
+    /*
+     * Structure attendue par OMNIX :
+     *
+     * data.bot.guildsCount
+     * data.bot.uptime
+     * data.bot.ping
+     * data.database.totalUsers
+     * data.commands
+     */
+
+    const bot =
+      data &&
+      data.bot
+        ? data.bot
+        : {};
+
+
+    const database =
+      data &&
+      data.database
+        ? data.database
+        : {};
+
+
+    const guildCount =
+      Number(
+        bot.guildsCount
+      );
+
+
+    const userCount =
+      Number(
+        database.totalUsers
+      );
+
+
+    const commandCount =
+      Number(
+        data.commands
+      );
+
+
+    const uptimeValue =
+      Number(
+        bot.uptime
+      );
+
+
+    const botPing =
+      Number(
+        bot.ping
+      );
+
+
+    /* =====================================================
+       SERVEURS
+    ====================================================== */
+
+    if (
+      Number.isFinite(
+        guildCount
+      )
+    ) {
+
+      animateValue(
+        servers,
+        0,
+        guildCount,
+        800
+      );
+
+    } else if (servers) {
+
+      servers.textContent =
+        '--';
+
+    }
+
+
+    /* =====================================================
+       MEMBRES
+    ====================================================== */
+
+    if (
+      Number.isFinite(
+        userCount
+      )
+    ) {
+
+      animateValue(
+        users,
+        0,
+        userCount,
+        800
+      );
+
+    } else if (users) {
+
+      users.textContent =
+        '--';
+
+    }
+
+
+    /* =====================================================
+       COMMANDES
+    ====================================================== */
+
+    if (
+      Number.isFinite(
+        commandCount
+      )
+    ) {
+
+      animateValue(
+        commands,
+        0,
+        commandCount,
+        800
+      );
+
+    } else if (commands) {
+
+      commands.textContent =
+        '--';
+
+    }
+
+
+    /* =====================================================
+       UPTIME
+    ====================================================== */
+
+    if (
+      Number.isFinite(
+        uptimeValue
+      )
+    ) {
+
+      animateValue(
+        uptime,
+        0,
+        uptimeValue,
+        800,
+        '%'
+      );
+
+    } else if (uptime) {
+
+      uptime.textContent =
+        '--';
+
+    }
+
+
+    /* =====================================================
+       LATENCE
+    ====================================================== */
+
+    const finalPing =
+      Number.isFinite(
+        botPing
+      )
+        ? botPing
+        : requestLatency;
+
+
+    if (latency) {
+
+      animateValue(
+        latency,
+        0,
+        finalPing,
+        800,
+        ' ms'
+      );
+
+    }
+
+
+    addLaunchLog(
+      'success',
+      `OMNIX en temps réel : ${
+        Number.isFinite(guildCount)
+          ? guildCount
+          : '--'
+      } serveurs / ${
+        Number.isFinite(userCount)
+          ? userCount
+          : '--'
+      } membres / ${
+        Number.isFinite(commandCount)
+          ? commandCount
+          : '--'
+      } commandes / ${
+        finalPing
+      } ms`
+    );
+
+
+  } catch (error) {
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : String(error);
+
+
+    console.error(
+      '[OMNIX STATS]',
+      error
+    );
+
+
+    addLaunchLog(
+      'error',
+      `API statistiques indisponible : ${message}`
+    );
+
+
+    /*
+     * IMPORTANT :
+     *
+     * Une donnée indisponible n'est jamais
+     * remplacée artificiellement par 0.
+     */
+
+    [
+      servers,
+      users,
+      commands,
+      uptime,
+      latency
+    ].forEach(
+      function(element) {
+
+        if (element) {
+
+          element.textContent =
+            '--';
+
+        }
+
+      }
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   RAFRAÎCHISSEMENT AUTOMATIQUE DES STATS
+========================================================= */
+
+let statsRefreshTimer =
+  null;
+
+
+function startStatsRefresh() {
+
+  if (
+    statsRefreshTimer
+  ) {
+
+    clearInterval(
+      statsRefreshTimer
+    );
+
+  }
+
+
+  /*
+   * Actualisation toutes les
+   * 30 secondes.
+   */
+
+  statsRefreshTimer =
+    window.setInterval(
+      function() {
+
+        void loadRealStats();
+
+      },
+      30000
+    );
+
+}
+
+
+/* =========================================================
+   BOOT OMNIX
+========================================================= */
+
+async function bootIndex() {
+
+  addLaunchLog(
+    'info',
+    'Initialisation de la plateforme OMNIX...'
+  );
+
+
+  /*
+   * Authentification et statistiques
+   * sont chargées en parallèle.
+   */
+
+  await Promise.allSettled([
+    setupDynamicButtons(),
+    loadRealStats()
+  ]);
+
+
+  /*
+   * Activation du rafraîchissement
+   * automatique des statistiques.
+   */
+
+  startStatsRefresh();
+
+
+  addLaunchLog(
+    'success',
+    'OMNIX est opérationnel.'
+  );
+
+}
+
+
+/* =========================================================
+   LOGO FALLBACK
+========================================================= */
+function setupLogoFallback() {
+  const image = document.getElementById('logo-main-img');
+  const fallback = document.getElementById('logo-fallback-box');
+  if (!image || !fallback) return;
+  const showFallback = () => {
+    image.style.display = 'none';
+    fallback.style.display = 'flex';
+  };
+  image.addEventListener('error', showFallback, { once: true });
+  if (image.complete && image.naturalWidth === 0) showFallback();
+}
+
+
+/* =========================================================
+   DOM READY
+========================================================= */
+
+if (
+  document.readyState ===
+  'loading'
+) {
+
+  document.addEventListener(
+    'DOMContentLoaded',
+    function() {
+
+      setupLogoFallback();
+
+      void bootIndex();
+
+    },
+    {
+      once: true
+    }
+  );
+
+} else {
+
+  setupLogoFallback();
+
+  void bootIndex();
+
+}
+
+</script>
+
+
+<!-- =========================================================
+     FIN OMNIX INDEX
+========================================================= -->
+
+</body>
+</html>
