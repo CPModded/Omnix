@@ -149,6 +149,11 @@ export interface IAutoModConfig {
   maxMentions: number;
   maxCapsPercentage: number;
   deleteMessages: boolean;
+  antiInvites?: boolean;
+  antiMedia?: boolean;
+  antiGif?: boolean;
+  antiRepeat?: boolean;
+  antiFiles?: boolean;
 }
 
 export interface ILevelsConfig {
@@ -306,6 +311,7 @@ export interface IGuildConfig extends Document {
   prefix: string;
 
   maintenance: boolean;
+  publicVisibility: boolean;
 
   createdAt: Date;
 
@@ -423,6 +429,11 @@ export const defaultModules: IModulesConfig = {
     maxMentions: 5,
     maxCapsPercentage: 80,
     deleteMessages: true,
+    antiInvites: true,
+    antiMedia: false,
+    antiGif: false,
+    antiRepeat: false,
+    antiFiles: false,
   },
 
   levels: {
@@ -1054,6 +1065,12 @@ const GuildConfigSchema =
             type: Boolean,
             default: true,
           },
+
+          antiInvites: { type: Boolean, default: true },
+          antiMedia: { type: Boolean, default: false },
+          antiGif: { type: Boolean, default: false },
+          antiRepeat: { type: Boolean, default: false },
+          antiFiles: { type: Boolean, default: false },
         },
 
         /* -------------------------------------------------
@@ -1451,7 +1468,7 @@ const GuildConfigSchema =
 
       prefix: {
         type: String,
-        default: '!',
+        default: '/',
         trim: true,
         maxlength: 10,
       },
@@ -1460,6 +1477,8 @@ const GuildConfigSchema =
         type: Boolean,
         default: false,
       },
+
+      publicVisibility: { type: Boolean, default: true },
     },
 
     /* =====================================================
