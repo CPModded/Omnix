@@ -3,7 +3,7 @@ import type { IGuildConfig } from '../../models/GuildConfig';
 /* =========================================================
    CONSTANTES
 ========================================================= */
-const DEFAULT_PREFIX = '!cm-';
+const DEFAULT_PREFIX = '/';
 const DEFAULT_LANGUAGE = 'fr';
 const DEFAULT_AI_PROMPT =
   'Tu es OMNIX, un assistant intelligent pour un serveur Discord. Réponds clairement, utilement et en français.';
@@ -252,7 +252,7 @@ export async function updateGuildConfig(
   const currentModules = mergeModules(current?.modules);
   const incomingModules = isObject(update.modules) ? update.modules : undefined;
   const mergedModules = incomingModules
-    ? mergeModules({ ...currentModules, ...incomingModules })
+    ? deepMerge(currentModules as Record<string, unknown>, incomingModules) as ModulesConfig
     : currentModules;
 
   const topLevel: Record<string, unknown> = { ...update };
@@ -276,6 +276,31 @@ export async function updateGuildConfig(
   if (!saved) throw new Error('[GuildConfig] Configuration non enregistrée.');
   return saved;
 }
+/* =========================================================
+   ATOMIC TICKET COUNTER
+========================================================= */
+export async function nextGuildTicketNumber(guildId: string): Promise<number> {
+  if (!/^\d{17,20}$/.test(guildId)) {
+    throw new Error('[GuildConfig] guildId invalide.');
+  }
+
+  // Ensure the guild exists before incrementing the nested counter.
+  await getGuildConfig(guildId);
+
+  const updated = await GuildConfig.findOneAndUpdate(
+    { guildId },
+    { $inc: { 'modules.tickets.counter': 1 } },
+    { new: true, runValidators: true },
+  );
+
+  const number = Number(updated?.modules?.tickets?.counter || 0);
+  if (!updated || number < 1) {
+    throw new Error('[GuildConfig] Impossible de générer le numéro du ticket.');
+  }
+
+  return number;
+}
+
 /* =========================================================
    UPDATE MODULE
 ========================================================= */
