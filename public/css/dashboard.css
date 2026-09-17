@@ -1,0 +1,2 @@
+/* OMNIX dashboard shared layer */
+:root{--omnix-bg:#080812;--omnix-panel:#141422;--omnix-border:#2a2840;--omnix-primary:#7c5cff}*{box-sizing:border-box}button,a{font:inherit}.omnix-focus:focus-visible{outline:2px solid var(--omnix-primary);outline-offset:3px}
