@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OMNIX — AI</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#08090d;color:#fff;font-family:Inter,system-ui,sans-serif}.layout{display:flex;height:100vh}.sidebar{width:290px;background:#101116;border-right:1px solid #242630;padding:20px;display:flex;flex-direction:column}.logo{font-size:22px;font-weight:800;margin-bottom:8px}.badge{display:inline-block;padding:5px 9px;border-radius:8px;background:#241849;color:#b58cff;font-size:11px;font-weight:700;margin-bottom:20px}.new{width:100%;padding:12px;border:1px solid #343746;border-radius:10px;background:#171923;color:#fff;cursor:pointer;margin-bottom:16px}.sessions{overflow:auto;flex:1}.session{padding:11px;border-radius:9px;color:#c6c8d1;cursor:pointer;margin-bottom:5px}.session:hover,.session.active{background:#1d1f27;color:#fff}.session small{display:block;color:#777b89;margin-top:4px}.main{flex:1;display:flex;flex-direction:column}.header{height:70px;border-bottom:1px solid #242630;display:flex;align-items:center;justify-content:space-between;padding:0 25px}.stats{color:#999cab;font-size:13px}.chat{flex:1;overflow:auto;padding:30px}.message{max-width:900px;margin:0 auto 18px;padding:18px;border-radius:14px;line-height:1.6;white-space:pre-wrap}.user{background:#171923}.assistant{background:#11131a;border:1px solid #262936}.system{color:#7d8190;text-align:center;font-size:13px;margin:15px}.composer{border-top:1px solid #242630;padding:20px}.composer-inner{max-width:1000px;margin:auto;display:flex;gap:10px}textarea{flex:1;resize:none;min-height:70px;background:#151720;color:white;border:1px solid #2b2e3a;border-radius:12px;padding:14px;outline:none}button.send{border:0;border-radius:10px;padding:0 20px;background:#8b5cf6;color:#fff;font-weight:700}.empty{color:#777b89;text-align:center;padding:25px;font-size:13px}
+</style></head>
+<body><div class="layout">
+<aside class="sidebar"><div class="logo">OMNIX</div><div class="badge">🤖 OMNIX AI</div>
+<button class="new" onclick="newChat()">＋ Nouvelle discussion</button><div class="sessions" id="sessions"><div class="empty">Chargement...</div></div></aside>
+<main class="main"><header class="header"><b>🤖 OMNIX AI</b><div class="stats">Tokens : <b id="tokens">0</b> · Requêtes : <b id="requests">0</b></div></header>
+<section id="chat" class="chat"><div class="system">Tes discussions sont sauvegardées dans OMNIX. Les fichiers internes du bot ne sont pas affichés.</div></section>
+<div class="composer"><div class="composer-inner"><textarea id="message" placeholder="Écris ta demande à OMNIX AI…"></textarea><button class="send" onclick="sendMessage()">Envoyer</button></div></div></main></div>
+<script>
+let currentSessionId=null;
+const $=id=>document.getElementById(id);
+function addMessage(role,content){const e=document.createElement('div');e.className='message '+role;e.textContent=content;$('chat').appendChild(e);$('chat').scrollTop=$('chat').scrollHeight;return e}
+function clearChat(){ $('chat').innerHTML='<div class="system">Discussion OMNIX sauvegardée. Les fichiers internes du bot restent masqués.</div>'; }
+async function api(url,opt={}){const r=await fetch(url,{credentials:'include',headers:{Accept:'application/json','Content-Type':'application/json',...(opt.headers||{})},...opt});let d={};try{d=await r.json()}catch{}if(!r.ok)throw new Error(d.error||`HTTP ${r.status}`);return d}
+async function loadSessions(){try{const d=await api('/api/ai-dev/sessions');const box=$('sessions');box.innerHTML='';if(!d.sessions?.length){box.innerHTML='<div class="empty">Aucune discussion sauvegardée.</div>';return}d.sessions.forEach(s=>{const e=document.createElement('div');e.className='session'+(s.id===currentSessionId?' active':'');e.dataset.id=s.id;e.innerHTML=`<b>${escapeHtml(s.title)}</b><small>${s.messageCount||0} messages</small>`;e.onclick=()=>openSession(s.id);box.appendChild(e)})}catch(e){$('sessions').innerHTML='<div class="empty">Impossible de charger les discussions.</div>'}}
+function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+async function openSession(id){try{const d=await api('/api/ai-dev/sessions/'+encodeURIComponent(id));currentSessionId=id;clearChat();(d.session.messages||[]).forEach(m=>addMessage(m.role,m.content));$('tokens').textContent=d.session.totalTokens||0;$('requests').textContent=d.session.totalRequests||0;loadSessions()}catch(e){addMessage('assistant','❌ '+e.message)}}
+function newChat(){currentSessionId=null;clearChat();$('tokens').textContent='0';$('requests').textContent='0';loadSessions()}
+async function sendMessage(){const input=$('message'),message=input.value.trim();if(!message)return;addMessage('user',message);input.value='';const loading=addMessage('assistant','⏳ Analyse en cours…');try{const d=await api('/api/ai-dev/chat',{method:'POST',body:JSON.stringify({message,sessionId:currentSessionId})});loading.remove();addMessage('assistant',d.answer);currentSessionId=d.sessionId;$('tokens').textContent=d.usage?.totalTokens||0;$('requests').textContent=Number($('requests').textContent||0)+1;await loadSessions()}catch(e){loading.remove();addMessage('assistant','❌ '+e.message)}}
+$('message').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}});loadSessions();
+</script></body></html>
