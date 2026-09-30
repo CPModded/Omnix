@@ -1,3 +1,0 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
-import MemberProfile from '../../models/MemberProfile';
-export default { data:new SlashCommandBuilder().setName('leaderboard').setDescription('Classement XP du serveur'), async execute(i:any){ const rows=await MemberProfile.find({guildId:i.guild.id}).sort({xp:-1}).limit(10).lean(); const text=rows.length?rows.map((p:any,n)=>`${n+1}. <@${p.userId}> — niveau ${p.level} • ${p.xp} XP`).join('\n'):'Aucun classement pour le moment.'; return i.reply({embeds:[new EmbedBuilder().setTitle('🏆 Classement OMNIX').setDescription(text).setColor(0xf59e0b)]}); } };
