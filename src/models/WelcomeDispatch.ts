@@ -11,7 +11,7 @@ const WelcomeDispatchSchema = new Schema<IWelcomeDispatch>({
   guildId: { type: String, required: true, index: true },
   memberId: { type: String, required: true, index: true },
   createdAt: { type: Date, default: Date.now },
-  expiresAt: { type: Date, required: true, index: true },
+  expiresAt: { type: Date, required: true },
 });
 WelcomeDispatchSchema.index({ guildId: 1, memberId: 1 }, { unique: true });
 WelcomeDispatchSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
