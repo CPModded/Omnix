@@ -1,2 +1,0 @@
-import { SlashCommandBuilder, MessageFlags } from 'discord.js';
-export default { data:new SlashCommandBuilder().setName('poll').setDescription('Crée un sondage simple').addStringOption(o=>o.setName('question').setDescription('Question').setRequired(true).setMaxLength(1800)), async execute(i:any){ const q=i.options.getString('question',true); const msg=await i.channel.send(`📊 **Sondage**\n${q}\n\n👍 Oui  •  👎 Non`); await msg.react('👍'); await msg.react('👎'); return i.reply({content:'✅ Sondage créé.',flags:MessageFlags.Ephemeral}); } };
