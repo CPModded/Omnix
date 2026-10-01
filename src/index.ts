@@ -157,47 +157,35 @@ async function connectDatabase(): Promise<void> {
 
     console.log(`[MongoDB] ✓ Connexion réussie. Base active : ${mongoose.connection.name || '(nom inconnu)'}.`);
 
-    // Migration Google OAuth : l'ancien index unique sur googleId
-    // provoquait E11000 lorsque plusieurs comptes Discord avaient
-    // googleId=null. `sparse` n'est pas suffisant pour les champs présents
-    // à null : on utilise donc un index partiel qui ne référence que les
-    // vraies chaînes Google ID.
+    // Répare automatiquement l'ancien index googleId_1 s'il a été créé
+    // avant que googleId ne devienne sparse. Sans cette migration, les
+    // comptes Discord avec googleId=null provoquent E11000 duplicate key.
     try {
       const indexes = await User.collection.indexes();
-      const googleIndexes = indexes.filter((idx: any) =>
-        idx.name === 'googleId_1' || (idx.key && idx.key.googleId === 1)
+      const googleIndex = indexes.find((idx: any) =>
+        idx.name === 'googleId_1' ||
+        (idx.key && idx.key.googleId === 1)
       );
 
-      for (const googleIndex of googleIndexes) {
+      if (googleIndex && googleIndex.unique && googleIndex.sparse !== true) {
         await User.collection.dropIndex(googleIndex.name || 'googleId_1');
-        console.log(`[MongoDB] ✓ Ancien index Google supprimé : ${googleIndex.name || 'googleId_1'}.`);
+        console.log('[MongoDB] ✓ Ancien index googleId_1 supprimé (non-sparse).');
       }
 
-      // Nettoyage non destructif : un googleId null n'apporte aucune
-      // information et doit être absent plutôt que stocké à null.
-      const nullGoogleIds = await User.updateMany(
-        { googleId: null },
-        { $unset: { googleId: 1 } },
+      const refreshedIndexes = await User.collection.indexes();
+      const validGoogleIndex = refreshedIndexes.find((idx: any) =>
+        idx.key && idx.key.googleId === 1 && idx.unique === true && idx.sparse === true
       );
 
-      if (nullGoogleIds.modifiedCount > 0) {
-        console.log(`[MongoDB] ✓ ${nullGoogleIds.modifiedCount} googleId null nettoyé(s).`);
+      if (!validGoogleIndex) {
+        await User.collection.createIndex(
+          { googleId: 1 },
+          { unique: true, sparse: true, name: 'googleId_1' }
+        );
+        console.log('[MongoDB] ✓ Index googleId_1 corrigé en unique+sparse.');
       }
-
-      await User.collection.createIndex(
-        { googleId: 1 },
-        {
-          unique: true,
-          partialFilterExpression: { googleId: { $type: 'string' } },
-          name: 'googleId_1',
-        },
-      );
-
-      console.log('[MongoDB] ✓ Index Google OAuth recréé en unique + filtre partiel.');
     } catch (indexError: any) {
-      console.error('[MongoDB] ✗ Migration index Google OAuth échouée :', indexError?.message || indexError);
-      // L'application peut continuer, mais l'authentification Google doit
-      // rester désactivée tant que cet index n'est pas réparé.
+      console.warn('[MongoDB] ⚠ Migration index googleId ignorée :', indexError?.message || indexError);
     }
 
     // Les tokens OAuth Discord sont volontairement conservés côté serveur
