@@ -1,9 +1,0 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const discord_js_1 = require("discord.js");
-const guildConfig_1 = require("../utils/guildConfig");
-exports.default = { data: new discord_js_1.SlashCommandBuilder().setName('security').setDescription('Centre de sécurité OMNIX').setDefaultMemberPermissions(discord_js_1.PermissionFlagsBits.ManageGuild).addSubcommand(s => s.setName('status').setDescription('Affiche la sécurité actuelle')).addSubcommand(s => s.setName('level').setDescription('Définit le niveau').addStringOption(o => o.setName('niveau').setDescription('Niveau').setRequired(true).addChoices({ name: 'LOW', value: 'low' }, { name: 'NORMAL', value: 'normal' }, { name: 'HIGH', value: 'high' }, { name: 'MAXIMUM', value: 'maximum' }))), async execute(i) { const sub = i.options.getSubcommand(); const cfg = await (0, guildConfig_1.getGuildConfig)(i.guild.id); if (sub === 'level') {
-        const level = i.options.getString('niveau', true);
-        await (0, guildConfig_1.updateGuildConfig)(i.guild.id, { modules: { security: { ...cfg.modules.security, level } } });
-        return i.reply({ content: `🛡️ Niveau de sécurité défini sur **${level.toUpperCase()}**.`, flags: discord_js_1.MessageFlags.Ephemeral });
-    } const s = cfg.modules.security; const e = new discord_js_1.EmbedBuilder().setTitle('🛡️ OMNIX Security Center').addFields({ name: 'Niveau', value: String(s.level).toUpperCase(), inline: true }, { name: 'Anti-Nuke', value: s.antiNuke.enabled ? 'Activé' : 'Désactivé', inline: true }, { name: 'Anti-Raid', value: cfg.modules.antiRaid.enabled ? 'Activé' : 'Désactivé', inline: true }, { name: 'AutoMod', value: cfg.modules.autoMod.enabled ? 'Activé' : 'Désactivé', inline: true }).setColor(0x10b981); return i.reply({ embeds: [e], flags: discord_js_1.MessageFlags.Ephemeral }); } };
