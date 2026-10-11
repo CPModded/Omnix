@@ -1,0 +1,6 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const discord_js_1 = require("discord.js");
+const guildConfig_1 = require("../utils/guildConfig");
+exports.default = { data: new discord_js_1.SlashCommandBuilder().setName('suggest').setDescription('Publie une suggestion communautaire').addStringOption(o => o.setName('idee').setDescription('Suggestion').setRequired(true).setMaxLength(1800)), async execute(i) { const cfg = await (0, guildConfig_1.getGuildConfig)(i.guild.id); const c = cfg.modules.suggestions.channelId ? i.guild.channels.cache.get(cfg.modules.suggestions.channelId) : i.channel; if (!c || !c.isTextBased())
+        return i.reply({ content: '❌ Aucun salon de suggestions configuré.', flags: discord_js_1.MessageFlags.Ephemeral }); const e = new discord_js_1.EmbedBuilder().setTitle('💡 Suggestion').setDescription(i.options.getString('idee', true)).addFields({ name: 'Auteur', value: `${i.user}`, inline: true }, { name: 'Statut', value: 'En attente', inline: true }).setFooter({ text: `OMNIX • ${i.guild.name}` }).setColor(0x6366f1); const msg = await c.send({ embeds: [e] }); await msg.react('👍'); await msg.react('👎'); return i.reply({ content: `✅ Suggestion publiée : ${msg.url}`, flags: discord_js_1.MessageFlags.Ephemeral }); } };
