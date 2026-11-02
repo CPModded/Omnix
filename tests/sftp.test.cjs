@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { normalizeRemotePath, sftpStatus } = require('../dist/tools/sftp.js');
+const { normalizeSftpHost } = require('../dist/config/env.js');
 
 test('SFTP path stays inside configured remote root', () => {
   assert.equal(normalizeRemotePath('src/index.js', '/home/container'), '/home/container/src/index.js');
@@ -20,4 +21,10 @@ test('SFTP status never exposes credentials and stays disabled by default', () =
   assert.equal(status.enabled, false);
   assert.equal(Object.hasOwn(status, 'password'), false);
   assert.equal(Object.hasOwn(status, 'privateKey'), false);
+});
+
+test('SFTP host accepts a bare hostname or sftp URL and strips scheme/port', () => {
+  assert.equal(normalizeSftpHost('node01.eternodes.fr'), 'node01.eternodes.fr');
+  assert.equal(normalizeSftpHost('sftp://node01.eternodes.fr:2022'), 'node01.eternodes.fr');
+  assert.throws(() => normalizeSftpHost('https://node01.eternodes.fr'), /SFTP_HOST invalide/);
 });
