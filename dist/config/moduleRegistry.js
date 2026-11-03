@@ -1,0 +1,40 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.OMNIX_MODULES = void 0;
+/**
+ * Registre des modules OMNIX.
+ *
+ * Les clés correspondent exactement aux propriétés de `defaultModules` dans
+ * GuildConfig. Les identifiants de routes du dashboard sont des slugs UI et
+ * doivent toujours être résolus vers ces clés canoniques via MODULE_DETAILS.
+ */
+exports.OMNIX_MODULES = [
+    { key: 'moderation', category: 'Modération', label: 'Modération', premium: false, tier: 'free', reason: 'Fonction essentielle de sécurité.' },
+    { key: 'autoMod', category: 'Sécurité', label: 'AutoMod', premium: false, tier: 'free', reason: 'Protection de base accessible à tous.' },
+    { key: 'antiRaid', category: 'Sécurité', label: 'Anti-Raid', premium: false, tier: 'free', reason: 'Protection essentielle contre les vagues de comptes.' },
+    { key: 'antiSpam', category: 'Sécurité', label: 'Anti-Spam', premium: false, tier: 'free', reason: 'Protection essentielle contre le flood.' },
+    { key: 'antiLink', category: 'Sécurité', label: 'Anti-Link', premium: false, tier: 'free', reason: 'Filtrage de liens configurable sans paywall.' },
+    { key: 'security', category: 'Sécurité', label: 'Security Center', premium: false, tier: 'free', reason: 'Réglages de sécurité fondamentaux.', toggle: false },
+    { key: 'verification', category: 'Sécurité', label: 'Vérification', premium: false, tier: 'free', reason: 'Protection d’accès essentielle.' },
+    { key: 'honeypot', category: 'Sécurité', label: 'Honeypot', premium: true, tier: 'premium', reason: 'Surveillance et automatisation anti-abus avancées.' },
+    { key: 'welcome', category: 'Communauté', label: 'Bienvenue', premium: false, tier: 'free', reason: 'Personnalisation communautaire de base.' },
+    { key: 'goodbye', category: 'Communauté', label: 'Départ', premium: false, tier: 'free', reason: 'Personnalisation des messages de départ.' },
+    { key: 'autoRole', category: 'Communauté', label: 'Auto-Roles', premium: false, tier: 'free', reason: 'Automatisation simple d’accueil.' },
+    { key: 'reactionRoles', category: 'Communauté', label: 'Reaction Roles', premium: false, tier: 'free', reason: 'Fonction communautaire classique.' },
+    { key: 'suggestions', category: 'Communauté', label: 'Suggestions', premium: false, tier: 'free', reason: 'Participation communautaire sans limitation Premium.' },
+    { key: 'polls', category: 'Communauté', label: 'Sondages', premium: false, tier: 'free', reason: 'Outil d’animation standard.' },
+    { key: 'giveaways', category: 'Engagement', label: 'Giveaways', premium: false, tier: 'free', reason: 'Animation de communauté accessible à tous.' },
+    { key: 'levels', category: 'Engagement', label: 'Levels / XP', premium: false, tier: 'free', reason: 'Engagement de communauté de base.' },
+    { key: 'counting', category: 'Engagement', label: 'Counting', premium: false, tier: 'free', reason: 'Petit module communautaire sans coût externe.' },
+    { key: 'autoReactions', category: 'Automatisation', label: 'Auto-Reactions', premium: false, tier: 'free', reason: 'Automatisation légère.' },
+    { key: 'scheduledMessages', category: 'Automatisation', label: 'Messages programmés', premium: false, tier: 'free', reason: 'Automatisation utile avec limites anti-abus.' },
+    { key: 'customCommands', category: 'Automatisation', label: 'Custom Commands', premium: false, tier: 'free', reason: 'Automatisation légère accessible à tous.' },
+    { key: 'tickets', category: 'Support', label: 'Tickets', premium: false, tier: 'free', reason: 'Support serveur essentiel.' },
+    { key: 'logs', category: 'Observabilité', label: 'Logs', premium: false, tier: 'free', reason: 'Traçabilité indispensable à la modération.' },
+    { key: 'statistics', category: 'Observabilité', label: 'Analytics', premium: false, tier: 'free', reason: 'Statistiques utiles sans paywall artificiel.' },
+    { key: 'ping', category: 'Observabilité', label: 'Status / Ping', premium: false, tier: 'free', reason: 'Diagnostic de base du bot.' },
+    { key: 'economy', category: 'Économie virtuelle', label: 'Économie', premium: false, tier: 'free', reason: 'Module communautaire optionnel.' },
+    { key: 'shop', category: 'Économie virtuelle', label: 'Boutique', premium: false, tier: 'free', reason: 'Boutique communautaire optionnelle.' },
+    { key: 'ai', category: 'IA', label: 'Omnix AI', premium: true, tier: 'premium', reason: 'Coûts fournisseurs IA + mémoire et traitement avancés.' },
+    { key: 'backups', category: 'Continuité', label: 'Backups', premium: true, tier: 'premium', reason: 'Stockage et restauration de configurations.' },
+];
