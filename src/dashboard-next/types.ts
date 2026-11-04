@@ -1,0 +1,73 @@
+export type OmnixGuild = {
+  id: string; name: string; icon?: string | null; owner?: boolean; permissions?: string; administrator?: boolean;
+  memberCount?: number; botPresent?: boolean; botInstalled?: boolean;
+  blacklisted?: boolean; blacklistReason?: string | null;
+  inviteUrl?: string | null; premium?: boolean;
+};
+
+export const MODULES = [
+  { id: 'general', label: 'Vue d’ensemble', group: 'Serveur', icon: 'grid', description: 'État général et accès rapides.' },
+  { id: 'moderation', label: 'Modération', group: 'Modération', icon: 'shield', description: 'Outils de modération.' },
+  { id: 'automod', label: 'AutoMod', group: 'Sécurité', icon: 'shield', description: 'Protection automatique.' },
+  { id: 'anti-raid', label: 'Anti-Raid', group: 'Sécurité', icon: 'shield', description: 'Protection contre les raids.' },
+  { id: 'anti-spam', label: 'Anti-Spam', group: 'Sécurité', icon: 'message', description: 'Limitation du spam.' },
+  { id: 'anti-link', label: 'Anti-Link', group: 'Sécurité', icon: 'globe', description: 'Filtrage des liens.' },
+  { id: 'security', label: 'Security Center', group: 'Sécurité', icon: 'shield', description: 'Niveau de sécurité du serveur.' },
+  { id: 'verification', label: 'Vérification', group: 'Sécurité', icon: 'check', description: 'Vérification des membres.' },
+  { id: 'honeypot', label: 'Honeypot', group: 'Sécurité', icon: 'spark', description: 'Détection des comportements suspects.' },
+  { id: 'welcome', label: 'Bienvenue', group: 'Communauté', icon: 'users', description: 'Messages de bienvenue.' },
+  { id: 'goodbye', label: 'Départ', group: 'Communauté', icon: 'globe', description: 'Messages de départ.' },
+  { id: 'auto-role', label: 'Auto-Roles', group: 'Communauté', icon: 'users', description: 'Attribution automatique des rôles.' },
+  { id: 'reaction-roles', label: 'Reaction Roles', group: 'Communauté', icon: 'users', description: 'Rôles par réaction.' },
+  { id: 'suggestions', label: 'Suggestions', group: 'Communauté', icon: 'spark', description: 'Suggestions des membres.' },
+  { id: 'polls', label: 'Sondages', group: 'Communauté', icon: 'clock', description: 'Sondages et votes.' },
+  { id: 'giveaways', label: 'Giveaways', group: 'Engagement', icon: 'star', description: 'Jeux concours.' },
+  { id: 'levels', label: 'Levels / XP', group: 'Engagement', icon: 'chart', description: 'Progression et expérience.' },
+  { id: 'counting', label: 'Counting', group: 'Engagement', icon: 'grid', description: 'Compteur communautaire.' },
+  { id: 'auto-reactions', label: 'Auto-Reactions', group: 'Automatisation', icon: 'spark', description: 'Réactions automatiques.' },
+  { id: 'scheduled-messages', label: 'Messages programmés', group: 'Automatisation', icon: 'clock', description: 'Messages récurrents.' },
+  { id: 'custom-commands', label: 'Custom Commands', group: 'Automatisation', icon: 'bot', description: 'Commandes personnalisées.' },
+  { id: 'tickets', label: 'Tickets', group: 'Support', icon: 'ticket', description: 'Centre de support.' },
+  { id: 'logs', label: 'Logs', group: 'Observabilité', icon: 'message', description: 'Événements du serveur.' },
+  { id: 'statistics', label: 'Statistiques', group: 'Observabilité', icon: 'chart', description: 'Statistiques communautaires.' },
+  { id: 'ping', label: 'Status / Ping', group: 'Observabilité', icon: 'spark', description: 'État du bot.' },
+  { id: 'economy', label: 'Économie', group: 'Économie', icon: 'shield', description: 'Économie virtuelle.' },
+  { id: 'shop', label: 'Boutique', group: 'Économie', icon: 'wallet', description: 'Boutique virtuelle.' },
+  { id: 'ai', label: 'Omnix AI', group: 'IA', icon: 'spark', description: 'Assistant IA du serveur.' },
+  { id: 'backups', label: 'Backups', group: 'Continuité', icon: 'database', description: 'Sauvegardes de configuration.' },
+  { id: 'settings', label: 'Paramètres', group: 'Configuration', icon: 'settings', description: 'Réglages généraux.' },
+] as const;
+
+const detail = (title: string, description: string, key: string, category: string) => ({ title, description, key, category });
+export const MODULE_DETAILS: Record<string, { title: string; description: string; key: string; category: string }> = {
+  general: detail('Vue d’ensemble', 'Retrouvez les informations essentielles de votre serveur.', 'general', 'Serveur'),
+  moderation: detail('Modération', 'Configurez les outils de modération de votre communauté.', 'moderation', 'Modération'),
+  automod: detail('AutoMod', 'Centralisez les protections automatiques de votre serveur.', 'autoMod', 'Sécurité'),
+  'anti-raid': detail('Anti-Raid', 'Protégez votre communauté contre les vagues de comptes.', 'antiRaid', 'Sécurité'),
+  'anti-spam': detail('Anti-Spam', 'Définissez les limites et sanctions contre le spam.', 'antiSpam', 'Sécurité'),
+  'anti-link': detail('Anti-Link', 'Contrôlez les liens publiés dans votre serveur.', 'antiLink', 'Sécurité'),
+  security: detail('Security Center', 'Gérez le niveau de protection et le verrouillage du serveur.', 'security', 'Sécurité'),
+  verification: detail('Vérification', 'Configurez le parcours de vérification des membres.', 'verification', 'Sécurité'),
+  honeypot: detail('Honeypot', 'Configurez le canal de détection des comptes suspects.', 'honeypot', 'Sécurité'),
+  welcome: detail('Bienvenue', 'Personnalisez les messages envoyés aux nouveaux membres.', 'welcome', 'Communauté'),
+  goodbye: detail('Départ', 'Personnalisez les messages envoyés lors des départs.', 'goodbye', 'Communauté'),
+  'auto-role': detail('Auto-Roles', 'Attribuez automatiquement les rôles aux nouveaux membres.', 'autoRole', 'Communauté'),
+  'reaction-roles': detail('Reaction Roles', 'Gérez les rôles attribués par réaction.', 'reactionRoles', 'Communauté'),
+  suggestions: detail('Suggestions', 'Organisez les suggestions et leur modération.', 'suggestions', 'Communauté'),
+  polls: detail('Sondages', 'Configurez le canal de publication des sondages.', 'polls', 'Communauté'),
+  giveaways: detail('Giveaways', 'Configurez les jeux concours de votre serveur.', 'giveaways', 'Engagement'),
+  levels: detail('Levels / XP', 'Personnalisez la progression et les récompenses XP.', 'levels', 'Engagement'),
+  counting: detail('Counting', 'Configurez le salon et le compteur communautaire.', 'counting', 'Engagement'),
+  'auto-reactions': detail('Auto-Reactions', 'Configurez les réactions automatiques.', 'autoReactions', 'Automatisation'),
+  'scheduled-messages': detail('Messages programmés', 'Gérez les messages récurrents.', 'scheduledMessages', 'Automatisation'),
+  'custom-commands': detail('Custom Commands', 'Configurez les commandes personnalisées.', 'customCommands', 'Automatisation'),
+  tickets: detail('Tickets', 'Organisez les demandes de support de vos membres.', 'tickets', 'Support'),
+  logs: detail('Logs', 'Choisissez les événements à suivre et leur destination.', 'logs', 'Observabilité'),
+  statistics: detail('Statistiques', 'Configurez les statistiques du serveur.', 'statistics', 'Observabilité'),
+  ping: detail('Status / Ping', 'Configurez les informations de statut du bot.', 'ping', 'Observabilité'),
+  economy: detail('Économie', 'Personnalisez la monnaie et les récompenses virtuelles.', 'economy', 'Économie'),
+  shop: detail('Boutique', 'Configurez les paramètres de la boutique virtuelle.', 'shop', 'Économie'),
+  ai: detail('Omnix AI', 'Configurez l’assistant IA de votre serveur.', 'ai', 'IA'),
+  backups: detail('Backups', 'Gérez la fréquence et la rétention des sauvegardes.', 'backups', 'Continuité'),
+  settings: detail('Paramètres', 'Gérez les réglages généraux liés à ce serveur.', 'settings', 'Configuration'),
+};
